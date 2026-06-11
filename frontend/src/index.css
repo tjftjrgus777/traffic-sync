@@ -43,42 +43,50 @@
   --overlay-bg:  rgba(3,6,10,0.88);
   /* 로그인 카드 glassmorphism (CivilLoginPage) */
   --login-card:  rgba(14,11,7,0.75);
+
+  --field-bg:     #0a1020;
+  --field-bg-sel: #141414;
+  --grid:         #141414;
+  --on-surface:   #ffffff;
 }
 
 /* ── 라이트 테마 ── */
 [data-theme="light"] {
-  --bg0: #faf8f5;      /* 페이지 배경 — 아주 연한 웜 화이트 */
-  --bg1: #ffffff;      /* 카드/패널 — 순백 */
-  --bg2: #f0ece6;      /* 내부 섹션 */
-  --bg3: #e5e0d8;      /* 더 깊은 구분 */
-  --line:  #e5e5e5;    /* 경계선 — 뉴트럴 */
-  --line2: #c8c8c8;    /* 강조 경계선 */
+  --bg0: #f4f6f9;
+  --bg1: #ffffff;
+  --bg2: #eef1f5;
+  --bg3: #e4e9f0;
+  --line:  #e3e8ef;
+  --line2: #cdd5e0;
 
-  --ink0: #111111;
-  --ink1: #333333;
-  --ink2: #666666;
-  --ink3: #999999;
+  --ink0: #1b2433;
+  --ink1: #3d4757;
+  --ink2: #6b7787;
+  --ink3: #9aa4b2;
 
-  --grn: #1e8a3c;
-  --yel: #d97706;
-  --red: #d12626;
-  --org: #e05c0a;
-  --blu: #1a6fd4;
+  --grn: #1f9d57;
+  --yel: #c98a16;
+  --red: #d6453f;
+  --org: #dd7a2e;
+  --blu: #2f6bdb;
 
   --card-bg:     #ffffff;
-  --card-border: #e5e5e5;
+  --card-border: #e3e8ef;
   --panel-bg:    #ffffff;
-  --panel-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  --panel-shadow: 0 1px 3px rgba(20,30,55,0.05), 0 1px 2px rgba(20,30,55,0.04);
 
-  --scrollbar-thumb: rgba(0,0,0,0.12);
-
+  --scrollbar-thumb: rgba(20,30,55,0.16);
   --icon-filter: none;
-
   --map-bg: #000000;
 
   --glass-bg:   rgba(255,255,255,0.92);
-  --overlay-bg: rgba(250,248,245,0.94);
-  --login-card: rgba(255,255,255,0.88);
+  --overlay-bg: rgba(244,246,249,0.94);
+  --login-card: rgba(255,255,255,0.9);
+
+  --field-bg:     #f4f6f9;
+  --field-bg-sel: #eaf1fd;
+  --grid:         #eaeef3;
+  --on-surface:   var(--ink0);
 }
 
 /* ── 서울 SVG 지도 라이트 모드 반전 필터 ── */

@@ -28,12 +28,12 @@ export default function LivCard({ name, color, speed, sparkData }) {
       {/* 헤더: 색상 막대 + 교차로명 + 상태 배지 */}
       <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
         <span style={{ display: "inline-block", width: 14, height: 3, background: color, borderRadius: 1, marginRight: 9 }} />
-        <span style={{ color: "#fff", fontSize: 17, fontWeight: 600 }}>{name}</span>
+        <span style={{ color: V.ink0, fontSize: 17, fontWeight: 600 }}>{name}</span>
         <span style={{ marginLeft: "auto", fontFamily: V.mono, fontSize: 11, color: stColor, fontWeight: 700 }}>{st}</span>
       </div>
       {/* 속도 수치 + 추세 */}
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, fontFamily: V.mono, flexShrink: 0 }}>
-        <span style={{ fontSize: 54, fontWeight: 700, color: "#fff", lineHeight: 1, letterSpacing: "-1px" }}>{speed ?? "—"}</span>
+        <span style={{ fontSize: 54, fontWeight: 700, color: V.ink0, lineHeight: 1, letterSpacing: "-1px" }}>{speed ?? "—"}</span>
         <span style={{ fontSize: 16, color: V.ink2 }}>km/h</span>
         {trend !== null && (
           <span style={{ marginLeft: "auto", fontSize: 13, color: trend >= 0 ? V.grn : V.red }}>
@@ -49,7 +49,7 @@ export default function LivCard({ name, color, speed, sparkData }) {
         }
       </div>
       {/* 하단 통계 바 */}
-      <div style={{ display: "flex", gap: 12, fontFamily: V.mono, fontSize: 11, color: V.ink2, paddingTop: 6, borderTop: "1px solid #141414", flexShrink: 0 }}>
+      <div style={{ display: "flex", gap: 12, fontFamily: V.mono, fontSize: 11, color: V.ink2, paddingTop: 6, borderTop: `1px solid ${V.line}`, flexShrink: 0 }}>
         <span>{cnt}관측</span>
         <span>윈도우 평균 <b style={{ color: V.ink1 }}>{winAvg ?? "—"} km/h</b></span>
         <span>최소·최대 <b style={{ color: V.ink1 }}>{mn ?? "—"} / {mx ?? "—"} km/h</b></span>

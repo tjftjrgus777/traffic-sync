@@ -21,7 +21,7 @@ export default function ForecastChart({ up = [], down = [], name }) {
       {/* 헤더: 지점명 + 상행/하행 피크 요약 */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: V.bg0, border: `1px solid ${V.line}`, borderRadius: 2, padding: "12px 14px" }}>
         <div>
-          <div style={{ fontSize: 15, color: "#fff", fontWeight: 700 }}>
+          <div style={{ fontSize: 15, color: V.ink0, fontWeight: 700 }}>
             <span style={{ color: V.ink3, marginRight: 8, fontSize: 11 }}>▪</span>{name || "—"}
           </div>
           <div style={{ fontSize: 11, color: V.ink2, fontFamily: V.mono, marginTop: 3 }}>상행/하행 0시–23시 예측 (대/시)</div>
@@ -33,7 +33,7 @@ export default function ForecastChart({ up = [], down = [], name }) {
             <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: V.ink1 }}>
               <span style={{ width: 14, height: 3, borderRadius: 1, background: s.sw, display: "inline-block" }} />
               <span style={{ fontSize: 11, color: V.ink2 }}>{s.label}</span>
-              <b style={{ fontFamily: V.mono, color: "#fff", fontSize: 14, fontWeight: 700 }}>{s.val}</b>
+              <b style={{ fontFamily: V.mono, color: V.ink0, fontSize: 14, fontWeight: 700 }}>{s.val}</b>
               {s.h && <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ink2 }}>· {s.h}</span>}
             </div>
           ))}
@@ -49,7 +49,7 @@ export default function ForecastChart({ up = [], down = [], name }) {
         <div style={{ flex: 1, position: "relative", paddingTop: 6 }}>
           {/* 수평 그리드 라인 */}
           {[0, 25, 50, 75].map(p => (
-            <div key={p} style={{ position: "absolute", left: 0, right: 0, height: 1, background: "#141414", top: `${p}%`, pointerEvents: "none" }} />
+            <div key={p} style={{ position: "absolute", left: 0, right: 0, height: 1, background: "var(--grid)", top: `${p}%`, pointerEvents: "none" }} />
           ))}
           <div style={{ position: "absolute", left: 0, right: 0, height: 1, background: V.line, bottom: 28 }} />
           {/* 막대: 24시간 × 상행/하행 */}
@@ -60,9 +60,9 @@ export default function ForecastChart({ up = [], down = [], name }) {
               return (
                 <div key={h} style={{ display: "flex", flexDirection: "row", alignItems: "flex-end", justifyContent: "center", gap: 1, height: "100%", padding: "0 1px" }}>
                   {/* 상행(파랑) — 피크는 흰 outline */}
-                  <div style={{ width: 6, height: `${uH}%`, minHeight: uH > 0 ? 2 : 0, background: V.blu, borderRadius: "1px 1px 0 0", outline: h === peakUp ? "1px solid #fff" : "none" }} />
+                  <div style={{ width: 6, height: `${uH}%`, minHeight: uH > 0 ? 2 : 0, background: V.blu, borderRadius: "1px 1px 0 0", outline: h === peakUp ? `1px solid ${V.ink2}` : "none" }} />
                   {/* 하행(주황) */}
-                  <div style={{ width: 6, height: `${dH}%`, minHeight: dH > 0 ? 2 : 0, background: "#ff8e55", borderRadius: "1px 1px 0 0", outline: h === peakDn ? "1px solid #fff" : "none" }} />
+                  <div style={{ width: 6, height: `${dH}%`, minHeight: dH > 0 ? 2 : 0, background: "#ff8e55", borderRadius: "1px 1px 0 0", outline: h === peakDn ? `1px solid ${V.ink2}` : "none" }} />
                 </div>
               );
             })}
@@ -70,7 +70,7 @@ export default function ForecastChart({ up = [], down = [], name }) {
           {/* X축 시간 레이블 (00~23) */}
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 24, display: "grid", gridTemplateColumns: "repeat(24,1fr)", fontFamily: V.mono, fontSize: 10, color: V.ink2, textAlign: "center" }}>
             {hours.map(h => (
-              <span key={h} style={{ paddingTop: 4, color: h === peakUp || h === peakDn ? "#fff" : V.ink2, fontWeight: h === peakUp || h === peakDn ? 700 : 400 }}>
+              <span key={h} style={{ paddingTop: 4, color: h === peakUp || h === peakDn ? V.ink0 : V.ink2, fontWeight: h === peakUp || h === peakDn ? 700 : 400 }}>
                 {String(h).padStart(2, "0")}
               </span>
             ))}

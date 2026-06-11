@@ -22,7 +22,7 @@ function useCloseOnOutside(ref, onClose) {
 export function StationPredictDropdown({ stations, selectedId, onSelect }) {
   return (
     <select value={selectedId} onChange={(e) => onSelect(e.target.value)}
-      style={{ background: "#0a1020", border: `1px solid ${V.line}`, borderRadius: 4, color: "#fff", fontSize: 13, padding: "6px 12px", fontFamily: V.sans, outline: "none", cursor: "pointer", minWidth: "220px" }}>
+      style={{ background: "var(--field-bg)", border: `1px solid ${V.line}`, borderRadius: 4, color: V.ink0, fontSize: 13, padding: "6px 12px", fontFamily: V.sans, outline: "none", cursor: "pointer", minWidth: "220px" }}>
       {stations.map((st) => (
         <option key={st.stationId} value={st.stationId}>{st.stationName}</option>
       ))}
@@ -43,7 +43,7 @@ export function SpeedDropdown({ options, selected, onToggle }) {
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button onClick={() => { setOpen(o => !o); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
-        background: V.bg0, border: `1px solid ${V.line}`, borderRadius: 2, color: "#fff",
+        background: "var(--field-bg)", border: `1px solid ${V.line}`, borderRadius: 2, color: V.ink0,
         fontFamily: V.sans, fontSize: 13, fontWeight: 600, padding: "7px 30px 7px 14px",
         cursor: "pointer", minWidth: 220, textAlign: "left", position: "relative",
       }}>
@@ -51,10 +51,10 @@ export function SpeedDropdown({ options, selected, onToggle }) {
         <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: V.ink2 }}>▾</span>
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "110%", left: 0, zIndex: 200, background: "#0d0d0d", border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 280, boxShadow: "0 8px 32px rgba(0,0,0,.8)" }}>
+        <div style={{ position: "absolute", top: "110%", left: 0, zIndex: 200, background: "var(--field-bg)", border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 280, boxShadow: "0 8px 32px rgba(0,0,0,.2)" }}>
           <div style={{ padding: "8px 10px", borderBottom: `1px solid ${V.line}` }}>
             <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder="교차로 검색..."
-              style={{ width: "100%", background: "#141414", border: `1px solid ${V.line}`, borderRadius: 2, color: "#fff", fontSize: 13, padding: "6px 10px", fontFamily: V.sans, outline: "none" }} />
+              style={{ width: "100%", background: "var(--field-bg-sel)", border: `1px solid ${V.line}`, borderRadius: 2, color: V.ink0, fontSize: 13, padding: "6px 10px", fontFamily: V.sans, outline: "none" }} />
           </div>
           <div style={{ maxHeight: 260, overflowY: "auto" }}>
             {filtered.length === 0
@@ -64,8 +64,8 @@ export function SpeedDropdown({ options, selected, onToggle }) {
                   return (
                     <div key={opt.id} onClick={() => onToggle(opt)}
                       style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
-                        background: isSel ? "#141414" : "transparent", borderBottom: `1px solid ${V.line}`,
-                        color: isSel ? "#fff" : V.ink1, fontSize: 13, fontWeight: isSel ? 600 : 400 }}>
+                        background: isSel ? "var(--field-bg-sel)" : "transparent", borderBottom: `1px solid ${V.line}`,
+                        color: isSel ? V.ink0 : V.ink1, fontSize: 13, fontWeight: isSel ? 600 : 400 }}>
                       <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ink2, minWidth: 28 }}>#{i + 1}</span>
                       <span style={{ flex: 1 }}>{opt.name}</span>
                       {isSel && <span style={{ color: V.blu, fontSize: 11 }}>✓</span>}
@@ -96,7 +96,7 @@ export function RiskDropdown({ options, selectedIdx, onChange, watchIds = [] }) 
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button onClick={() => { setOpen(o => !o); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
-        background: "#0a1020", border: `1px solid ${V.line}`, borderRadius: 999, color: "#fff",
+        background: "var(--field-bg)", border: `1px solid ${V.line}`, borderRadius: 999, color: V.ink0,
         fontFamily: V.sans, fontSize: 13, fontWeight: 600, padding: "8px 32px 8px 14px",
         cursor: "pointer", minWidth: 220, textAlign: "left", position: "relative",
       }}>
@@ -104,10 +104,10 @@ export function RiskDropdown({ options, selectedIdx, onChange, watchIds = [] }) 
         <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: V.ink2 }}>▾</span>
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "110%", left: 0, zIndex: 200, background: "#0d0d0d", border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 300, boxShadow: "0 8px 32px rgba(0,0,0,.8)" }}>
+        <div style={{ position: "absolute", top: "110%", left: 0, zIndex: 200, background: "var(--field-bg)", border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 300, boxShadow: "0 8px 32px rgba(0,0,0,.2)" }}>
           <div style={{ padding: "8px 10px", borderBottom: `1px solid ${V.line}` }}>
             <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder="교차로 검색..."
-              style={{ width: "100%", background: "#141414", border: `1px solid ${V.line}`, borderRadius: 2, color: "#fff", fontSize: 13, padding: "6px 10px", fontFamily: V.sans, outline: "none" }} />
+              style={{ width: "100%", background: "var(--field-bg-sel)", border: `1px solid ${V.line}`, borderRadius: 2, color: V.ink0, fontSize: 13, padding: "6px 10px", fontFamily: V.sans, outline: "none" }} />
           </div>
           <div style={{ maxHeight: 280, overflowY: "auto" }}>
             {filtered.length === 0
@@ -120,8 +120,8 @@ export function RiskDropdown({ options, selectedIdx, onChange, watchIds = [] }) 
                     <div key={opt.name + opt.origIdx}
                       onClick={() => { onChange(opt.origIdx); if (!isRegisterMode) { setOpen(false); setQuery(""); } }}
                       style={{ padding: "11px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
-                        background: isSel || isWatched ? "#141414" : "transparent", borderBottom: `1px solid ${V.line}`,
-                        color: isSel || isWatched ? "#fff" : V.ink1, fontSize: 13 }}>
+                        background: isSel || isWatched ? "var(--field-bg-sel)" : "transparent", borderBottom: `1px solid ${V.line}`,
+                        color: isSel || isWatched ? V.ink0 : V.ink1, fontSize: 13 }}>
                       <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ink2, minWidth: 28 }}>#{opt.origIdx + 1}</span>
                       <span style={{ flex: 1, fontWeight: 600 }}>{opt.name}</span>
                       <span style={{ fontFamily: V.mono, fontSize: 13, color, fontWeight: 700 }}>{hasRiskScore(opt.score) ? `${opt.score}점` : "—"}</span>

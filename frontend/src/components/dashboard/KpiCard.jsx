@@ -24,7 +24,7 @@ export default function KpiCard({ value, unit, label, sub, status }) {
           {status}
         </span>
       )}
-      <div style={{ fontFamily: V.mono, fontWeight: 700, fontSize: 44, color: "#fff", letterSpacing: "-1.8px", lineHeight: 1, display: "flex", alignItems: "baseline", gap: 4 }}>
+      <div style={{ fontFamily: V.mono, fontWeight: 700, fontSize: 44, color: V.ink0, letterSpacing: "-1.8px", lineHeight: 1, display: "flex", alignItems: "baseline", gap: 4 }}>
         {value}<span style={{ fontSize: 12, color: V.ink2, fontWeight: 500 }}>{unit}</span>
       </div>
       <div style={{ fontSize: 15, color: V.ink0, fontWeight: 600, marginTop: 7 }}>{label}</div>
