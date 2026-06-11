@@ -3,18 +3,18 @@ import { useState, useEffect } from "react";
 const API = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 const V = {
-  bg: "#000", card: "rgba(14,11,7,.35)",
-  bd: "#1a1a1a", bd2: "#2a2a2a",
-  ink: "#e7ecf5", ink2: "#aab4c8", ink3: "#7a7a7a", ink4: "#3a3a3a",
-  pri: "#ffaa33", ok: "#2ee07a", err: "#ff5566",
+  bg: "var(--bg0)", card: "var(--login-card)",
+  bd: "var(--line)", bd2: "var(--line2)",
+  ink: "var(--ink0)", ink2: "var(--ink2)", ink3: "var(--ink3)", ink4: "var(--ink3)",
+  pri: "var(--org)", ok: "var(--grn)", err: "var(--red)",
   mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
   sans: "'Pretendard','Noto Sans KR',system-ui,sans-serif",
 };
 
 const s = {
-  inp: { width: "100%", height: 46, padding: "0 16px", background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.14)", borderRadius: 2, color: V.ink, fontSize: 14, fontWeight: 500, fontFamily: V.sans, outline: "none", boxSizing: "border-box" },
+  inp: { width: "100%", height: 46, padding: "0 16px", background: "rgba(128,128,128,.08)", border: "1px solid var(--line2)", borderRadius: 2, color: V.ink, fontSize: 14, fontWeight: 500, fontFamily: V.sans, outline: "none", boxSizing: "border-box" },
   lab: { fontFamily: V.mono, fontSize: 11, color: V.ink3, letterSpacing: ".5px" },
-  btn: (color) => ({ width: "100%", height: 52, border: "none", borderRadius: 2, background: color || V.pri, color: "#000", fontSize: 15, fontWeight: 700, letterSpacing: ".4px", cursor: "pointer", marginTop: 8, fontFamily: V.sans }),
+  btn: (color) => ({ width: "100%", height: 52, border: "none", borderRadius: 2, background: color || V.pri, color: "var(--bg0)", fontSize: 15, fontWeight: 700, letterSpacing: ".4px", cursor: "pointer", marginTop: 8, fontFamily: V.sans }),
   link: { color: V.ink2, fontSize: 13, fontWeight: 500, cursor: "pointer", padding: "0 12px" },
   hint: (type) => ({ fontSize: 11, fontFamily: V.mono, color: type === "ok" ? V.ok : V.err }),
 };
@@ -34,7 +34,7 @@ function Links({ items }) {
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 18 }}>
       {items.map((item, i) => (
         <span key={i} style={{ display: "flex", alignItems: "center" }}>
-          {i > 0 && <span style={{ color: "rgba(255,255,255,.18)", padding: "0 2px" }}>|</span>}
+          {i > 0 && <span style={{ color: "var(--line2)", padding: "0 2px" }}>|</span>}
           <a style={s.link} onClick={item.onClick}>{item.label}</a>
         </span>
       ))}
@@ -156,7 +156,7 @@ export default function CivilLoginPage({ onLogin, onBack }) {
     <div style={{ fontFamily: V.sans, background: V.bg, color: V.ink, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
       {/* status bar */}
-      <header style={{ height: 28, display: window.innerWidth <= 768 ? "none" : "flex", alignItems: "center", gap: 16, padding: "0 16px", background: "#0a0a0a", borderBottom: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 11, color: V.ink3, letterSpacing: ".3px", zIndex: 30, flexShrink: 0 }}>
+      <header style={{ height: 28, display: window.innerWidth <= 768 ? "none" : "flex", alignItems: "center", gap: 16, padding: "0 16px", background: "var(--bg0)", borderBottom: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 11, color: V.ink3, letterSpacing: ".3px", zIndex: 30, flexShrink: 0 }}>
         <span style={{ width: 8, height: 8, background: V.pri, display: "inline-block" }} />
         <span>TRAFFICSYNC · 민원 시스템</span>
         <span style={{ color: V.ink4 }}>│</span>
@@ -172,8 +172,8 @@ export default function CivilLoginPage({ onLogin, onBack }) {
         <div style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", background: "radial-gradient(ellipse at center, rgba(0,0,0,.25) 0%, rgba(0,0,0,.55) 70%, rgba(0,0,0,.75) 100%)" }} />
         <div style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", opacity: .15, background: "linear-gradient(rgba(255,170,51,.18) 1px,transparent 1px) 0 0/48px 48px, linear-gradient(90deg,rgba(255,170,51,.18) 1px,transparent 1px) 0 0/48px 48px" }} />
 
-        <div style={{ position: "absolute", top: 24, left: 42, zIndex: 3, fontFamily: V.mono, fontSize: 10.5, color: "rgba(255,255,255,.55)", letterSpacing: ".5px" }}>
-          <b style={{ color: "#fff", fontWeight: 600, marginRight: 6 }}>민원 포털</b>TrafficSync CITIZEN SERVICE
+        <div style={{ position: "absolute", top: 24, left: 42, zIndex: 3, fontFamily: V.mono, fontSize: 10.5, color: "var(--ink2)", letterSpacing: ".5px" }}>
+          <b style={{ color: "var(--ink0)", fontWeight: 600, marginRight: 6 }}>민원 포털</b>TrafficSync CITIZEN SERVICE
         </div>
 
         {/* 카드 */}
@@ -184,7 +184,7 @@ export default function CivilLoginPage({ onLogin, onBack }) {
               {/* 헤더 */}
               <div style={{ fontSize: 30, fontWeight: 800, color: V.pri, letterSpacing: "-.3px", lineHeight: 1 }}>TrafficSync</div>
               <div style={{ marginTop: 8, fontFamily: V.mono, fontSize: 12, color: V.ink2, letterSpacing: "1.4px", textTransform: "uppercase" }}>서울시 교통 민원 포털</div>
-              <div style={{ height: 1, background: "rgba(255,255,255,.10)", margin: "24px -40px 22px" }} />
+              <div style={{ height: 1, background: "var(--line)", margin: "24px -40px 22px" }} />
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 18 }}>
                 <span style={{ fontSize: 17, fontWeight: 600, color: V.ink }}>{titles[screen]}</span>
                 <span style={{ fontFamily: V.mono, fontSize: 12, color: V.ink3 }}>{titles[screen].toUpperCase()}</span>
@@ -195,14 +195,14 @@ export default function CivilLoginPage({ onLogin, onBack }) {
             </div>
 
             {/* 일반 로그인 링크 */}
-            <a onClick={onBack} style={{ fontFamily: V.mono, fontSize: 12, color: "rgba(255,255,255,.4)", letterSpacing: ".5px", padding: "8px 18px", cursor: "pointer" }}>
+            <a onClick={onBack} style={{ fontFamily: V.mono, fontSize: 12, color: "var(--ink3)", letterSpacing: ".5px", padding: "8px 18px", cursor: "pointer" }}>
               ← 관제 시스템으로 돌아가기
             </a>
           </div>
         </div>
       </div>
 
-      <footer style={{ height: 24, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", background: "#0a0a0a", borderTop: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 11, color: V.ink4, letterSpacing: ".3px", flexShrink: 0 }}>
+      <footer style={{ height: 24, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", background: "var(--bg0)", borderTop: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 11, color: V.ink4, letterSpacing: ".3px", flexShrink: 0 }}>
         <span>TRAFFICSYNC CITIZEN · © 2026 서울특별시 교통정보센터</span>
         <span>민원 접수 내용은 처리 현황 관리에 기록됩니다</span>
       </footer>

@@ -3,18 +3,18 @@ import { useState, useEffect } from "react";
 const API = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 const V = {
-  bg0:  "#000",
-  bg1:  "#0a0a0a",
-  line: "#1a1a1a",
-  bd2:  "#2a2a2a",
-  ink0: "#e7ecf5",
-  ink1: "#aab4c8",
-  ink2: "#7a7a7a",
-  ink3: "#3a3a3a",
-  grn:  "#2ee07a",
-  red:  "#ff5566",
-  blu:  "#4ea6ff",
-  org:  "#ffaa33",
+  bg0:  "var(--bg0)",
+  bg1:  "var(--bg1)",
+  line: "var(--line)",
+  bd2:  "var(--line2)",
+  ink0: "var(--ink0)",
+  ink1: "var(--ink1)",
+  ink2: "var(--ink2)",
+  ink3: "var(--ink3)",
+  grn:  "var(--grn)",
+  red:  "var(--red)",
+  blu:  "var(--blu)",
+  org:  "var(--org)",
   mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
   sans: "'Pretendard','Noto Sans KR',system-ui,sans-serif",
 };
@@ -37,7 +37,7 @@ function Toggle({ on, onChange, disabled }) {
         position: "absolute", top: 3,
         left: on ? 22 : 3,
         width: 16, height: 16, borderRadius: "50%",
-        background: on ? "#000" : V.ink2,
+        background: on ? "var(--bg0)" : V.ink2,
         transition: "left .2s",
       }} />
     </div>
@@ -142,7 +142,7 @@ export default function MyPage({ onBack }) {
 
   const inpStyle = {
     width: "100%", height: 42, padding: "0 14px",
-    background: "rgba(255,255,255,.04)", border: `1px solid ${V.bd2}`,
+    background: "rgba(128,128,128,.08)", border: `1px solid ${V.bd2}`,
     borderRadius: 2, color: V.ink0, fontSize: 14, fontFamily: V.sans,
     outline: "none", boxSizing: "border-box",
   };
@@ -231,7 +231,7 @@ export default function MyPage({ onBack }) {
               <button
                 type="submit"
                 disabled={pwLoading}
-                style={{ height: 42, background: V.blu, border: "none", borderRadius: 2, color: "#000", fontSize: 14, fontWeight: 700, cursor: pwLoading ? "default" : "pointer", fontFamily: V.sans, marginTop: 4 }}
+                style={{ height: 42, background: V.blu, border: "none", borderRadius: 2, color: "var(--bg0)", fontSize: 14, fontWeight: 700, cursor: pwLoading ? "default" : "pointer", fontFamily: V.sans, marginTop: 4 }}
               >
                 {pwLoading ? "변경 중..." : "비밀번호 변경"}
               </button>

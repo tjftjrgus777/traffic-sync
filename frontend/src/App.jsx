@@ -8,6 +8,7 @@
  * SimulationDashboard는 한 번 진입한 뒤에는 unmount하지 않고 display만 전환한다.
  */
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { ThemeProvider } from './contexts/ThemeContext'
 
 import LoginPage from './pages/LoginPage'
 import MyPage from './pages/mypage/MyPage'
@@ -169,50 +170,50 @@ export default function App() {
 
   // ── 로그인/민원 사용자 페이지는 별도 진입 화면 ──────────────────
 
-  if (page === 'civil') return <CivilApp onBack={() => setPage('login')} />
+  if (page === 'civil') return <ThemeProvider><CivilApp onBack={() => setPage('login')} /></ThemeProvider>
 
   if (page === 'login') return (
-    <LoginPage
-      onCivil={() => setPage('civil')}
-      onLoginSuccess={async (data) => {
-        const name = data.name || '관제사'
-        const gu   = selectedGu?.name || '강남구'
-        const API  = (import.meta.env.VITE_API_URL || 'http://localhost:8080').replace(/\/+$/, '')
+    <ThemeProvider>
+      <LoginPage
+        onCivil={() => setPage('civil')}
+        onLoginSuccess={async (data) => {
+          const name = data.name || '관제사'
+          const gu   = selectedGu?.name || '강남구'
+          const API  = (import.meta.env.VITE_API_URL || 'http://localhost:8080').replace(/\/+$/, '')
 
-        setPage(data.isTempPw ? 'mypage' : 'main')
+          setPage(data.isTempPw ? 'mypage' : 'main')
 
-        // 임시 비번이면 브리핑 없이 마이페이지로
-        if (data.isTempPw) { assistant.greetOnLogin(name, gu); return }
+          if (data.isTempPw) { assistant.greetOnLogin(name, gu); return }
 
-        // 날씨 + 민원 미처리 건수 병렬 fetch
-        let weatherDesc = '정보 없음', temp = '--', pendingCount = 0
-        try {
-          const pos = await new Promise((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(
-              p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-              reject, { timeout: 5000 }
+          let weatherDesc = '정보 없음', temp = '--', pendingCount = 0
+          try {
+            const pos = await new Promise((resolve, reject) =>
+              navigator.geolocation.getCurrentPosition(
+                p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+                reject, { timeout: 5000 }
+              )
             )
-          )
-          const [wRes, cRes] = await Promise.all([
-            fetch(`${API}/api/civil/auth/weather?lat=${pos.lat}&lng=${pos.lng}`),
-            fetch(`${API}/api/complaints`),
-          ])
-          if (wRes.ok) {
-            const w = await wRes.json()
-            weatherDesc = w.description || '정보 없음'
-            temp = w.temperatureC != null ? `${Math.round(w.temperatureC)}도` : '--'
-          }
-          if (cRes.ok) {
-            const complaints = await cRes.json()
-            pendingCount = Array.isArray(complaints)
-              ? complaints.filter(c => c.status === '접수').length
-              : 0
-          }
-        } catch {}
+            const [wRes, cRes] = await Promise.all([
+              fetch(`${API}/api/civil/auth/weather?lat=${pos.lat}&lng=${pos.lng}`),
+              fetch(`${API}/api/complaints`),
+            ])
+            if (wRes.ok) {
+              const w = await wRes.json()
+              weatherDesc = w.description || '정보 없음'
+              temp = w.temperatureC != null ? `${Math.round(w.temperatureC)}도` : '--'
+            }
+            if (cRes.ok) {
+              const complaints = await cRes.json()
+              pendingCount = Array.isArray(complaints)
+                ? complaints.filter(c => c.status === '접수').length
+                : 0
+            }
+          } catch {}
 
-        setLoginBriefing({ name, gu, weatherDesc, temp, pendingCount })
-      }}
-    />
+          setLoginBriefing({ name, gu, weatherDesc, temp, pendingCount })
+        }}
+      />
+    </ThemeProvider>
   )
 
   // ── 로그인 이후 화면 ────────────────────────────────────────────
@@ -227,7 +228,7 @@ export default function App() {
 
   // ── 메인 대시보드 + AI 어시스턴트 팝업들 ────────────────────────
   return (
-    <>
+    <ThemeProvider>
       {simulationMounted && (
         <div
           style={{
@@ -415,6 +416,6 @@ export default function App() {
           shifted={assistant.voiceUI.active && !assistant.voiceMinimized}
         />
       )}
-    </>
+    </ThemeProvider>
   )
 }

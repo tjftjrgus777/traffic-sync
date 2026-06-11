@@ -1,16 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { GU_LIST } from "../constants/seoulGeoData";
 import AppHeader from "../components/common/AppHeader";
+import { V } from "../constants/theme";
 
 const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/+$/, "");
-
-const V = {
-  bg0: "#000", bg1: "#0a0a0a", line: "#1a1a1a",
-  ink0: "#e7ecf5", ink1: "#aab4c8", ink2: "#7a7a7a", ink3: "#3a3a3a",
-  grn: "#2ee07a", red: "#ff5566", org: "#ffaa33", blu: "#4ea6ff",
-  mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
-  sans: "'Pretendard','Noto Sans KR',system-ui,sans-serif",
-};
 
 const STATUS_META = {
   "접수":   { color: V.org, next: "처리중" },
@@ -194,8 +187,8 @@ export default function ComplaintManagePage({
 
           {/* 전체 */}
           <div onClick={() => setSelectedGu(null)}
-            style={{ padding: "9px 16px", cursor: "pointer", background: !selectedGu ? "#0d0d0d" : "transparent", borderLeft: !selectedGu ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-            onMouseEnter={e => { if (selectedGu) e.currentTarget.style.background = "#080808"; }}
+            style={{ padding: "9px 16px", cursor: "pointer", background: !selectedGu ? V.bg2 : "transparent", borderLeft: !selectedGu ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            onMouseEnter={e => { if (selectedGu) e.currentTarget.style.background = "var(--bg2)"; }}
             onMouseLeave={e => { if (selectedGu) e.currentTarget.style.background = "transparent"; }}>
             <span style={{ fontSize: 14, fontWeight: !selectedGu ? 700 : 400, color: !selectedGu ? V.ink0 : V.ink1 }}>전체 보기</span>
           </div>
@@ -206,8 +199,8 @@ export default function ComplaintManagePage({
             const pending = guPendingMap[g.name] || 0;
             return (
               <div key={g.name} onClick={() => setSelectedGu(g.name)}
-                style={{ padding: "9px 16px", cursor: "pointer", background: isSel ? "#0d0d0d" : "transparent", borderLeft: isSel ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "#080808"; }}
+                style={{ padding: "9px 16px", cursor: "pointer", background: isSel ? V.bg2 : "transparent", borderLeft: isSel ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "var(--bg2)"; }}
                 onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = "transparent"; }}>
                 <span style={{ fontSize: 14, fontWeight: isSel ? 700 : 400, color: isSel ? V.ink0 : pending > 0 ? V.ink1 : V.ink3 }}>{g.name}</span>
                 {pending > 0 && (
@@ -229,21 +222,21 @@ export default function ComplaintManagePage({
             </span>
 
             <span style={{ fontFamily: V.mono, fontSize: 12.5, color: V.ink3, letterSpacing: ".5px", marginLeft: 8 }}>STATUS</span>
-            <div style={{ display: "flex", background: "#0a0a0a", border: `1px solid ${V.line}`, borderRadius: 2 }}>
+            <div style={{ display: "flex", background: V.bg0, border: `1px solid ${V.line}`, borderRadius: 2 }}>
               {["전체", "접수", "처리중", "완료"].map(s => (
                 <button key={s} onClick={() => setFilterStatus(s)}
-                  style={{ background: filterStatus === s ? "#141414" : "transparent", border: 0, borderRight: `1px solid ${V.line}`, color: filterStatus === s ? V.ink0 : V.ink3, padding: "6px 13px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: V.mono }}>
+                  style={{ background: filterStatus === s ? V.bg2 : "transparent", border: 0, borderRight: `1px solid ${V.line}`, color: filterStatus === s ? V.ink0 : V.ink3, padding: "6px 13px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: V.mono }}>
                   {s}{s !== "전체" ? ` (${counts[s] ?? 0})` : ` (${counts.전체})`}
                 </button>
               ))}
             </div>
 
             <select value={filterCategory} onChange={e => setFilterCat(e.target.value)}
-              style={{ height: 32, padding: "0 10px", background: "#0a0a0a", border: `1px solid ${V.line}`, borderRadius: 2, color: V.ink1, fontSize: 13, fontFamily: V.sans, outline: "none", cursor: "pointer" }}>
+              style={{ height: 32, padding: "0 10px", background: V.bg0, border: `1px solid ${V.line}`, borderRadius: 2, color: V.ink1, fontSize: 13, fontFamily: V.sans, outline: "none", cursor: "pointer" }}>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
 
-            <div style={{ marginLeft: "auto", height: 34, display: "flex", alignItems: "center", gap: 8, padding: "0 12px", background: "#0a0a0a", border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 300 }}>
+            <div style={{ marginLeft: "auto", height: 34, display: "flex", alignItems: "center", gap: 8, padding: "0 12px", background: V.bg0, border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 300 }}>
               <span style={{ fontFamily: V.mono, color: V.ink3, fontSize: 13 }}>⌕</span>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="제목, 주소, 신청자 검색"
                 style={{ flex: 1, background: "transparent", border: 0, outline: 0, color: V.ink0, fontSize: 13, fontFamily: V.sans }} />
@@ -259,7 +252,7 @@ export default function ComplaintManagePage({
                 <thead>
                   <tr>
                     {["#", "상태", "분류", "제목", "주소", "신청자", "접수 일시", "사진", "처리"].map((h, i) => (
-                      <th key={h} style={{ position: "sticky", top: 0, background: "#0a0a0a", borderBottom: `1px solid ${V.line}`, textAlign: i >= 7 ? "center" : "left", fontFamily: V.mono, fontSize: 12.5, fontWeight: 700, color: V.ink2, letterSpacing: ".5px", textTransform: "uppercase", padding: "8px 14px", whiteSpace: "nowrap" }}>{h}</th>
+                      <th key={h} style={{ position: "sticky", top: 0, background: V.bg0, borderBottom: `1px solid ${V.line}`, textAlign: i >= 7 ? "center" : "left", fontFamily: V.mono, fontSize: 12.5, fontWeight: 700, color: V.ink2, letterSpacing: ".5px", textTransform: "uppercase", padding: "8px 14px", whiteSpace: "nowrap" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>

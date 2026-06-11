@@ -237,8 +237,8 @@ export default function CctvDashboard({ onGoMain, onGoMap, onGoNews, onGoSimulat
           {/* openGu === null이면 파란 좌측 테두리 + 진한 배경으로 선택 표시 */}
           <div
             onClick={() => setOpenGu(null)}
-            style={{ padding: "9px 16px", cursor: "pointer", background: !openGu ? "#0d0d0d" : "transparent", borderLeft: !openGu ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-            onMouseEnter={e => { if (openGu) e.currentTarget.style.background = "#080808"; }}
+            style={{ padding: "9px 16px", cursor: "pointer", background: !openGu ? V.bg2 : "transparent", borderLeft: !openGu ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            onMouseEnter={e => { if (openGu) e.currentTarget.style.background = "var(--bg2)"; }}
             onMouseLeave={e => { if (openGu) e.currentTarget.style.background = "transparent"; }}
           >
             <span style={{ fontSize: 14, fontWeight: !openGu ? 700 : 400, color: !openGu ? V.ink0 : V.ink1 }}>전체 보기</span>
@@ -249,8 +249,8 @@ export default function CctvDashboard({ onGoMain, onGoMap, onGoNews, onGoSimulat
           {guGroups.map(gu => (
             <div key={gu.name}
               onClick={() => setOpenGu(gu.name)}
-              style={{ padding: "9px 16px", cursor: "pointer", background: openGu === gu.name ? "#0d0d0d" : "transparent", borderLeft: openGu === gu.name ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-              onMouseEnter={e => { if (openGu !== gu.name) e.currentTarget.style.background = "#080808"; }}
+              style={{ padding: "9px 16px", cursor: "pointer", background: openGu === gu.name ? V.bg2 : "transparent", borderLeft: openGu === gu.name ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              onMouseEnter={e => { if (openGu !== gu.name) e.currentTarget.style.background = "var(--bg2)"; }}
               onMouseLeave={e => { if (openGu !== gu.name) e.currentTarget.style.background = "transparent"; }}
             >
               <span style={{ fontSize: 14, fontWeight: openGu === gu.name ? 700 : 400, color: openGu === gu.name ? V.ink0 : V.ink1 }}>{gu.name}</span>

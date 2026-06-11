@@ -1,17 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { speakAsync, stopAllTTS } from '../lib/tts'
-
-const V = {
-  bg:   'rgba(8,8,8,0.97)',
-  line: '#1a1a1a',
-  ink0: '#e7ecf5',
-  ink1: '#aab4c8',
-  ink2: '#7a7a7a',
-  org:  '#ffaa33',
-  blu:  '#4ea6ff',
-  mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
-  sans: "'Pretendard','Noto Sans KR',system-ui,sans-serif",
-}
+import { V } from '../constants/theme'
 
 export default function LoginBriefingCard({ briefing, onClose, onTTSDone }) {
   const { name, gu, weatherDesc, temp, pendingCount } = briefing
@@ -21,7 +10,6 @@ export default function LoginBriefingCard({ briefing, onClose, onTTSDone }) {
   const mm     = String(now.getMinutes()).padStart(2, '0')
   const timeStr = `${hh}시 ${mm}분`
 
-  // ── 드래그 ──────────────────────────────────────────────────────
   const [pos, setPos]         = useState({ x: 0, y: 0 })
   const [moved, setMoved]     = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -47,7 +35,6 @@ export default function LoginBriefingCard({ briefing, onClose, onTTSDone }) {
     return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up) }
   }, [dragging])
 
-  // ── TTS ──────────────────────────────────────────────────────────
   useEffect(() => {
     const text =
       `안녕하세요 ${name}님, 관리자 계정 접속 ${timeStr}에 인증되었습니다. ` +
@@ -60,9 +47,7 @@ export default function LoginBriefingCard({ briefing, onClose, onTTSDone }) {
   }, [])
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 600, pointerEvents: 'none',
-    }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 600, pointerEvents: 'none' }}>
       <style>{`
         @keyframes briefingSlideUp {
           from { opacity: 0; transform: translate(-50%, calc(-50% + 30px)) scale(0.96); }
@@ -78,10 +63,10 @@ export default function LoginBriefingCard({ briefing, onClose, onTTSDone }) {
           left: `calc(50% + ${pos.x}px)`,
           transform: 'translate(-50%, -50%)',
           width: 340, maxWidth: 'calc(100vw - 32px)',
-          background: V.bg,
-          border: `1px solid rgba(255,170,51,0.4)`,
+          background: V.bg1,
+          border: `1px solid rgba(194,81,12,0.4)`,
           borderRadius: 8,
-          boxShadow: '0 16px 56px rgba(0,0,0,0.9)',
+          boxShadow: '0 16px 56px rgba(0,0,0,0.5)',
           pointerEvents: 'auto',
           cursor: dragging ? 'grabbing' : 'grab',
           animation: !moved
@@ -90,7 +75,6 @@ export default function LoginBriefingCard({ briefing, onClose, onTTSDone }) {
           userSelect: 'none',
         }}
       >
-        {/* 헤더 */}
         <div style={{
           display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
           padding: '16px 18px 12px',
@@ -119,7 +103,6 @@ export default function LoginBriefingCard({ briefing, onClose, onTTSDone }) {
           >✕</button>
         </div>
 
-        {/* 날씨 */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '13px 18px',
@@ -135,7 +118,6 @@ export default function LoginBriefingCard({ briefing, onClose, onTTSDone }) {
           </div>
         </div>
 
-        {/* 미처리 민원 */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '13px 18px',

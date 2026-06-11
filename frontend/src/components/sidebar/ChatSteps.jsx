@@ -21,7 +21,7 @@ export function ThinkingDots() {
       {[0, 1, 2].map(i => (
         <span key={i} style={{
           width: 3, height: 3, borderRadius: "50%",
-          background: "rgba(255,255,255,0.45)", display: "inline-block",
+          background: "var(--ink2)", display: "inline-block",
           animation: `chatDotBlink 1.2s ease ${i * 0.2}s infinite`,
         }} />
       ))}
@@ -39,10 +39,10 @@ export function StepRows({ steps }) {
           : (step.content ?? "");
         return (
           <div key={i} style={{ display: "flex", gap: 10, animation: "chatFadeIn .15s ease" }}>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", minWidth: 54, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
+            <span style={{ fontSize: 10, color: "var(--ink3)", minWidth: 54, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
               {label}
             </span>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.48)", lineHeight: 1.55, wordBreak: "break-all", fontFamily: "system-ui,sans-serif" }}>
+            <span style={{ fontSize: 10, color: "var(--ink1)", lineHeight: 1.55, wordBreak: "break-all", fontFamily: "system-ui,sans-serif" }}>
               {text.length > 140 ? text.slice(0, 140) + "…" : text}
             </span>
           </div>
@@ -55,11 +55,11 @@ export function StepRows({ steps }) {
 export function InlineSteps({ steps, collapsed, onToggle, label }) {
   if (!steps || steps.length === 0) return null;
   return (
-    <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden", marginBottom: 4 }}>
+    <div style={{ border: "1px solid var(--line)", borderRadius: 6, overflow: "hidden", marginBottom: 4 }}>
       <button onClick={onToggle} style={{
         width: "100%", display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
-        background: "rgba(255,255,255,0.025)", border: "none", cursor: "pointer",
-        color: "rgba(255,255,255,0.38)", fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
+        background: "var(--bg1)", border: "none", cursor: "pointer",
+        color: "var(--ink2)", fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
       }}>
         <span style={{ fontSize: 8, transition: "transform .2s", transform: collapsed ? "rotate(-90deg)" : "none", display: "inline-block" }}>▾</span>
         {label ?? `추론 과정 · ${steps.length}단계`}
@@ -71,18 +71,18 @@ export function InlineSteps({ steps, collapsed, onToggle, label }) {
 
 export function ThinkingBlock({ steps }) {
   return (
-    <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden" }}>
+    <div style={{ border: "1px solid var(--line)", borderRadius: 6, overflow: "hidden" }}>
       <div style={{
         display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
-        background: "rgba(255,255,255,0.025)", color: "rgba(255,255,255,0.38)", fontSize: 11,
+        background: "var(--bg1)", color: "var(--ink2)", fontSize: 11,
         fontFamily: "system-ui,sans-serif",
       }}>
         <ThinkingDots />
         <span style={{ marginLeft: 2 }}>추론 중{steps.length > 0 ? ` · ${steps.length}단계` : ""}</span>
       </div>
       {steps.length > 0 && <StepRows steps={steps} />}
-      <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }}>
-        <div style={{ height: "100%", background: "rgba(255,255,255,0.14)", animation: "chatProgressBar 2.4s ease infinite" }} />
+      <div style={{ height: 1, background: "var(--line)" }}>
+        <div style={{ height: "100%", background: "var(--ink3)", animation: "chatProgressBar 2.4s ease infinite" }} />
       </div>
     </div>
   );

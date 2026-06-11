@@ -6,6 +6,89 @@
   box-sizing: border-box;
 }
 
+/* ── 다크 테마 (기본) ── */
+:root {
+  --bg0: #03060a;
+  --bg1: #0c131d;
+  --bg2: #121c2a;
+  --bg3: #172437;
+  --line:  #1a2535;
+  --line2: #3f506a;
+
+  --ink0: #f7faff;
+  --ink1: #d2dbea;
+  --ink2: #9aa8bb;
+  --ink3: #657386;
+
+  --grn: #2ee07a;
+  --yel: #facc15;
+  --red: #ff5566;
+  --org: #ffaa33;
+  --blu: #4ea6ff;
+
+  --card-bg:     #0c131d;
+  --card-border: #1a2535;
+  --panel-bg:    linear-gradient(180deg, #0c131d 0%, #070b11 100%);
+
+  --scrollbar-thumb: rgba(255,255,255,0.10);
+
+  --icon-filter: invert(1);
+
+  /* SVG 서울 지도 배경 */
+  --map-bg: #000000;
+
+  /* 블러 유리 패널 (VoiceAssistant, PendingBriefing 등 backdrop-filter 사용) */
+  --glass-bg:    rgba(6,10,16,0.96);
+  /* 지도 위 오버레이 패널 (KakaoMap 범례, 카운트 라벨 등) */
+  --overlay-bg:  rgba(3,6,10,0.88);
+  /* 로그인 카드 glassmorphism (CivilLoginPage) */
+  --login-card:  rgba(14,11,7,0.75);
+}
+
+/* ── 라이트 테마 ── */
+[data-theme="light"] {
+  --bg0: #faf8f5;      /* 페이지 배경 — 아주 연한 웜 화이트 */
+  --bg1: #ffffff;      /* 카드/패널 — 순백 */
+  --bg2: #f0ece6;      /* 내부 섹션 */
+  --bg3: #e5e0d8;      /* 더 깊은 구분 */
+  --line:  #e5e5e5;    /* 경계선 — 뉴트럴 */
+  --line2: #c8c8c8;    /* 강조 경계선 */
+
+  --ink0: #111111;
+  --ink1: #333333;
+  --ink2: #666666;
+  --ink3: #999999;
+
+  --grn: #1e8a3c;
+  --yel: #d97706;
+  --red: #d12626;
+  --org: #e05c0a;
+  --blu: #1a6fd4;
+
+  --card-bg:     #ffffff;
+  --card-border: #e5e5e5;
+  --panel-bg:    #ffffff;
+  --panel-shadow: 0 1px 4px rgba(0,0,0,0.06);
+
+  --scrollbar-thumb: rgba(0,0,0,0.12);
+
+  --icon-filter: none;
+
+  --map-bg: #000000;
+
+  --glass-bg:   rgba(255,255,255,0.92);
+  --overlay-bg: rgba(250,248,245,0.94);
+  --login-card: rgba(255,255,255,0.88);
+}
+
+/* ── 서울 SVG 지도 라이트 모드 반전 필터 ── */
+/* invert(1): 다크 배경→밝게, 텍스트 색→어둡게 */
+/* hue-rotate(180deg): 인버트로 인한 색상 변이 보정 (파란 선이 파랗게 유지됨) */
+/* brightness(0.88) saturate(0.75): 너무 형광 빛나지 않도록 조절 */
+[data-theme="light"] .seoul-map-root {
+  filter: invert(1) hue-rotate(180deg) brightness(0.88) saturate(0.75);
+}
+
 html, body, #root {
   height: 100%;
   overflow-y: auto;
@@ -13,8 +96,9 @@ html, body, #root {
 
 body {
   font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
-  background: #070c17;
-  color: #e2e8f0;
+  background: var(--bg0);
+  color: var(--ink0);
+  transition: background 0.25s, color 0.25s;
 }
 
 ::-webkit-scrollbar {
@@ -24,6 +108,6 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }

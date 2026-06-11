@@ -40,9 +40,9 @@ export const CIVIL_CATEGORIES = [
 ];
 
 const V = {
-  bg0: "#000", bg1: "#0a0a0a", line: "#1a1a1a",
-  ink0: "#e7ecf5", ink1: "#aab4c8", ink2: "#7a7a7a", ink3: "#3a3a3a",
-  grn: "#2ee07a", red: "#ff5566", org: "#ffaa33", blu: "#4ea6ff",
+  bg0: "var(--bg0)", bg1: "var(--bg1)", line: "var(--line)",
+  ink0: "var(--ink0)", ink1: "var(--ink1)", ink2: "var(--ink2)", ink3: "var(--ink3)",
+  grn: "var(--grn)", red: "var(--red)", org: "var(--org)", blu: "var(--blu)",
   mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
   sans: "'Pretendard','Noto Sans KR',system-ui,sans-serif",
 };
@@ -94,6 +94,23 @@ export default function CivilDashboard({ civilUser, onLogout }) {
     document.head.appendChild(s);
   }, []);
 
+  // ── 지도 필터: 다크 모드에서만 invert 적용, 라이트 모드에서는 원래 색상 ───────
+  const applyMapFilter = () => {
+    if (!mapRef.current) return;
+    const isLight = document.documentElement.dataset.theme === 'light';
+    mapRef.current.style.filter = isLight
+      ? "none"
+      : "invert(90%) hue-rotate(180deg) brightness(0.85) saturate(0.9)";
+  };
+
+  // 테마 전환 시 지도 필터 실시간 업데이트
+  useEffect(() => {
+    if (!mapObj.current) return;
+    const obs = new MutationObserver(applyMapFilter);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, [mapObj.current]);
+
   // ── 지도 초기화 ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!ready || !mapRef.current) return;
@@ -103,7 +120,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
       center: new kakao.maps.LatLng(37.5665, 126.9780),
       level: 7,
     });
-    mapRef.current.style.filter = "invert(90%) hue-rotate(180deg) brightness(0.85) saturate(0.9)";
+    applyMapFilter();
     mapObj.current = map;
     geocRef.current = new kakao.maps.services.Geocoder();
 
@@ -167,17 +184,18 @@ export default function CivilDashboard({ civilUser, onLogout }) {
 
       // 마커 위 이름 라벨 (X 버튼 포함)
       const overlayId = `search-overlay-${Date.now()}`;
+      const _lt = document.documentElement.dataset.theme === 'light';
       const content = `<div id="${overlayId}" style="
         display:flex; align-items:center; gap:6px;
-        background: rgba(0,0,0,0.92); color: #e7ecf5;
+        background: ${_lt ? 'rgba(255,255,255,0.97)' : 'rgba(0,0,0,0.92)'}; color: ${_lt ? '#0f1929' : '#e7ecf5'};
         padding: 5px 10px 5px 12px; border-radius: 6px;
         font-size: 12px; font-weight: 700;
-        border: 1px solid #2a2a2a;
+        border: 1px solid ${_lt ? '#c8d2e0' : '#2a2a2a'};
         white-space: nowrap;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        box-shadow: 0 2px 8px rgba(0,0,0,${_lt ? '0.15' : '0.6'});
       ">
         ${place.place_name}
-        <span onclick="document.getElementById('${overlayId}').parentElement.parentElement.style.display='none'" style="cursor:pointer;color:#7a7a7a;font-size:13px;line-height:1;padding-left:2px;">✕</span>
+        <span onclick="document.getElementById('${overlayId}').parentElement.parentElement.style.display='none'" style="cursor:pointer;color:${_lt ? '#96a4b4' : '#7a7a7a'};font-size:13px;line-height:1;padding-left:2px;">✕</span>
       </div>`;
       const overlay = new window.kakao.maps.CustomOverlay({
         position: latlng,
@@ -350,9 +368,9 @@ export default function CivilDashboard({ civilUser, onLogout }) {
               onChange={e => setSearchQ(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSearch()}
               placeholder="위치 검색"
-              style={{ flex: 1, height: 34, padding: "0 12px", background: "rgba(255,255,255,.05)", border: `1px solid ${V.line}`, borderRadius: 2, color: V.ink0, fontSize: 13, fontFamily: V.sans, outline: "none" }}
+              style={{ flex: 1, height: 34, padding: "0 12px", background: "rgba(128,128,128,.08)", border: `1px solid ${V.line}`, borderRadius: 2, color: V.ink0, fontSize: 13, fontFamily: V.sans, outline: "none" }}
             />
-            <button onClick={handleSearch} style={{ height: 34, padding: "0 16px", background: V.org, border: "none", borderRadius: 2, color: "#000", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>검색</button>
+            <button onClick={handleSearch} style={{ height: 34, padding: "0 16px", background: V.org, border: "none", borderRadius: 2, color: "var(--bg0)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>검색</button>
           </div>
         </div>
       ) : (
@@ -363,11 +381,11 @@ export default function CivilDashboard({ civilUser, onLogout }) {
           <span style={{ fontFamily: V.mono, fontSize: 12, color: V.ink2, whiteSpace: "nowrap" }}>{civilUser.name} 님</span>
           <div style={{ display: "flex", gap: 6, marginLeft: 8, flex: 1, maxWidth: 360 }}>
             <input value={searchQ} onChange={e => setSearchQ(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSearch()} placeholder="위치 검색 (Enter)"
-              style={{ flex: 1, height: 34, padding: "0 12px", background: "rgba(255,255,255,.05)", border: `1px solid ${V.line}`, borderRadius: 2, color: V.ink0, fontSize: 13, fontFamily: V.sans, outline: "none" }} />
-            <button onClick={handleSearch} style={{ height: 34, padding: "0 14px", background: V.org, border: "none", borderRadius: 2, color: "#000", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>검색</button>
+              style={{ flex: 1, height: 34, padding: "0 12px", background: "rgba(128,128,128,.08)", border: `1px solid ${V.line}`, borderRadius: 2, color: V.ink0, fontSize: 13, fontFamily: V.sans, outline: "none" }} />
+            <button onClick={handleSearch} style={{ height: 34, padding: "0 14px", background: V.org, border: "none", borderRadius: 2, color: "var(--bg0)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>검색</button>
           </div>
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            {submitOk && <span style={{ fontFamily: V.mono, fontSize: 11, color: V.grn, padding: "4px 8px", border: "1px solid #1a3a24", background: "#0c1a12", borderRadius: 2 }}>✓ 민원이 접수되었습니다</span>}
+            {submitOk && <span style={{ fontFamily: V.mono, fontSize: 11, color: V.grn, padding: "4px 8px", border: "1px solid rgba(46,224,122,0.3)", background: "rgba(46,224,122,0.08)", borderRadius: 2 }}>✓ 민원이 접수되었습니다</span>}
             <button onClick={onLogout} style={{ height: 32, padding: "0 14px", background: "transparent", border: "1px solid #3a1820", borderRadius: 2, color: V.red, fontSize: 13, cursor: "pointer", fontFamily: V.sans }}>로그아웃</button>
           </div>
         </div>
@@ -386,7 +404,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
 
         {/* 검색 결과 없음 토스트 */}
         {searchNoResult && (
-          <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 20, background: "rgba(8,8,8,0.95)", border: `1px solid ${V.line}`, borderRadius: 6, padding: "8px 16px", fontFamily: V.mono, fontSize: 12, color: V.ink2, whiteSpace: "nowrap", pointerEvents: "none" }}>
+          <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 20, background: "var(--overlay-bg)", border: `1px solid ${V.line}`, borderRadius: 6, padding: "8px 16px", fontFamily: V.mono, fontSize: 12, color: V.ink2, whiteSpace: "nowrap", pointerEvents: "none", backdropFilter: "blur(4px)" }}>
             검색 결과가 없습니다
           </div>
         )}
@@ -394,14 +412,14 @@ export default function CivilDashboard({ civilUser, onLogout }) {
         {/* 현재 위치로 민원 신청 버튼 — 모바일에서 숨김 */}
         {!isMobile && (
           <button onClick={goCurrentLocation} disabled={locating} title="현재 위치에 민원 신청"
-            style={{ position: "absolute", bottom: 24, right: 16, zIndex: 10, height: 54, padding: "0 20px", background: locating ? "#1a1a1a" : V.org, border: "none", borderRadius: 6, color: locating ? V.ink2 : "#000", fontSize: 14, fontWeight: 700, cursor: locating ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,.6)", fontFamily: V.sans, whiteSpace: "nowrap" }}>
+            style={{ position: "absolute", bottom: 24, right: 16, zIndex: 10, height: 54, padding: "0 20px", background: locating ? "var(--bg2)" : V.org, border: "none", borderRadius: 6, color: locating ? V.ink2 : "var(--bg0)", fontSize: 14, fontWeight: 700, cursor: locating ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 16px rgba(0,0,0,.6)", fontFamily: V.sans, whiteSpace: "nowrap" }}>
             {locating ? "위치 확인 중..." : "현재 위치로 신청"}
           </button>
         )}
 
         {/* 범례 — 모바일에서 숨김 */}
         {!isMobile && (
-          <div style={{ position: "absolute", top: 12, left: 12, zIndex: 10, background: "rgba(0,0,0,0.88)", border: `1px solid ${V.line}`, borderRadius: 2, padding: "10px 14px" }}>
+          <div style={{ position: "absolute", top: 12, left: 12, zIndex: 10, background: "var(--bg0)", border: `1px solid ${V.line}`, borderRadius: 2, padding: "10px 14px" }}>
             <div style={{ fontFamily: V.mono, fontSize: 11, color: V.ink0, fontWeight: 700, marginBottom: 4 }}>민원 신청 방법</div>
             <div style={{ fontFamily: V.mono, fontSize: 11, color: V.ink2 }}>① 지도 클릭 → ② 위치 확인 → ③ 내용 입력</div>
           </div>
@@ -412,7 +430,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
           <div style={{
             position: "absolute", bottom: 80, left: "50%", transform: "translateX(-50%)",
             zIndex: 20, width: 340, maxWidth: "calc(100vw - 32px)",
-            background: "#0a0a0a", border: `1px solid ${V.line}`,
+            background: "var(--bg0)", border: `1px solid ${V.line}`,
             borderRadius: 4, overflow: "hidden",
             boxShadow: "0 8px 32px rgba(0,0,0,0.8)",
           }}>
@@ -425,7 +443,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
             </div>
             <div style={{ display: "flex" }}>
               <button onClick={() => { setConfirmOpen(false); setFormOpen(true); }}
-                style={{ flex: 2, height: 44, background: V.org, border: "none", color: "#000", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: V.sans, letterSpacing: ".3px" }}>
+                style={{ flex: 2, height: 44, background: V.org, border: "none", color: "var(--bg0)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: V.sans, letterSpacing: ".3px" }}>
                 민원 신청하기
               </button>
               <button onClick={cancelSelection}
@@ -444,7 +462,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
           <div style={{ position: "relative", width: isMobile ? "100%" : 480, background: V.bg1, borderLeft: `1px solid ${V.line}`, display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", boxShadow: "-8px 0 32px rgba(0,0,0,0.7)" }}>
 
             {/* 패널 헤더 */}
-            <div style={{ padding: "14px 20px", borderBottom: `1px solid ${V.line}`, background: "#080808", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <div style={{ padding: "14px 20px", borderBottom: `1px solid ${V.line}`, background: "var(--bg0)", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: V.ink0 }}>민원 내용 입력</span>
               <div style={{ marginLeft: "auto", fontFamily: V.mono, fontSize: 11, color: V.ink2, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 📍 {selectedLoc?.address}
@@ -476,7 +494,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
 
                 {/* AI 분류 중 - 타이핑 애니메이션 */}
                 {classifying && (
-                  <div style={{ padding: "12px 14px", background: "#0d0d0d", border: `1px solid ${V.line}`, borderRadius: 6, marginTop: 2 }}>
+                  <div style={{ padding: "12px 14px", background: "var(--bg1)", border: `1px solid ${V.line}`, borderRadius: 6, marginTop: 2 }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ink1 }}>이미지 분석 중</span>
                       <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
@@ -496,7 +514,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
 
                 {/* AI 분류 결과 */}
                 {!classifying && department && aiReason && (
-                  <div style={{ padding: "14px", background: "#0d0d0d", border: `1px solid ${V.line}`, borderRadius: 6, marginTop: 2, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ padding: "14px", background: "var(--bg1)", border: `1px solid ${V.line}`, borderRadius: 6, marginTop: 2, display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "flex", gap: 8 }}>
                       <div style={{ flex: 1, padding: "8px 12px", background: V.bg0, border: `1px solid ${V.line}`, borderRadius: 4, display: "flex", flexDirection: "column", gap: 3 }}>
                         <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ink2, letterSpacing: ".4px" }}>분류</span>
@@ -516,7 +534,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
 
                 {/* 수동 선택 시 담당과만 표시 */}
                 {!classifying && !aiReason && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", background: "#0d0d0d", border: `1px solid ${V.line}`, borderRadius: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", background: "var(--bg1)", border: `1px solid ${V.line}`, borderRadius: 4 }}>
                     <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ink2 }}>담당과</span>
                     <span style={{ fontFamily: V.mono, fontSize: 12, color: V.ink0, fontWeight: 700 }}>{DEPT_MAP[form.category] || "민원과"}</span>
                   </div>
@@ -545,9 +563,9 @@ export default function CivilDashboard({ civilUser, onLogout }) {
 
                 {/* 사진이 없을 때 드래그앤드롭 스타일 업로드 영역 */}
                 {photos.length === 0 ? (
-                  <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: "24px 16px", border: `1px dashed ${V.line}`, borderRadius: 6, cursor: "pointer", background: "#0d0d0d", transition: "all .2s" }}
-                    onMouseEnter={e => { e.currentTarget.style.border = "1px dashed #3a3a3a"; e.currentTarget.style.background = "#111"; }}
-                    onMouseLeave={e => { e.currentTarget.style.border = `1px dashed ${V.line}`; e.currentTarget.style.background = "#0d0d0d"; }}>
+                  <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: "24px 16px", border: `1px dashed ${V.line}`, borderRadius: 6, cursor: "pointer", background: "var(--bg1)", transition: "all .2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.border = "1px dashed var(--line2)"; e.currentTarget.style.background = "var(--bg2)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.border = `1px dashed ${V.line}`; e.currentTarget.style.background = "var(--bg1)"; }}>
                     <div style={{ textAlign: "center" }}>
                       <div style={{ fontFamily: V.sans, fontSize: 13, color: V.ink1, fontWeight: 600 }}>사진을 클릭해서 첨부하세요</div>
                       <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ink2, marginTop: 3 }}>첫 번째 사진으로 AI가 민원 유형을 자동 분류합니다</div>
@@ -573,7 +591,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
                           <img src={preview.url} alt="" style={{ width: 88, height: 88, objectFit: "cover", borderRadius: 6, border: `1px solid ${V.line}` }} />
                         )}
                         {preview.isHeic && (
-                          <div style={{ display: "none", width: 88, height: 88, borderRadius: 6, border: `1px solid ${V.line}`, background: "#0d0d0d", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                          <div style={{ display: "none", width: 88, height: 88, borderRadius: 6, border: `1px solid ${V.line}`, background: "var(--bg1)", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
                             <span style={{ fontFamily: V.mono, fontSize: 18, color: V.ink2 }}>⬜</span>
                             <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ink2 }}>HEIC</span>
                           </div>
@@ -599,14 +617,14 @@ export default function CivilDashboard({ civilUser, onLogout }) {
               </div>
 
               {err && (
-                <div style={{ fontFamily: V.mono, fontSize: 12, color: V.red, padding: "8px 12px", background: "#1a0a10", border: "1px solid #3a1820", borderRadius: 2 }}>{err}</div>
+                <div style={{ fontFamily: V.mono, fontSize: 12, color: V.red, padding: "8px 12px", background: "rgba(255,85,102,0.08)", border: "1px solid rgba(255,85,102,0.25)", borderRadius: 2 }}>{err}</div>
               )}
             </div>
 
             {/* 제출 버튼 */}
-            <div style={{ padding: "16px 20px", borderTop: `1px solid ${V.line}`, flexShrink: 0, background: "#060606" }}>
+            <div style={{ padding: "16px 20px", borderTop: `1px solid ${V.line}`, flexShrink: 0, background: "var(--bg0)" }}>
               <button onClick={handleSubmit} disabled={submitting}
-                style={{ width: "100%", height: 48, background: submitting ? V.ink3 : V.org, border: "none", borderRadius: 2, color: "#000", fontSize: 15, fontWeight: 700, cursor: submitting ? "wait" : "pointer", fontFamily: V.sans, letterSpacing: ".3px" }}>
+                style={{ width: "100%", height: 48, background: submitting ? V.ink3 : V.org, border: "none", borderRadius: 2, color: "var(--bg0)", fontSize: 15, fontWeight: 700, cursor: submitting ? "wait" : "pointer", fontFamily: V.sans, letterSpacing: ".3px" }}>
                 {submitting ? "접수 중..." : "민원 접수하기"}
               </button>
             </div>

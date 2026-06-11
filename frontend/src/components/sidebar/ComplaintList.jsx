@@ -1,17 +1,11 @@
+import { V } from "../../constants/theme";
+
 const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 const STATUS_META = {
-  "접수":   { color: "#ffaa33", bg: "#1a1206", bd: "#3a2a14", next: "처리중" },
-  "처리중": { color: "#4ea6ff", bg: "#0a1020", bd: "#1a2a40", next: "완료"  },
-  "완료":   { color: "#2ee07a", bg: "#0c1a12", bd: "#1a3a24", next: null    },
-};
-
-const V = {
-  bg0: "#000", bg1: "#1a1710", line: "#2a2418",
-  ink0: "#e7ecf5", ink1: "#aab4c8", ink2: "#7a7a7a", ink3: "#3a3a3a",
-  org: "#ffaa33", blu: "#4ea6ff", grn: "#2ee07a", red: "#ff5566",
-  mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
-  sans: "'Pretendard','Noto Sans KR',system-ui,sans-serif",
+  "접수":   { color: V.org, bg: "rgba(194,81,12,0.12)", bd: "rgba(194,81,12,0.35)", next: "처리중" },
+  "처리중": { color: V.blu, bg: "rgba(26,95,200,0.12)", bd: "rgba(26,95,200,0.35)", next: "완료"  },
+  "완료":   { color: V.grn, bg: "rgba(13,148,72,0.12)", bd: "rgba(13,148,72,0.35)", next: null    },
 };
 
 async function patchStatus(id, status) {
@@ -42,7 +36,6 @@ export default function ComplaintList({ complaints, onSelect, selected, onStatus
   return (
     <div style={{ background: V.bg1, border: `1px solid ${V.line}`, borderRadius: 2, padding: "14px 16px", fontFamily: V.sans }}>
 
-      {/* 헤더 */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 14, fontWeight: 700, color: V.ink0 }}>민원 현황</span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
@@ -54,7 +47,6 @@ export default function ComplaintList({ complaints, onSelect, selected, onStatus
         </div>
       </div>
 
-      {/* 목록 */}
       {complaints.filter(c => c.status !== "완료").length === 0 ? (
         <div style={{ fontSize: 13, color: V.ink3, textAlign: "center", padding: "10px 0" }}>접수된 민원 없음</div>
       ) : (
@@ -72,13 +64,11 @@ export default function ComplaintList({ complaints, onSelect, selected, onStatus
                 border: `1px solid ${isSel ? meta.bd : V.line}`,
                 cursor: "pointer",
               }}
-              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "#1f1c14"; }}
+              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "var(--bg2)"; }}
               onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
             >
-              {/* 상태 점 */}
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: meta.color, flexShrink: 0, marginTop: 4 }} />
 
-              {/* 내용 */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
                   <span style={{ fontSize: 11, fontFamily: V.mono, color: meta.color, fontWeight: 700 }}>{c.status}</span>
@@ -94,19 +84,18 @@ export default function ComplaintList({ complaints, onSelect, selected, onStatus
                 <div style={{ fontSize: 10, color: V.ink3, fontFamily: V.mono, marginTop: 2 }}>{c.userName} · {fmt(c.createdAt)}</div>
               </div>
 
-              {/* 상태 전환 버튼 */}
               {meta.next && (
                 <button
                   onClick={e => handleNext(e, c)}
                   title={`${meta.next}으로 변경`}
                   style={{
                     flexShrink: 0, padding: "3px 8px", background: "transparent",
-                    border: `1px solid ${V.ink3}`, borderRadius: 2,
+                    border: `1px solid ${V.line2}`, borderRadius: 2,
                     color: V.ink2, fontSize: 10, fontFamily: V.mono,
                     cursor: "pointer", whiteSpace: "nowrap", alignSelf: "center",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = meta.color; e.currentTarget.style.color = meta.color; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = V.ink3; e.currentTarget.style.color = V.ink2; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = V.line2; e.currentTarget.style.color = V.ink2; }}
                 >
                   → {meta.next}
                 </button>

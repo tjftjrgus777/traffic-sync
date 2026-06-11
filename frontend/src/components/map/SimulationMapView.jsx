@@ -436,31 +436,31 @@ export default function SimulationMapView({
   // ─── JSX ──────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative", background: "#0a0f1e" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative", background: "var(--bg0)" }}>
       <div id="vworld-simulation-map" ref={containerRef} style={{ width: "100%", height: "100%" }} />
 
       {status && (
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#93c5fd", background: "rgba(10,15,30,0.85)", zIndex: 5, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--blu)", background: "var(--bg0)", zIndex: 5, pointerEvents: "none" }}>
           {status}
         </div>
       )}
 
-      <div style={{ position: "absolute", top: 14, left: 14, zIndex: 10, padding: "10px 14px", borderRadius: 6, background: "rgba(18,16,10,0.88)", border: "1px solid rgba(255,255,255,0.12)", color: "#dbeafe", fontSize: 12 }}>
-        <div style={{ fontWeight: 800, color: "#60a5fa", marginBottom: 4 }}>VWorld WebGL 3D 신호 시뮬레이션</div>
+      <div style={{ position: "absolute", top: 14, left: 14, zIndex: 10, padding: "10px 14px", borderRadius: 6, background: "var(--overlay-bg)", border: "1px solid var(--line)", color: "var(--ink1)", fontSize: 12, backdropFilter: "blur(4px)" }}>
+        <div style={{ fontWeight: 800, color: "var(--blu)", marginBottom: 4 }}>VWorld WebGL 3D 신호 시뮬레이션</div>
         <div>1. 출발지 마커 클릭 → 2. 목적지 마커 클릭</div>
       </div>
 
       <div style={{ position: "absolute", right: 16, bottom: 14, zIndex: 12, display: "flex", gap: 8 }}>
         <button
           onClick={() => setDriveView(false)}
-          style={{ border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "9px 14px", cursor: "pointer", color: "#fff", fontWeight: 800, background: !driveView ? "#3b82f6" : "rgba(15,23,42,0.82)", boxShadow: "0 8px 20px rgba(0,0,0,0.28)" }}
+          style={{ border: "1px solid var(--line2)", borderRadius: 999, padding: "9px 14px", cursor: "pointer", color: "var(--ink0)", fontWeight: 800, background: !driveView ? "var(--blu)" : "var(--bg1)", boxShadow: "0 8px 20px rgba(0,0,0,0.28)" }}
         >
           3D 시뮬레이션
         </button>
         <button
           onClick={() => setDriveView(true)}
           disabled={!routePoints.length}
-          style={{ border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "9px 14px", cursor: routePoints.length ? "pointer" : "not-allowed", color: "#fff", fontWeight: 800, opacity: routePoints.length ? 1 : 0.45, background: driveView ? "#22c55e" : "rgba(15,23,42,0.82)", boxShadow: "0 8px 20px rgba(0,0,0,0.28)" }}
+          style={{ border: "1px solid var(--line2)", borderRadius: 999, padding: "9px 14px", cursor: routePoints.length ? "pointer" : "not-allowed", color: "var(--ink0)", fontWeight: 800, opacity: routePoints.length ? 1 : 0.45, background: driveView ? "#22c55e" : "var(--bg1)", boxShadow: "0 8px 20px rgba(0,0,0,0.28)" }}
         >
           주행뷰
         </button>
@@ -468,7 +468,7 @@ export default function SimulationMapView({
           <button
             onClick={restartRouteAnimation}
             disabled={!routePoints.length}
-            style={{ border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "9px 14px", cursor: routePoints.length ? "pointer" : "not-allowed", color: "#fff", fontWeight: 800, opacity: routePoints.length ? 1 : 0.45, background: simulationCompleted ? "#f59e0b" : "rgba(15,23,42,0.82)", boxShadow: "0 8px 20px rgba(0,0,0,0.28)" }}
+            style={{ border: "1px solid var(--line2)", borderRadius: 999, padding: "9px 14px", cursor: routePoints.length ? "pointer" : "not-allowed", color: "var(--ink0)", fontWeight: 800, opacity: routePoints.length ? 1 : 0.45, background: simulationCompleted ? "#f59e0b" : "var(--bg1)", boxShadow: "0 8px 20px rgba(0,0,0,0.28)" }}
           >
             다시 실행
           </button>

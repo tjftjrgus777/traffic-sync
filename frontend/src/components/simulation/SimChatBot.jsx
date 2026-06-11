@@ -129,19 +129,19 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
       {isOpen && (
         <div style={{
           width: 340, maxHeight: "calc(100vh - 310px)", minHeight: 360,
-          background: "rgba(18,16,10,0.94)", border: "1px solid rgba(42,36,24,0.8)",
+          background: "var(--bg0)", border: "1px solid var(--line)",
           borderRadius: 8, padding: "16px 18px", backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)", display: "flex", flexDirection: "column",
           gap: 10, boxShadow: "0 14px 38px rgba(0,0,0,0.45)", overflow: "hidden",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 16, fontWeight: 700, color: "#4ea6ff" }}>AI 신호 분석</span>
-            {intNm && <span style={{ marginLeft: "auto", fontSize: 11, color: "#64748b", fontFamily: "monospace" }}>● {intNm}</span>}
+            <span style={{ fontSize: 16, fontWeight: 700, color: "var(--blu)" }}>AI 신호 분석</span>
+            {intNm && <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ink3)", fontFamily: "monospace" }}>● {intNm}</span>}
           </div>
 
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
             {SIM_PRESETS.map(({ label, q }) => (
-              <button key={label} onClick={() => send(q)} disabled={loading} style={{ ...btnBase, padding: "5px 12px", fontSize: 12, border: "1px solid #2a3a5a", background: loading ? "transparent" : "rgba(78,166,255,0.1)", color: loading ? "#3a3a3a" : "#4ea6ff" }}>
+              <button key={label} onClick={() => send(q)} disabled={loading} style={{ ...btnBase, padding: "5px 12px", fontSize: 12, border: "1px solid var(--line2)", background: loading ? "transparent" : "rgba(78,166,255,0.1)", color: loading ? "var(--ink3)" : "var(--blu)" }}>
                 {label}
               </button>
             ))}
@@ -150,8 +150,8 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
           <div style={{ flex: 1, minHeight: 150, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
             {messages.map((m, i) => (
               <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: m.role === "user" ? "flex-end" : "flex-start", gap: 4 }}>
-                <div style={{ maxWidth: "92%", padding: "9px 13px", borderRadius: 2, background: m.role === "user" ? "rgba(78,166,255,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${m.role === "user" ? "#2a3a5a" : "#1a1a1a"}`, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-line", color: "#e7ecf5" }}>
-                  {m.role === "ai" && <div style={{ fontSize: 11, color: "#4ea6ff", marginBottom: 3 }}>Qwen3 분석</div>}
+                <div style={{ maxWidth: "92%", padding: "9px 13px", borderRadius: 2, background: m.role === "user" ? "rgba(78,166,255,0.15)" : "var(--bg1)", border: `1px solid ${m.role === "user" ? "var(--line2)" : "var(--line)"}`, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-line", color: "var(--ink0)" }}>
+                  {m.role === "ai" && <div style={{ fontSize: 11, color: "var(--blu)", marginBottom: 3 }}>Qwen3 분석</div>}
                   {m.role === "ai" ? renderBold(formatSimAnswer(m.text)) : m.text}
                 </div>
                 {/* 이메일 버튼 — AI 메시지이고 초기 안내 메시지가 아닐 때만 */}
@@ -196,9 +196,9 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
                       style={{
                         ...btnBase,
                         padding: "3px 10px", fontSize: 11,
-                        border: "1px solid #2a3a5a",
+                        border: "1px solid var(--line2)",
                         background: emailState[i] === "sending" ? "transparent" : "rgba(78,166,255,0.08)",
-                        color: emailState[i] === "sending" ? "#3a3a3a" : "#4ea6ff",
+                        color: emailState[i] === "sending" ? "var(--ink3)" : "var(--blu)",
                         cursor: (emailState[i] === "sending" || loading) ? "default" : "pointer",
                       }}
                     >
@@ -209,7 +209,7 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
               </div>
             ))}
             {loading && (
-              <div style={{ padding: "9px 13px", borderRadius: 2, background: "rgba(255,255,255,0.04)", border: "1px solid #1a1a1a", fontSize: 12, color: "#4ea6ff" }}>
+              <div style={{ padding: "9px 13px", borderRadius: 2, background: "var(--bg1)", border: "1px solid var(--line)", fontSize: 12, color: "var(--blu)" }}>
                 신호계획 분석 중...
               </div>
             )}
@@ -222,9 +222,9 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
               onKeyDown={e => e.key === "Enter" && !loading && send()}
               placeholder={intNo ? "신호 최적화, 현시 구성 등 질문..." : "교차로를 먼저 선택하세요"}
               disabled={loading}
-              style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid #1a1a1a", borderRadius: 2, padding: "9px 13px", color: "#e7ecf5", fontSize: 13, outline: "none", fontFamily: "inherit", opacity: loading ? 0.6 : 1 }}
+              style={{ flex: 1, background: "var(--bg1)", border: "1px solid var(--line)", borderRadius: 2, padding: "9px 13px", color: "var(--ink0)", fontSize: 13, outline: "none", fontFamily: "inherit", opacity: loading ? 0.6 : 1 }}
             />
-            <button onClick={() => send()} disabled={loading} style={{ ...btnBase, padding: "9px 18px", background: loading ? "#1a1a1a" : "#4ea6ff", color: loading ? "#3a3a3a" : "#000", fontSize: 14, fontWeight: 700 }}>
+            <button onClick={() => send()} disabled={loading} style={{ ...btnBase, padding: "9px 18px", background: loading ? "var(--bg2)" : "var(--blu)", color: loading ? "var(--ink3)" : "var(--bg0)", fontSize: 14, fontWeight: 700 }}>
               전송
             </button>
           </div>

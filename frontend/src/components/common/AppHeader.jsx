@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
-
-const V = {
-  bg0: "#000", line: "#1a1a1a", ink0: "#e7ecf5", ink1: "#aab4c8", ink2: "#7a7a7a", ink3: "#3a3a3a",
-  grn: "#2ee07a", org: "#ffaa33", blu: "#4ea6ff", red: "#ff5566",
-  mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
-  sans: "'Pretendard','Noto Sans KR','Malgun Gothic',system-ui,sans-serif",
-};
+import { useTheme } from "../../contexts/ThemeContext";
+import { V } from "../../constants/theme";
 
 function useIsMobile(breakpoint = 768) {
   const [mobile, setMobile] = useState(() => window.innerWidth < breakpoint);
@@ -39,13 +34,13 @@ export default function AppHeader({
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { light, toggleTheme } = useTheme();
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // 모바일에서 메뉴 열릴 때 바깥 클릭 닫기
   useEffect(() => {
     if (!menuOpen) return;
     const close = (e) => {
@@ -74,29 +69,33 @@ export default function AppHeader({
     if (tab === "complaints") return onGoComplaints?.();
   };
 
+  const themeBtnStyle = {
+    width: 40, height: 40, display: "grid", placeItems: "center",
+    background: light ? "rgba(26,95,200,0.10)" : "transparent",
+    border: `1px solid ${light ? "var(--blu)" : "var(--line2)"}`,
+    borderRadius: 999, cursor: "pointer", flexShrink: 0,
+    fontSize: 18, transition: "all 0.2s",
+  };
+
   // ── 모바일 헤더 ──────────────────────────────────────────────────
   if (isMobile) {
     const activeLabel = tabs.find(([, t]) => t === activePage)?.[0] ?? "메뉴";
     return (
       <div style={{ background: V.bg0, borderBottom: `1px solid ${V.line}`, padding: "0 12px", height: 52, display: "flex", alignItems: "center", gap: 10, position: "sticky", top: 0, zIndex: 100, fontFamily: V.sans, flexShrink: 0 }}>
 
-        {/* 로고 */}
         <button onClick={onGoMain} style={{ display: "flex", alignItems: "center", gap: 7, background: "transparent", border: 0, padding: 0, cursor: "pointer", flexShrink: 0 }}>
-          <div style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", background: "#0a0a0a", border: `1px solid ${V.line}`, flexShrink: 0 }}>
+          <div style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", background: V.bg1, border: `1px solid ${V.line}`, flexShrink: 0 }}>
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: V.grn, display: "block" }} />
           </div>
           <span style={{ fontWeight: 700, fontSize: 13, color: V.ink0, whiteSpace: "nowrap" }}>Syncro</span>
         </button>
 
-        {/* 현재 페이지명 */}
         <span style={{ fontSize: 11, color: V.ink2, flexShrink: 0 }}>/ {activeLabel}</span>
 
-        {/* 선택된 구 */}
         {selectedGu && (
           <span style={{ fontSize: 11, color: V.org, flexShrink: 0 }}>· {selectedGu.name}</span>
         )}
 
-        {/* LIVE 상태 */}
         {statusText && (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: V.ink1, flexShrink: 0 }}>
             <span style={{ width: 5, height: 5, borderRadius: "50%", background: statusLive ? V.grn : V.ink3, display: "inline-block" }} />
@@ -104,20 +103,21 @@ export default function AppHeader({
           </span>
         )}
 
-        {/* rightExtra (음소거 버튼 등) */}
+        <button onClick={toggleTheme} style={{ ...themeBtnStyle, width: 32, height: 32, fontSize: 15 }}>
+          {light ? "🌙" : "☀️"}
+        </button>
+
         {rightExtra && <div style={{ flexShrink: 0 }}>{rightExtra}</div>}
 
-        {/* 로그아웃 버튼 */}
         {onLogout && (
           <button
             onClick={() => { localStorage.removeItem("ts_user"); onLogout(); }}
-            style={{ background: "transparent", border: "1px solid #3a1820", borderRadius: 999, padding: "5px 10px", color: V.red, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+            style={{ background: "transparent", border: `1px solid var(--red)`, borderRadius: 999, padding: "5px 10px", color: V.red, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, opacity: 0.7 }}
           >
             로그아웃
           </button>
         )}
 
-        {/* 햄버거 메뉴 버튼 */}
         <button
           data-mobile-menu
           onClick={() => setMenuOpen(o => !o)}
@@ -128,11 +128,10 @@ export default function AppHeader({
           ))}
         </button>
 
-        {/* 드롭다운 메뉴 */}
         {menuOpen && (
           <div
             data-mobile-menu
-            style={{ position: "fixed", top: 52, right: 0, left: 0, background: "#0d0d0d", borderBottom: `1px solid ${V.line}`, zIndex: 200, padding: "8px 0" }}
+            style={{ position: "fixed", top: 52, right: 0, left: 0, background: V.bg1, borderBottom: `1px solid ${V.line}`, zIndex: 200, padding: "8px 0" }}
           >
             {tabs.map(([label, tab]) => {
               const isActive = tab === activePage;
@@ -141,7 +140,7 @@ export default function AppHeader({
                 <button
                   key={tab}
                   onClick={() => go(tab)}
-                  style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "13px 20px", background: isActive ? "#111" : "transparent", border: 0, color: isActive ? V.blu : "#fff", fontSize: 15, fontWeight: isActive ? 700 : 400, cursor: "pointer", textAlign: "left", fontFamily: V.sans, position: "relative" }}
+                  style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "13px 20px", background: isActive ? V.bg2 : "transparent", border: 0, color: isActive ? V.blu : V.ink0, fontSize: 15, fontWeight: isActive ? 700 : 400, cursor: "pointer", textAlign: "left", fontFamily: V.sans, position: "relative" }}
                 >
                   <span style={{ width: 7, height: 7, borderRadius: "50%", background: isActive ? V.blu : isCivil ? V.org : V.ink3, display: "inline-block", flexShrink: 0 }} />
                   {label}
@@ -167,7 +166,7 @@ export default function AppHeader({
     );
   }
 
-  // ── 데스크톱 헤더 (기존 그대로) ──────────────────────────────────
+  // ── 데스크톱 헤더 ──────────────────────────────────────────────
   return (
     <div style={{ background: V.bg0, borderBottom: `1px solid ${V.line}`, padding: "0 20px", height: 92, display: "flex", alignItems: "center", gap: 10, flexShrink: 0, position: "sticky", top: 0, zIndex: 100, fontFamily: V.sans, overflowX: "clip", overflowY: "visible", whiteSpace: "nowrap" }}>
       <button onClick={onGoMain} style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 210, flexShrink: 0, background: "transparent", border: 0, padding: 0, cursor: "pointer", textAlign: "left", fontFamily: V.sans }}>
@@ -175,7 +174,6 @@ export default function AppHeader({
           <div style={{ fontWeight: 800, fontSize: 20, color: V.ink0 }}>Syncro 교통 관제 시스템</div>
         </div>
       </button>
-
 
       <div style={{ display: "flex", gap: 2, background: V.bg0, border: `1px solid ${V.line}`, borderRadius: 999, padding: 3, flexShrink: 0 }}>
         {tabs.map(([label, tab]) => {
@@ -185,7 +183,7 @@ export default function AppHeader({
           return (
             <div key={tab} style={{ position: "relative" }}>
               <button onClick={() => go(tab)}
-                style={{ appearance: "none", border: 0, background: isActive ? "#141414" : "transparent", color: isActive ? V.blu : "#fff", padding: "8px 12px", borderRadius: 999, fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: isActive ? "inset 0 0 0 1px #2a2a2a" : "none", fontFamily: V.sans, position: "relative", whiteSpace: "nowrap", flexShrink: 0, lineHeight: 1.15 }}>
+                style={{ appearance: "none", border: isActive ? `1px solid ${V.line}` : "1px solid transparent", background: isActive ? V.bg2 : "transparent", color: isActive ? V.blu : V.ink0, padding: "8px 12px", borderRadius: 999, fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, fontFamily: V.sans, position: "relative", whiteSpace: "nowrap", flexShrink: 0, lineHeight: 1.15 }}>
                 <span style={{ width: 7, height: 7, borderRadius: "50%", background: isCivil && notifQueue.length > 0 ? V.org : dotColor, display: "inline-block" }} />
                 {label}
                 {isCivil && notifQueue.length > 0 && (
@@ -200,118 +198,60 @@ export default function AppHeader({
       </div>
 
       {rightExtra && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: 4,
-            marginTop: 5,
-            padding: "3px 5px",
-            border: `1px solid ${V.line}`,
-            borderRadius: 999,
-            background: "rgba(255,255,255,0.025)",
-            flexShrink: 0,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, marginTop: 5, padding: "3px 5px", border: `1px solid ${V.line}`, borderRadius: 999, background: "rgba(255,255,255,0.025)", flexShrink: 0 }}>
           {rightExtra}
         </div>
       )}
 
       {selectedGu && (
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 9px", borderRadius: 2, background: "#1a1206", border: "1px solid #3a2a14", color: V.org, fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 9px", borderRadius: 2, background: "var(--bg2)", border: `1px solid var(--line)`, color: V.org, fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: V.org, display: "inline-block" }} />
           {selectedGu.name} 선택됨
         </div>
       )}
+
       {fetchMsg && (
-        <div
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 10px", borderRadius: 2, background: "#0c1a12",
-            border: "1px solid #1a3a24", color: V.grn, fontSize: 11, fontWeight: 600, fontFamily: V.mono, whiteSpace: "nowrap", flexShrink: 0,
-          }}
-        >
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 10px", borderRadius: 2, background: V.bg2, border: `1px solid ${V.line}`, color: V.grn, fontSize: 11, fontWeight: 600, fontFamily: V.mono, whiteSpace: "nowrap", flexShrink: 0 }}>
           ✓ {fetchMsg}
         </div>
       )}
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flexShrink: 0, whiteSpace: "nowrap" }}>
         {statusText && (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px", border: `1px solid ${V.line}`, background: V.bg0, borderRadius: 2, fontFamily: V.mono, fontSize: 12, color: V.ink1, whiteSpace: "nowrap",  flexShrink: 0 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px", border: `1px solid ${V.line}`, background: V.bg0, borderRadius: 2, fontFamily: V.mono, fontSize: 12, color: V.ink1, whiteSpace: "nowrap", flexShrink: 0 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusLive ? V.grn : V.ink3, display: "inline-block" }} />
             {statusText}
           </span>
         )}
 
-        
-
-        
-
-       
-
-        {/* <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ink0, letterSpacing: ".3px" }}>
-          <span style={{ color: V.ink2, marginRight: 6 }}>{time.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short" })}</span>
-          {time.toLocaleTimeString("ko-KR")}
-        </span> */}
-        
-        
-        <div
-          style={{
-            display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", fontFamily: V.mono, gap: 4,
-             color: V.ink0, letterSpacing: ".2px", whiteSpace: "nowrap", flexShrink: 0, 
-          }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", fontFamily: V.mono, gap: 4, color: V.ink0, letterSpacing: ".2px", whiteSpace: "nowrap", flexShrink: 0 }}>
           <span style={{ color: V.ink2, fontSize: 11, lineHeight: 1.15 }}>
-            {time.toLocaleDateString("ko-KR", {
-              year: "numeric", month: "long", day: "numeric", weekday: "short", 
-            })}
+            {time.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short" })}
           </span>
           <span style={{ color: V.ink0, fontSize: 12, fontWeight: 600 }}>
             {time.toLocaleTimeString("ko-KR")}
           </span>
-         
         </div>
 
+        <button onClick={toggleTheme} title={light ? "다크 모드" : "라이트 모드"} style={themeBtnStyle}>
+          {light ? "🌙" : "☀️"}
+        </button>
 
-         {onGoMyPage && (
-          <button
-            onClick={onGoMyPage}
-            title="마이페이지"
-            aria-label="마이페이지"
-            style={{
-              width: 40, height: 40, display: "grid", placeItems: "center", background: "transparent",
-              border: `1px solid #a59c9e`, borderRadius: 999, cursor: "pointer", flexShrink: 0,
-            }}
+        {onGoMyPage && (
+          <button onClick={onGoMyPage} title="마이페이지" aria-label="마이페이지"
+            style={{ width: 40, height: 40, display: "grid", placeItems: "center", background: "transparent", border: `1px solid ${V.line2}`, borderRadius: 999, cursor: "pointer", flexShrink: 0 }}
           >
-            <img src="/icons/user.png" alt=""
-              style={{
-                width: 20, height: 20, objectFit: "contain", filter: "invert(1)", opacity: 0.95,
-              }}
-            />
+            <img src="/icons/user.png" alt="" style={{ width: 20, height: 20, objectFit: "contain", filter: "var(--icon-filter)", opacity: 0.85 }} />
           </button>
         )}
 
         {onLogout && (
-          <button
-            onClick={() => {
-              localStorage.removeItem("ts_user");
-              onLogout();
-            }}
-            title="로그아웃"
-            aria-label="로그아웃"
-            style={{
-              width: 40, height: 40, display: "grid", placeItems: "center", background: "transparent",
-              border: "1px solid #a59c9e", borderRadius: 999, cursor: "pointer", flexShrink: 0,
-            }}
+          <button onClick={() => { localStorage.removeItem("ts_user"); onLogout(); }} title="로그아웃" aria-label="로그아웃"
+            style={{ width: 40, height: 40, display: "grid", placeItems: "center", background: "transparent", border: `1px solid ${V.line2}`, borderRadius: 999, cursor: "pointer", flexShrink: 0 }}
           >
-            <img src="/icons/logout.png" alt=""
-              style={{
-                width: 20, height: 20, objectFit: "contain", filter: "invert(1)", opacity: 0.95,
-              }}
-            />
+            <img src="/icons/logout.png" alt="" style={{ width: 20, height: 20, objectFit: "contain", filter: "var(--icon-filter)", opacity: 0.85 }} />
           </button>
         )}
-        
       </div>
     </div>
   );

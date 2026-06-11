@@ -67,7 +67,7 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
         {hiddenCt > 0 && (
           <div style={{
             fontSize:   11,
-            color:      '#5a5a5a',
+            color:      'var(--ink3)',
             padding:    '2px 6px',
             fontFamily: "'IBM Plex Mono',monospace",
           }}>
@@ -89,8 +89,8 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                 alignItems:   'flex-start',
                 gap:          12,
                 padding:      '12px 14px',
-                background:   'linear-gradient(135deg, #12100a 0%, #0f0d08 100%)',
-                border:       '1px solid #3a3020',
+                background:   'var(--bg0)',
+                border:       '1px solid var(--line)',
                 borderLeft:   '4px solid #ffaa33',
                 borderRadius: 8,
                 boxShadow:    '0 8px 32px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,170,51,0.08)',
@@ -121,7 +121,7 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                   </div>
                   <div style={{
                     fontSize:     15,
-                    color:        '#e7ecf5',
+                    color:        'var(--ink0)',
                     fontWeight:   700,
                     overflow:     'hidden',
                     textOverflow: 'ellipsis',
@@ -132,7 +132,7 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                   {c.title && (
                     <div style={{
                       fontSize:     12,
-                      color:        '#8a96a8',
+                      color:        'var(--ink2)',
                       marginTop:    4,
                       overflow:     'hidden',
                       textOverflow: 'ellipsis',
@@ -149,8 +149,8 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                     height:         26,
                     borderRadius:   '50%',
                     background:     'transparent',
-                    border:         '1px solid #3a3a3a',
-                    color:          '#7a7a7a',
+                    border:         '1px solid var(--line2)',
+                    color:          'var(--ink3)',
                     cursor:         'pointer',
                     display:        'flex',
                     alignItems:     'center',
@@ -165,8 +165,8 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                     e.currentTarget.style.background = 'rgba(255,170,51,0.08)'
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = '#3a3a3a'
-                    e.currentTarget.style.color = '#7a7a7a'
+                    e.currentTarget.style.borderColor = 'var(--line2)'
+                    e.currentTarget.style.color = 'var(--ink3)'
                     e.currentTarget.style.background = 'transparent'
                   }}
                 >✕</button>
