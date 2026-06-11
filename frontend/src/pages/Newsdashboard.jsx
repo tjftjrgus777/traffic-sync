@@ -130,6 +130,7 @@ function NewsCard({ item }) {
   );
 }
 
+
 export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulation, onGoComplaints, onGoMyPage, onLogout, selectedGu, notifQueue = [], onDismissNotif }) {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
