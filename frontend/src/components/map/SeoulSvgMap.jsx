@@ -37,7 +37,7 @@ export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading }
   })).filter(gu => gu.coord);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", userSelect: "none" }}>
+    <div className="seoul-map-root" style={{ position: "relative", width: "100%", height: "100%", userSelect: "none" }}>
       {loading && (
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <div style={{ width: 16, height: 16, border: "2px solid #333", borderTop: "2px solid #4ea6ff", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
@@ -66,8 +66,8 @@ export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading }
           </filter>
         </defs>
 
-        {/* 배경 */}
-        <rect width="460" height="320" fill="#000"/>
+        {/* 배경 — 다크: #000, 라이트: 어두운 네이비 */}
+        <rect width="460" height="320" style={{ fill: "var(--map-bg)" }}/>
 
         {/* 서울 전체 면 채우기 */}
         <polygon
