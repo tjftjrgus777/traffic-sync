@@ -57,6 +57,240 @@ sim_llm = ChatOllama(
     num_ctx=16384,
 )
 
+# ── 멀티에이전트 워커 LLM (exaone3.5:2.4b × 4, 포트별 독립 인스턴스) ────────────────
+WORKER_MODEL  = "exaone3.5:2.4b"
+WORKER_PORTS  = [11435, 11436, 11437, 11438]
+SPRING_BASE   = "http://localhost:8080"
+
+worker_llms = [
+    ChatOllama(
+        model=WORKER_MODEL,
+        base_url=f"http://localhost:{port}",
+        temperature=0.1,   # 낮출수록 일관성↑, 할루시네이션↓
+        num_predict=6000,  # think 토큰 충분히 확보 (느리지만 정확)
+        num_ctx=8192,
+    )
+    for port in WORKER_PORTS
+]
+
+# 방위각 계산
+def _calc_bearing(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    import math
+    dlon = math.radians(lon2 - lon1)
+    r1, r2 = math.radians(lat1), math.radians(lat2)
+    x = math.sin(dlon) * math.cos(r2)
+    y = math.cos(r1) * math.sin(r2) - math.sin(r1) * math.cos(r2) * math.cos(dlon)
+    return (math.degrees(math.atan2(x, y)) + 360) % 360
+
+def _bearing_dir(b: float) -> str:
+    # 8방향 (45° 단위)
+    if b < 22.5 or b >= 337.5: return 'N'
+    if b < 67.5:  return 'NE'
+    if b < 112.5: return 'E'
+    if b < 157.5: return 'SE'
+    if b < 202.5: return 'S'
+    if b < 247.5: return 'SW'
+    if b < 292.5: return 'W'
+    return 'NW'
+
+def _haversine_km(lat1, lon1, lat2, lon2) -> float:
+    import math
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+DIR_KO = {'N': '북', 'S': '남', 'E': '동', 'W': '서',
+          'NE': '북동', 'NW': '북서', 'SE': '남동', 'SW': '남서'}
+
+def calc_signal_delta(spd_f: float) -> tuple[str, int]:
+    """속도 → (상태명, 권고 초 변화량) — 범위 아닌 중간 고정값으로 LLM 계산 제거"""
+    if spd_f < 10:
+        return "심한정체", +18   # 15~20 중간
+    elif spd_f < 20:
+        return "서행",   +10   # 8~12 중간
+    elif spd_f < 30:
+        return "약한정체", +4    # 3~5 중간
+    else:
+        return "원활",   -5
+
+async def _classify_multi_analyze(question: str) -> tuple[bool, str | None]:
+    """LLM으로 멀티에이전트 분석 의도 판단 + 장소명 추출
+    Returns: (is_multi, location_name_or_None)
+    응답 형식: "예:선릉역" / "예:없음" / "아니오"
+    """
+    r = await llm.ainvoke([{
+        "role": "user",
+        "content": (
+            '/no_think 이 질문에 "주변/근처/인근 + 분석" 의도가 포함되어 있는지 판단해.\n'
+            '"예:장소명" 또는 "예:없음" 또는 "아니오" 중 하나만 답해.\n'
+            '장소명이 있으면 반드시 추출할 것. 뒤에 다른 작업(신호 최적화 등)이 붙어도 무시하고 근처 분석 의도만 판단.\n'
+            '"선릉역 주변 분석해줘" → "예:선릉역"\n'
+            '"개나리아파트 근처 분석해서 신호 최적화 해줘" → "예:개나리아파트"\n'
+            '"강남역 인근 교차로 봐줘" → "예:강남역"\n'
+            '"근처 교차로 분석해줘" → "예:없음"\n'
+            '"주변 교차로 어때" → "예:없음"\n'
+            '"잠실역 신호 어때" → "아니오"\n'
+            '"병목 TOP3 알려줘" → "아니오"\n'
+            '"이 교차로 분석해줘" → "아니오"\n'
+            '"강남구 교통 상황은" → "아니오"\n'
+            f'질문: {question}'
+        )
+    }])
+    text = r.content.strip().split('\n')[0].strip()  # 첫 줄만 사용
+    if text.startswith("예"):
+        parts = text.split(":", 1)
+        location = parts[1].strip() if len(parts) > 1 else ""
+        location = None if not location or location == "없음" else location
+        return True, location
+    return False, None
+
+
+def select_directional(center_lat, center_lon, crossroads):
+    """방향별(N/S/E/W) 가장 가까운 교차로 최대 4개 선택, 중심 교차로 제외"""
+    best: dict[str, tuple] = {}
+    for cr in crossroads:
+        b = _calc_bearing(center_lat, center_lon, cr['lat'], cr['lon'])
+        d = _bearing_dir(b)
+        dist = _haversine_km(center_lat, center_lon, cr['lat'], cr['lon'])
+        if dist < 0.05:          # 50m 이내 = 중심 교차로 자신
+            continue
+        if d not in best or dist < best[d][1]:
+            best[d] = (cr, dist)
+    order = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+    return [(cr, d) for d in order if d in best for (cr, _) in [best[d]]]
+
+async def _worker_discuss_turn(worker_llm, worker_idx, dir_ko, my_nm, my_analysis,
+                               analysis_results, discussion_so_far, queue):
+    """순차 토론 한 턴: 지금까지 나온 토론을 보고 이어서 대화"""
+    analyses = "\n".join(
+        f"[{r['direction']}쪽 {r['crossroad_name']}] {r['content']}"
+        for r in analysis_results
+    )
+    chat_so_far = "\n".join(
+        f"[{d['direction']}쪽 {d['crossroad_name']}]: {d['content']}"
+        for d in discussion_so_far
+    ) if discussion_so_far else "아직 없음"
+
+    prompt = (
+        f"/no_think 반드시 한국어로 짧게 답변하십시오.\n\n"
+        f"서울 교통 관제 AI 에이전트들이 실시간 대화 중이야.\n\n"
+        f"[1차 분석 결과]\n{analyses}\n\n"
+        f"[지금까지 대화]\n{chat_so_far}\n\n"
+        f"이제 네 차례야. 너는 {dir_ko}쪽 {my_nm} 담당.\n"
+        f"앞 에이전트들 말에 반응하거나 새로운 관점 추가. 2문장 이내로.\n"
+        f"수치(초) 언급하면 좋아. 운전자 안내 말투 금지. 관제 에이전트끼리 대화하듯."
+    )
+    await queue.put({'type': 'discuss_start', 'worker_id': worker_idx,
+                     'direction': dir_ko, 'crossroad_name': my_nm})
+    try:
+        result  = await worker_llm.ainvoke([{"role": "user", "content": prompt}])
+        content = strip_chinese((result.content if hasattr(result, 'content') else str(result)).strip())
+    except Exception as e:
+        content = f'토론 오류: {e}'
+    await queue.put({'type': 'discuss_done', 'worker_id': worker_idx,
+                     'direction': dir_ko, 'crossroad_name': my_nm, 'content': content})
+    return content
+
+
+_WORKER_DIR_KO = {
+    "nt": "북", "et": "동", "st": "남", "wt": "서",
+    "ne": "북동", "nw": "북서", "se": "남동", "sw": "남서",
+}
+_WORKER_DIR_ORDER = ["nt", "et", "st", "wt", "ne", "nw", "se", "sw"]
+
+def _build_dir_speed_str(speed_by_dir: dict | None) -> str:
+    """방향별 속도를 '북 17.2km/h | 동 측정값없음 | 남 15.1km/h | ...' 형식으로 반환"""
+    if not speed_by_dir:
+        return "방향별 측정값 없음"
+    parts = []
+    seen = set()
+    for code in _WORKER_DIR_ORDER:
+        ko = _WORKER_DIR_KO[code]
+        val = speed_by_dir.get(code)
+        # "없음" 대신 "측정값없음" — LLM이 통행불가로 오해하지 않도록
+        parts.append(f"{ko} {val}km/h" if val is not None else f"{ko} 측정값없음")
+        seen.add(code)
+    for code, val in speed_by_dir.items():
+        if code not in seen:
+            ko = _WORKER_DIR_KO.get(code, code)
+            parts.append(f"{ko} {val}km/h" if val is not None else f"{ko} 측정값없음")
+    return " | ".join(parts)
+
+async def _worker_analyze(worker_llm, cr, traffic_data, worker_idx, direction, queue):
+    """워커: 교차로 데이터 분석 후 결과를 queue에 push"""
+    dir_ko   = DIR_KO.get(direction, direction)
+    nm       = cr['crsrdNm']
+
+    await queue.put({'type': 'worker_start', 'worker_id': worker_idx,
+                     'direction': dir_ko, 'crossroad_name': nm,
+                     'lat': cr.get('lat'), 'lon': cr.get('lon')})
+    try:
+        spd_raw = traffic_data.get('speedKph') if traffic_data else None
+        has_valid_speed = isinstance(spd_raw, (int, float)) and spd_raw > 0
+
+        if not traffic_data or not has_valid_speed:
+            content   = f"{nm}: 실시간 속도 데이터 없음"
+            spd       = 'N/A'
+            state, delta, delta_str = "데이터없음", None, "데이터없음"
+        else:
+            spd        = spd_raw
+            congestion = traffic_data.get('congestion', 'N/A')
+            risk       = traffic_data.get('riskGrade', 'N/A')
+            spd_by_dir = traffic_data.get('speedKphByDirection') or {}
+            dir_speed_str = _build_dir_speed_str(spd_by_dir)
+
+            # 중심 교차로를 향하는 방향 속도
+            # 에이전트 위치의 반대 방향 = 중심으로 향하는 차량 속도
+            _TOWARD_CENTER = {
+                'E': 'wt', 'W': 'et', 'S': 'nt', 'N': 'st',
+                'NE': 'sw', 'NW': 'se', 'SE': 'nw', 'SW': 'ne',
+            }
+            toward_key = _TOWARD_CENTER.get(direction)
+            toward_spd = spd_by_dir.get(toward_key) if toward_key else None
+            # 중심 방향 속도 있으면 그걸 사용, 없으면 평균으로 폴백
+            calc_spd = float(toward_spd) if isinstance(toward_spd, (int, float)) and toward_spd > 0 else float(spd)
+
+            state, delta = calc_signal_delta(calc_spd)
+            sign      = "+" if delta >= 0 else ""
+            delta_str = f"{sign}{delta}초"
+            spd_display = f"{calc_spd}km/h" + (f" ({toward_key} 방향)" if toward_spd else " (평균)")
+            pressure  = f"{state}({spd_display}) → 중심 교차로 {dir_ko}방향 유입 압력: {delta_str}"
+
+            pressure_level = "높음" if delta > 5 else "낮음"
+            prompt = (
+                f"/think 반드시 한국어로만 답변하십시오.\n\n"
+                f"[역할] 너는 데이터 보고 에이전트야. 신호 조정 결정은 오케스트레이터가 담당.\n"
+                f"[담당 교차로] {nm} ({dir_ko}쪽)\n\n"
+                f"[보유 데이터]\n"
+                f"  평균 속도: {spd}km/h ({state})\n"
+                f"  방향별 속도: {dir_speed_str}\n"
+                f"  혼잡: {congestion} / 위험도: {risk}\n"
+                f"  유입 압력 분석: {pressure}\n\n"
+                f"아래 내용을 자연스러운 3문장으로 보고 (번호·레이블 출력 금지):\n"
+                f"  · {dir_ko}쪽 {nm}의 방향별 속도를 그대로 나열\n"
+                f"    (측정값없음 = 센서 미수신이며 통행 불가 아님, 통행불가/불가능 표현 금지)\n"
+                f"  · 혼잡도와 위험도 등급\n"
+                f"  · {dir_ko}방향 유입 압력 {pressure_level}, {delta_str}\n\n"
+                f"금지: '1문장' '2문장' 레이블, 차량 대수, '+N초 해달라', '통행 불가능'"
+            )
+            result  = await worker_llm.ainvoke([{"role": "user", "content": prompt}])
+            content = strip_chinese((result.content if hasattr(result, 'content') else str(result)).strip())
+
+        has_data = has_valid_speed
+        await queue.put({'type': 'worker_done', 'worker_id': worker_idx,
+                         'direction': dir_ko, 'crossroad_name': nm,
+                         'content': content, 'has_data': has_data,
+                         'speed': spd, 'state': state,
+                         'delta': delta, 'delta_str': delta_str,
+                         'spd_by_dir': spd_by_dir if has_valid_speed else {}})
+    except Exception as e:
+        await queue.put({'type': 'worker_done', 'worker_id': worker_idx,
+                         'direction': dir_ko, 'crossroad_name': nm,
+                         'content': f'분석 오류: {e}', 'has_data': False,
+                         'speed': 'N/A', 'state': '오류', 'delta': None, 'delta_str': '데이터없음'})
+
 # 에이전트는 앱 시작 시 한 번만 생성 (MCP 클라이언트 포함)
 agent = None
 mcp_client = None
@@ -158,7 +392,10 @@ class NavIntentRequest(BaseModel):
 class ChatRequest(BaseModel):
     question: str
     crsrdId: str | None = None       # 선택된 교차로 ID (없으면 에이전트가 검색)
+    crsrdNm: str | None = None       # 선택된 교차로 이름 (답변에 이름 사용)
     userEmail: str | None = None     # 요청한 유저 이메일 (메일 발송 시 사용)
+    lat: float | None = None         # 선택된 교차로 위도 (멀티에이전트 라우팅용)
+    lon: float | None = None         # 선택된 교차로 경도 (멀티에이전트 라우팅용)
 
 class SimulationChatRequest(BaseModel):
     question: str
@@ -176,10 +413,18 @@ class ChatResponse(BaseModel):
     answer: str
     adjustment: dict | None = None       # 단일 (하위 호환)
     adjustments: list | None = None      # 다중 병목 조정값
+    report: str | None = None            # 이메일용 상세 분석 보고서
 
 class ReportResponse(BaseModel):
     report: str
     district: str
+
+class MultiAnalyzeRequest(BaseModel):
+    lat: float
+    lon: float
+    crsrdId: str | None = None
+    crsrdNm: str | None = None
+    userEmail: str | None = None
 
 # ── 헬퍼 ────────────────────────────────────────────────────────────────────────
 
@@ -431,8 +676,10 @@ async def nav_intent(req: NavIntentRequest):
    - 시뮬레이션/신호/신호등 → simulation
    - CCTV/씨씨티비/카메라 → cctv
    - 뉴스/감성 → news
-2. 구 선택 명령 → {{"action":"select_gu","gu":"구이름"}}
-   - 서울 25개 구 중 하나가 포함되면: {', '.join(SEOUL_GU)}
+2. 구 선택/이동 명령 → {{"action":"select_gu","gu":"구이름"}}
+   - 반드시 "~로 가줘", "~으로 이동", "~구 선택", "~구 보여줘" 같은 명시적 이동/선택 표현이 있어야 함
+   - 단순히 구 이름만 언급하거나 질문("~구 날씨 어때", "~구 교통 어때")이면 unknown
+   - 해당 구: {', '.join(SEOUL_GU)}
 3. 마이페이지 → {{"action":"mypage"}}
    - 마이페이지/내 정보/프로필/설정
 4. 로그아웃 → {{"action":"logout"}}
@@ -484,23 +731,39 @@ async def free_chat(req: ChatRequest):
         "① 현재 상태: 속도·위험등급·혼잡도 요약\n"
         "② 혼잡 원인: 어느 방향 신호가 왜 막히는지 (rmndCs 높은 적색 방향 기준)\n"
         "③ 조정 권고: 구체적으로 어떤 현시를 몇 초 조정할지\n"
-        "반드시 전체 분석 내용을 답변에 먼저 출력하고, 이메일은 그 다음에 발송할 것.\n"
-        "이메일 전송 완료 메시지로 답변을 끝내지 말 것. 분석 본문이 답변의 핵심."
+        "답변은 분석 내용으로 끝낼 것.\n"
+        "'추가 분석', '이메일로 보낼 필요', '알려주세요', '도움이 필요하시면', '다른 요청이 있으시면' 등 "
+        "서비스 안내·권유·마무리 문구를 답변 마지막에 절대 붙이지 말 것."
     )
 
     email_ctx = (
         f"\n[요청 유저 이메일: {req.userEmail}]"
-        f"\n메일 발송 요청이 있으면 분석 완료 후 send_email_report 도구로 동일한 분석 내용을 발송할 것."
+        f"\n[이메일 발송 엄격 규칙] 사용자 질문에 '이메일', '메일', '메일로', '이메일로' 단어가 직접 포함된 경우에만 send_email_report 호출 가능.\n"
+        "분석·최적화·리포트 요청이라도 이메일 키워드 없으면 send_email_report 절대 호출 금지.\n"
+        "send_email_report 호출 시 subject는 '[Syncro] 분석결과를 알려드립니다' 형식으로 작성할 것.\n"
+        "이메일 본문 마지막에는 반드시 아래 마무리 문구를 그대로 추가할 것:\n"
+        "---\n본 메일은 Syncro 교통 관제 시스템에서 자동 발송되었습니다.\n감사합니다.\n\nSyncro 교통 관제 시스템 드림\n"
+        "이메일 발송 여부를 묻거나 '이메일로 보내드릴까요?' 같은 문구를 답변에 절대 포함하지 말 것."
     ) if req.userEmail else ""
+
+    cr_ctx = (
+        f"현재 선택된 교차로는 '{req.crsrdNm}' (ID: {req.crsrdId})야.\n"
+        if req.crsrdId and req.crsrdNm else
+        f"현재 선택된 교차로 ID는 {req.crsrdId}야.\n"
+        if req.crsrdId else ""
+    )
 
     if req.crsrdId:
         prompt = (
             f"/no_think\n"
             f"서울 교통 관제 시스템이야. 반드시 한국어로 답해줘.\n"
-            f"현재 선택된 교차로 ID는 {req.crsrdId}야.\n"
+            f"{cr_ctx}"
+            f"답변에서 교차로를 지칭할 때 반드시 교차로 이름을 사용하고 숫자 ID는 절대 노출하지 말 것.\n"
+            f"질문에 현재 선택된 교차로와 다른 교차로명·장소명(학교, 건물, 역 등)이 언급되면 "
+            f"get_traffic_data 대신 반드시 search_crossroad_by_name으로 먼저 검색할 것.\n"
+            f"질문이 현재 선택된 교차로에 관한 것이면 get_traffic_data({req.crsrdId})를 사용할 것.\n"
             f"질문이 병목·TOP에 관한 거면 get_bottleneck_list를 먼저 호출해서 병목 순위를 구하고 "
             f"각 교차로를 get_traffic_data로 조회해서 분석해줘. 선택된 교차로는 무시해도 됨.\n"
-            f"특정 교차로에 대한 질문이면 get_traffic_data({req.crsrdId})를 사용해줘.\n"
             f"질문: {req.question}"
             f"{analysis_rule}"
             f"{email_ctx}"
@@ -509,8 +772,9 @@ async def free_chat(req: ChatRequest):
         prompt = (
             f"/no_think\n"
             f"서울 교통 관제 시스템이야. 반드시 한국어로 답해줘.\n"
-            f"구 단위 분석 요청이면 get_district_traffic 도구를 한 번만 호출하고, "
-            f"반환된 속도·위험도·날씨 데이터만으로 분석을 완성해줘. 추가 도구 호출 불필요.\n"
+            f"질문에 자치구 이름(예: 강남구, 서초구 등)이 있으면 반드시 get_district_traffic 도구를 호출해서 "
+            f"속도·위험도·날씨 데이터를 가져올 것. 날씨·교통·혼잡 관련 질문도 모두 이 도구로 처리할 것. "
+            f"추가 위치 질문 없이 즉시 도구를 호출할 것.\n"
             f"질문: {req.question}"
             f"{analysis_rule}"
             f"{email_ctx}"
@@ -521,15 +785,17 @@ async def free_chat(req: ChatRequest):
 
 
 TOOL_LABELS = {
-    "get_traffic_data":        "교차로 실시간 데이터 조회",
-    "get_bottleneck_list":     "전체 병목 목록 조회",
-    "search_crossroad_by_name":"교차로 이름 검색",
-    "get_district_traffic":    "자치구 교통 현황 조회",
-    "set_signal_timing":       "신호 타이밍 조정",
-    "send_alert":              "관제사 알림 전송",
-    "send_email_report":       "이메일 리포트 전송",
-    "get_simulation_context":  "신호계획 조회",
-    "search_project_docs":     "도메인 지식 검색",
+    "get_traffic_data":           "교차로 실시간 데이터 조회",
+    "get_bottleneck_list":        "전체 병목 목록 조회",
+    "search_crossroad_by_name":   "교차로 이름 검색",
+    "get_district_traffic":       "자치구 교통 현황 조회",
+    "set_signal_timing":          "신호 타이밍 조정",
+    "send_alert":                 "관제사 알림 전송",
+    "send_email_report":          "이메일 리포트 전송",
+    "get_simulation_context":     "신호계획 조회",
+    "search_project_docs":        "도메인 지식 검색",
+    "classify_intent":            "의도 분류",
+    "search_crossroad_location":  "교차로 좌표 검색",
 }
 
 
@@ -544,22 +810,38 @@ async def free_chat_stream(req: ChatRequest, request: Request):
         "① 현재 상태: 속도·위험등급·혼잡도 요약\n"
         "② 혼잡 원인: 어느 방향 신호가 왜 막히는지 (rmndCs 높은 적색 방향 기준)\n"
         "③ 조정 권고: 구체적으로 어떤 현시를 몇 초 조정할지\n"
-        "이메일 본문도 동일한 분석 형식으로 작성할 것. 데이터 나열 금지."
+        "이메일 본문도 동일한 분석 형식으로 작성할 것. 데이터 나열 금지.\n"
+        "이메일 본문 마지막에는 반드시 '---\\n본 메일은 Syncro 교통 관제 시스템에서 자동 발송되었습니다.\\n감사합니다.\\n\\nSyncro 교통 관제 시스템 드림' 문구를 추가할 것."
     )
 
     email_ctx = (
         f"\n[요청 유저 이메일: {req.userEmail}]"
-        f"\n메일 발송 요청이 있으면 분석 완료 후 send_email_report 도구로 동일한 분석 내용을 발송할 것."
+        f"\n[이메일 발송 엄격 규칙] 사용자 질문에 '이메일', '메일', '메일로', '이메일로' 단어가 직접 포함된 경우에만 send_email_report 호출 가능.\n"
+        "분석·최적화·리포트 요청이라도 이메일 키워드 없으면 send_email_report 절대 호출 금지.\n"
+        "send_email_report 호출 시 subject는 '[Syncro] 분석결과를 알려드립니다' 형식으로 작성할 것.\n"
+        "이메일 본문 마지막에는 반드시 아래 마무리 문구를 그대로 추가할 것:\n"
+        "---\n본 메일은 Syncro 교통 관제 시스템에서 자동 발송되었습니다.\n감사합니다.\n\nSyncro 교통 관제 시스템 드림\n"
+        "이메일 발송 여부를 묻거나 '이메일로 보내드릴까요?' 같은 문구를 답변에 절대 포함하지 말 것."
     ) if req.userEmail else ""
+
+    cr_ctx = (
+        f"현재 선택된 교차로는 '{req.crsrdNm}' (ID: {req.crsrdId})야.\n"
+        if req.crsrdId and req.crsrdNm else
+        f"현재 선택된 교차로 ID는 {req.crsrdId}야.\n"
+        if req.crsrdId else ""
+    )
 
     if req.crsrdId:
         prompt = (
             f"/no_think\n"
             f"서울 교통 관제 시스템이야. 반드시 한국어로 답해줘.\n"
-            f"현재 선택된 교차로 ID는 {req.crsrdId}야.\n"
+            f"{cr_ctx}"
+            f"답변에서 교차로를 지칭할 때 반드시 교차로 이름을 사용하고 숫자 ID는 절대 노출하지 말 것.\n"
+            f"질문에 현재 선택된 교차로와 다른 교차로명·장소명(학교, 건물, 역 등)이 언급되면 "
+            f"get_traffic_data 대신 반드시 search_crossroad_by_name으로 먼저 검색할 것.\n"
+            f"질문이 현재 선택된 교차로에 관한 것이면 get_traffic_data({req.crsrdId})를 사용할 것.\n"
             f"질문이 병목·TOP에 관한 거면 get_bottleneck_list를 먼저 호출해서 병목 순위를 구하고 "
             f"각 교차로를 get_traffic_data로 조회해서 분석해줘. 선택된 교차로는 무시해도 됨.\n"
-            f"특정 교차로에 대한 질문이면 get_traffic_data({req.crsrdId})를 사용해줘.\n"
             f"질문: {req.question}"
             f"{analysis_rule}{email_ctx}"
         )
@@ -567,13 +849,54 @@ async def free_chat_stream(req: ChatRequest, request: Request):
         prompt = (
             f"/no_think\n"
             f"서울 교통 관제 시스템이야. 반드시 한국어로 답해줘.\n"
-            f"구 단위 분석 요청이면 get_district_traffic 도구를 한 번만 호출하고, "
-            f"반환된 속도·위험도·날씨 데이터만으로 분석을 완성해줘. 추가 도구 호출 불필요.\n"
+            f"질문에 자치구 이름(예: 강남구, 서초구 등)이 있으면 반드시 get_district_traffic 도구를 호출해서 "
+            f"속도·위험도·날씨 데이터를 가져올 것. 날씨·교통·혼잡 관련 질문도 모두 이 도구로 처리할 것. "
+            f"추가 위치 질문 없이 즉시 도구를 호출할 것.\n"
             f"질문: {req.question}"
             f"{analysis_rule}{email_ctx}"
         )
 
     async def generate():
+        # 주변/근처/인근 키워드 또는 좌표가 있을 때만 LLM 분류 실행 (불필요한 분류 오버헤드 방지)
+        has_nearby_kw = any(kw in req.question for kw in ['주변', '근처', '인근'])
+        if has_nearby_kw or (req.lat is not None and req.lon is not None):
+            try:
+                is_multi, location = await _classify_multi_analyze(req.question)
+                if is_multi:
+                    lat, lon = req.lat, req.lon
+                    crsrd_id, crsrd_nm = req.crsrdId, req.crsrdNm
+
+                    # Step 1: 의도 분류 완료 알림
+                    loc_label = location or "(현재 위치)"
+                    yield f"data: {_json.dumps({'type': 'action', 'tool': 'classify_intent', 'label': '의도 분류', 'args': req.question[:60]}, ensure_ascii=False)}\n\n"
+                    yield f"data: {_json.dumps({'type': 'observation', 'content': f'주변 분석 의도 확인 · 장소명: {loc_label}'}, ensure_ascii=False)}\n\n"
+
+                    # 좌표 없으면 장소명으로 신호 캐시에서 교차로 검색
+                    if lat is None and location:
+                        yield f"data: {_json.dumps({'type': 'action', 'tool': 'search_crossroad_location', 'label': '교차로 좌표 검색', 'args': location}, ensure_ascii=False)}\n\n"
+                        async with httpx.AsyncClient(timeout=5.0) as cl:
+                            sig_r = await cl.get(f"{SPRING_BASE}/api/signals")
+                            signals = sig_r.json() if sig_r.status_code == 200 else []
+                        matched = [
+                            s for s in (signals if isinstance(signals, list) else [])
+                            if location in s.get("crsrdNm", "")
+                        ]
+                        if matched:
+                            first = matched[0]
+                            lat      = first.get("lat")
+                            lon      = first.get("lon")
+                            crsrd_id = str(first.get("crsrdId", ""))
+                            crsrd_nm = first.get("crsrdNm", location)
+                            yield f"data: {_json.dumps({'type': 'observation', 'content': f'{crsrd_nm} 발견 ({lat:.4f}, {lon:.4f})'}, ensure_ascii=False)}\n\n"
+                        else:
+                            yield f"data: {_json.dumps({'type': 'observation', 'content': f'{location} 교차로 없음 — 현재 위치 사용'}, ensure_ascii=False)}\n\n"
+
+                    if lat is not None:
+                        yield f"data: {_json.dumps({'type': 'route_multi', 'lat': lat, 'lon': lon, 'crsrdId': crsrd_id, 'crsrdNm': crsrd_nm}, ensure_ascii=False)}\n\n"
+                        return
+            except Exception:
+                pass  # 분류/검색 실패 시 일반 ReAct로 폴백
+
         try:
             async for msg_kind, event in agent_stream_with_cancel(request, prompt):
                 if msg_kind == "error":
@@ -689,6 +1012,9 @@ async def simulation_chat(req: SimulationChatRequest):
             f"원래 신호계획과 비교해서 어떤 현시가 얼마나 바뀌었는지 분석해줘."
         )
 
+    _DIR_KO = {"north":"북","east":"동","south":"남","west":"서",
+               "northeast":"북동","northwest":"북서","southeast":"남동","southwest":"남서"}
+
     traffic_block = ""
     if req.routeTraffic:
         lines = []
@@ -696,34 +1022,52 @@ async def simulation_chat(req: SimulationChatRequest):
             spd = seg.get("speedKph")
             cng = seg.get("congestion", "")
             spd_str = f"{spd}km/h" if spd is not None else "미수집"
-            bottleneck_mark = " ★병목" if spd is not None and spd < 40 else ""
+            bottleneck_mark = " ★병목" if spd is not None and spd < 15 else ""
+            spd_by_dir = seg.get("speedByDirection") or {}
+            dir_parts = [f"{_DIR_KO.get(k, k)} {v}km/h" for k, v in spd_by_dir.items() if v is not None]
+            dir_str = f" [{', '.join(dir_parts)}]" if dir_parts else ""
             lines.append(
                 f"  {seg.get('fromIntNo','?')}→{seg.get('toIntNo','?')}"
-                f" ({seg.get('axisName','')}) | {spd_str} | {cng}{bottleneck_mark}"
+                f" ({seg.get('axisName','')}) | 평균 {spd_str}{dir_str} | {cng}{bottleneck_mark}"
             )
         traffic_block = (
-            "\n\n[경로 구간별 실시간 속도 — 40km/h 이하가 병목]\n" + "\n".join(lines)
+            "\n\n[경로 구간별 실시간 속도 — 15km/h 이하가 병목]\n" + "\n".join(lines)
         )
 
     # Webster 공식 기반 JSON 출력 지시
     json_instruction = (
-        "\n\n[신호 최적화 — Webster 공식 적용 절차]\n"
-        "① 실측 속도로 포화도(Y) 결정: 40km/h 미만=0.85, 40~60=0.65, 60초과=0.4\n"
-        "② Co = (1.5 × L + 5) / (1 - ΣY),  L = 현시수 × 4s\n"
-        "③ Co를 직진/좌회전/보행 중요도 비율로 배분 (보행 최소 20s)\n"
-        "④ 각 교차로별 조정값을 아래 JSON으로 출력\n\n"
-        "반드시 JSON 블록을 맨 앞에 출력하고, 그 뒤 분석 설명을 붙여:\n"
+        "\n\n[신호 최적화 출력 형식]\n"
+        "Webster 공식으로 조정값을 계산한 뒤, 아래 순서로 출력:\n\n"
+        "0. 답변 맨 처음에 아래 형식으로 측정 속도 표를 반드시 출력할 것 (방향 데이터 없으면 평균만):\n"
+        "[측정 속도]\n"
+        "• 교차로명: 평균 Xkm/h | 북 Akm/h | 서 Bkm/h | 남 Ckm/h\n\n"
+        "1. 그 다음 JSON 블록 출력 (조정값)\n"
         "```json\n"
         "{\"adjustments\": [{\"intNo\": \"47\", \"phases\": [{\"no\": 1, \"sec\": 80}, {\"no\": 2, \"sec\": 30}, {\"no\": 3, \"sec\": 20}, {\"no\": 4, \"sec\": 10}]}]}\n"
         "```\n"
-        "⚠️ 중요 규칙 (반드시 지킬 것):\n"
-        "- phases에는 신호계획에 있는 현시 번호를 빠짐없이 모두 포함할 것 (현시1·2·3·4가 있으면 4개 전부 출력)\n"
-        "- 각 교차로의 phases 합계가 해당 교차로의 cycleVal과 정확히 일치해야 함\n"
-        "- intNo는 신호계획 괄호 안 숫자 ID 그대로 사용. 교차로 이름 절대 금지\n"
-        "JSON 다음 설명에는 반드시 아래 내용을 포함할 것:\n"
-        "- 실측 속도(km/h)와 이에 따른 Y값\n"
-        "- 계산된 최적 주기(Co)와 기존 cycleVal 비교\n"
-        "- 어떤 현시를 왜 늘리고 줄였는지 (방향명 + 초 단위로 명시)"
+        "⚠️ JSON 블록 규칙 (반드시 지킬 것):\n"
+        "- JSON 안의 intNo는 반드시 신호계획 괄호 안 숫자 ID를 그대로 사용할 것 (필수 필드, 절대 생략 금지)\n"
+        "- phases에는 신호계획에 있는 현시 번호를 빠짐없이 모두 포함할 것\n"
+        "- 각 교차로의 phases 합계가 해당 교차로의 cycleVal과 정확히 일치해야 함\n\n"
+        "2. JSON 다음에는 교차로별 변경사항을 아래 형식으로 출력 (UI 표시용 요약):\n"
+        "- 마크다운 헤더(###, ####, ## 등) 절대 사용 금지\n"
+        "- 텍스트 설명에서는 intNo 숫자 대신 교차로 이름만 사용할 것\n"
+        "- 각 교차로는 반드시 빈 줄로 구분하고 아래 형식 그대로 출력:\n\n"
+        "• 교차로명\n"
+        "  현시1 (방향): Xs → Ys\n"
+        "  현시2 (방향): As → Bs\n\n"
+        "- 수식·이유 설명 포함 금지. 변경 결과만 나열할 것\n\n"
+        "3. 마지막에 [REPORT] 태그로 시작하는 이메일용 상세 분석 보고서를 작성할 것:\n"
+        "- 형식: 분석관 보고서 (한국어, 전문적 어조)\n"
+        "- 각 교차로별로 아래 항목 포함:\n"
+        "  ① 현황: 방향별 실시간 속도 및 병목 판단 (15km/h 기준)\n"
+        "  ② Webster 최적 주기 계산: Co = (1.5L + 5) / (1 - ΣY)\n"
+        "     - L = 손실시간 (현시 수 × 4s 추정)\n"
+        "     - Y = 각 현시 포화도비 (현재 초 / cycleVal로 추정)\n"
+        "     - 계산식과 도출값 명시\n"
+        "  ③ 현시별 조정 근거 (직진 확보·좌회전 억제·보행자 최소화 등 이유)\n"
+        "  ④ 예상 효과 (통과 시간 단축 추정 %)\n"
+        "- [REPORT] 이후 내용만 보고서로 파싱하므로 태그 위치 정확히 지킬 것"
     )
 
     prompt = (
@@ -758,16 +1102,30 @@ async def simulation_chat(req: SimulationChatRequest):
 
     clean_answer = strip_json_block(raw).strip() if adjustments else raw.strip()
 
+    # [REPORT] 섹션 분리 (이메일용 상세 보고서)
+    report = None
+    if "[REPORT]" in clean_answer:
+        parts = clean_answer.split("[REPORT]", 1)
+        clean_answer = parts[0].strip()
+        report = parts[1].strip() if len(parts) > 1 else None
+
     # 설명이 없으면 기본 메시지 생성
     if not clean_answer and adjustments:
         clean_answer = "경로 내 병목 구간의 실시간 속도와 신호계획을 분석하여 각 교차로의 직진 현시를 우선적으로 늘리고, 주기 내 비율을 재조정했습니다."
     elif not clean_answer:
         clean_answer = "신호계획을 분석했습니다. 현재 구간의 속도 데이터를 확인하세요."
 
+    print(f"\n[SIM-CHAT ANSWER (UI용 요약)]\n{clean_answer}\n", flush=True)
+    if report:
+        print(f"[SIM-CHAT REPORT (이메일용 보고서 — {len(report)}자)]\n{report[:600]}\n", flush=True)
+    else:
+        print("[SIM-CHAT REPORT] 없음 (AI가 [REPORT] 섹션 미생성)\n", flush=True)
+
     return ChatResponse(
         answer=clean_answer,
         adjustment=adjustments[0] if adjustments and len(adjustments) == 1 else None,
         adjustments=adjustments,
+        report=report,
     )
 
 
@@ -801,19 +1159,30 @@ async def simulation_chat_stream(req: SimulationChatRequest, request: Request):
             f"원래 신호계획과 비교해서 어떤 현시가 얼마나 바뀌었는지 분석해줘."
         )
 
+    _DIR_KO = {"north":"북","east":"동","south":"남","west":"서",
+               "northeast":"북동","northwest":"북서","southeast":"남동","southwest":"남서"}
+
     traffic_block = ""
     if req.routeTraffic:
         lines = []
         for seg in req.routeTraffic:
             spd = seg.get("speedKph")
             mark = " ★병목" if spd is not None and spd < 15 else ""
-            lines.append(f"  {seg.get('fromIntNo')}→{seg.get('toIntNo')} | {spd}km/h{mark}")
-        traffic_block = "\n\n[경로 속도 — 40km/h↓ 병목]\n" + "\n".join(lines)
+            spd_by_dir = seg.get("speedByDirection") or {}
+            dir_parts = [f"{_DIR_KO.get(k, k)} {v}km/h" for k, v in spd_by_dir.items() if v is not None]
+            dir_str = f" [{', '.join(dir_parts)}]" if dir_parts else ""
+            lines.append(f"  {seg.get('fromIntNo')}→{seg.get('toIntNo')} | 평균 {spd}km/h{dir_str}{mark}")
+        traffic_block = "\n\n[경로 속도 — 15km/h↓ 병목]\n" + "\n".join(lines)
 
     json_instruction = (
-        "\n\n신호 조정이 필요하면 답변 맨 앞에 먼저 출력:\n"
-        "```json\n{\"adjustments\":[{\"intNo\":\"번호\",\"phases\":[{\"no\":현시번호,\"sec\":초}]}]}\n```\n"
-        "그 다음 1~2문장 설명. phases는 위 신호계획의 기존 현시만 사용."
+        "\n\n답변 순서:\n"
+        "0. 맨 처음에 측정 속도 표 출력 (반드시):\n"
+        "[측정 속도]\n"
+        "• 교차로명: 평균 Xkm/h | 북 Akm/h | 서 Bkm/h | 남 Ckm/h (없는 방향 생략)\n\n"
+        "1. 그 다음 JSON 조정값 출력:\n"
+        "```json\n{\"adjustments\":[{\"intNo\":\"신호계획의 intNo 숫자\",\"phases\":[{\"no\":현시번호,\"sec\":초}]}]}\n```\n"
+        "⚠️ intNo는 신호계획 괄호 안 숫자 ID 그대로 사용 — 필수 필드, 절대 생략 금지.\n"
+        "2. 그 다음 교차로명(이름만, intNo 숫자 제외)으로 현시별 변경 결과 나열."
     )
 
     prompt = (
@@ -892,13 +1261,18 @@ async def bottleneck_email(req: DistrictRequest):
         f"[시스템 분석 및 조치 권고]\n"
         f"(혼잡 원인 추정 + 신호 조정 또는 우회 권고 2~3문장. 반드시 한국어로 작성)\n\n"
         f"---\n"
-        f"TrafficSync 자동 발송 | 조치 후 관제 시스템에서 확인 바랍니다.\n\n"
+        f"본 메일은 Syncro 교통 관제 시스템에서 자동 발송되었습니다.\n"
+        f"조치 후 관제 시스템에서 결과를 확인해 주시기 바랍니다.\n"
+        f"감사합니다.\n\n"
+        f"Syncro 교통 관제 시스템 드림\n\n"
         f"병목 교차로가 없으면 아래 양식만 출력:\n"
         f"교통관제 자동화 시스템입니다.\n"
         f"현재 {req.district} 내 15km/h 이하 구간이 감지되지 않았습니다.\n"
         f"수집 교차로: {{total_crossroads}}개 / 현재 교통 상황 양호\n\n"
         f"---\n"
-        f"TrafficSync 자동 발송"
+        f"본 메일은 Syncro 교통 관제 시스템에서 자동 발송되었습니다.\n"
+        f"감사합니다.\n\n"
+        f"Syncro 교통 관제 시스템 드림"
     )
     result = await agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
     return ChatResponse(answer=strip_chinese(extract_answer(result)))
@@ -923,7 +1297,11 @@ async def bottleneck_email_stream(req: DistrictRequest, request: Request):
         f"(병목 교차로를 순위별로 작성. 없으면 '해당 없음' 한 줄)\n\n"
         f"[날씨 현황]\n기온 {{temperatureC}}°C / 강수량 {{precipitationMm}}mm / 풍속 {{windSpeedMs}}m/s\n\n"
         f"[시스템 분석 및 조치 권고]\n(혼잡 원인 추정 + 신호 조정 또는 우회 권고 2~3문장. 반드시 한국어로 작성)\n\n"
-        f"---\nTrafficSync 자동 발송"
+        f"---\n"
+        f"본 메일은 Syncro 교통 관제 시스템에서 자동 발송되었습니다.\n"
+        f"조치 후 관제 시스템에서 결과를 확인해 주시기 바랍니다.\n"
+        f"감사합니다.\n\n"
+        f"Syncro 교통 관제 시스템 드림"
     )
 
     async def generate():
@@ -992,7 +1370,7 @@ async def bottleneck_email_stream(req: DistrictRequest, request: Request):
                     async with _httpx.AsyncClient(timeout=10.0) as client:
                         await client.post(
                             "http://localhost:8080/api/email/send",
-                            json={"to": req.userEmail, "subject": f"[병목 경보] 서울 {req.district}", "body": report_text},
+                            json={"to": req.userEmail, "subject": f"[Syncro] 서울 {req.district} 분석결과를 알려드립니다", "body": report_text},
                         )
                     yield f"data: {_json.dumps({'type': 'observation', 'content': f'메일 발송 완료 → {req.userEmail}'}, ensure_ascii=False)}\n\n"
                 except Exception as e:
@@ -1117,6 +1495,246 @@ async def district_report(req: DistrictRequest):
 
     result = await agent.ainvoke({"messages": [{"role": "user", "content": prompt}]})
     return ReportResponse(report=extract_answer(result), district=req.district)
+
+
+# ── 멀티에이전트: 방향별 주변 교차로 분석 ──────────────────────────────────────────
+
+@app.post("/api/agent/multi-analyze/stream")
+async def multi_analyze_stream(req: MultiAnalyzeRequest, request: Request):
+    """방향별(N/S/E/W) 워커 에이전트 병렬 분석 + 오케스트레이터 종합 SSE"""
+    import json as _json
+
+    async def generate():
+        try:
+            # 1. 인근 교차로 조회 — 100m 고정, 없으면 없는 대로 진행
+            async with httpx.AsyncClient(timeout=10.0) as cl:
+                nearby_r = await cl.get(
+                    f"{SPRING_BASE}/api/crossroads/nearby",
+                    params={"lat": req.lat, "lon": req.lon, "radius": 0.3},
+                )
+                nearby = nearby_r.json() if nearby_r.status_code == 200 else []
+            directional = select_directional(req.lat, req.lon, nearby) if nearby else []
+
+            if not directional:
+                yield f"data: {_json.dumps({'type':'error','content':'인근 교차로가 없습니다.'}, ensure_ascii=False)}\n\n"
+                return
+
+            # 3. 전체 신호 캐시 → crsrdId 기준 맵
+            async with httpx.AsyncClient(timeout=10.0) as cl:
+                sig_r = await cl.get(f"{SPRING_BASE}/api/signals")
+                raw   = sig_r.json() if sig_r.status_code == 200 else []
+            signals_map = {s['crsrdId']: s for s in (raw if isinstance(raw, list) else raw.values()) if 'crsrdId' in s}
+
+            # 4. 분석 시작 이벤트 (중심+방향 교차로 좌표 전송)
+            yield f"data: {_json.dumps({'type':'analyze_init','center':{'lat':req.lat,'lon':req.lon},'workers':[{'worker_id':i+1,'direction':DIR_KO.get(d,d),'crossroad_name':cr['crsrdNm'],'lat':cr['lat'],'lon':cr['lon']} for i,(cr,d) in enumerate(directional)]}, ensure_ascii=False)}\n\n"
+
+            # 5. 워커 병렬 실행
+            queue: asyncio.Queue = asyncio.Queue()
+            tasks = [
+                asyncio.create_task(
+                    _worker_analyze(
+                        worker_llms[i % len(worker_llms)],
+                        cr, signals_map.get(cr['crsrdId']),
+                        i + 1, direction, queue
+                    )
+                )
+                for i, (cr, direction) in enumerate(directional)
+            ]
+
+            # 5. 워커 이벤트 스트리밍
+            worker_results = []
+            done_count = 0
+            while done_count < len(tasks):
+                if await request.is_disconnected():
+                    for t in tasks: t.cancel()
+                    return
+                try:
+                    msg = await asyncio.wait_for(queue.get(), timeout=0.3)
+                except asyncio.TimeoutError:
+                    continue
+                yield f"data: {_json.dumps(msg, ensure_ascii=False)}\n\n"
+                if msg['type'] == 'worker_done':
+                    worker_results.append(msg)
+                    done_count += 1
+
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+            # 6. 라운드 2/3/4 — 워커 3라운드 순차 토론
+            yield f"data: {_json.dumps({'type':'discussion_start'}, ensure_ascii=False)}\n\n"
+
+            center_nm = req.crsrdNm or f"({req.lat:.4f},{req.lon:.4f})"
+            discuss_results = []
+            # 데이터 없는 워커는 토론에서 제외 (없는 숫자 지어내는 것 방지)
+            ordered_workers = sorted(
+                [r for r in worker_results if r.get('has_data', True)],
+                key=lambda x: x['worker_id']
+            )
+            num_workers     = len(ordered_workers)
+
+            STRICT_RULE = (
+                "\n\n[엄격 규칙]\n"
+                "✓ 언급 가능: 속도(km/h), 혼잡, 위험도, 유입 압력 수준(높음/낮음)\n"
+                "✗ 금지: 차량 대수('약 N대', '많은 차량'), 교통량 수치\n"
+                "✗ 금지: '+N초', '신호 연장', 신호 조정 수치 ← 수치 결정은 오케스트레이터만\n"
+                "✗ 금지: '운전자', '권장드립니다', '안전하게'"
+            )
+
+            ROUND_INSTRUCTIONS = [
+                # 1라운드: 자기 교차로 방향별 속도 + 유입 압력 공유
+                lambda dk, nm, last, cnm=center_nm: (
+                    f"너는 {dk}쪽 {nm} 담당 에이전트야. [1라운드: 방향별 속도 공유]\n"
+                    f"위 '내 담당 교차로' 데이터만 사용해서 자연스러운 2문장으로 보고해.\n"
+                    f"  · 첫 문장: {dk}쪽 {nm}의 방향별 속도 나열 (없는 방향은 '없음')\n"
+                    f"  · 둘째 문장: {cnm} {dk}방향 유입 압력 수준\n"
+                    f"금지: '1문장' '2문장' 같은 레이블 출력, '+N초', 다른 교차로 수치를 내 것처럼 사용"
+                    + STRICT_RULE
+                ),
+                # 2라운드: 방향별 우선순위 논의
+                lambda dk, nm, last, cnm=center_nm: (
+                    f"너는 {dk}쪽 {nm} 담당 에이전트야. [2라운드: 우선순위 논의]\n"
+                    f"다른 방향들과 비교해서 {dk}방향 압력의 우선순위를 2문장으로 말해.\n"
+                    f"금지: '+N초', 신호 조정 수치, 형식 설명 텍스트 출력"
+                    + STRICT_RULE
+                ),
+                # 3라운드: 압력 우선순위 합의
+                lambda dk, nm, last, cnm=center_nm: (
+                    (
+                        f"너는 {dk}쪽 {nm} 담당 에이전트야. [3라운드: 최종 합의]\n"
+                        f"방향별 유입 압력 순위를 정리해서 오케스트레이터에게 합의안 2문장으로 전달.\n"
+                        f"형식: '합의: X>Y>Z 순으로 압력 높음. 이 순서로 신호 조정 권고.'\n"
+                        f"금지: '+N초', 신호 조정 수치, 형식 설명 텍스트 출력"
+                    ) if last else (
+                        f"너는 {dk}쪽 {nm} 담당 에이전트야. [3라운드: 합의]\n"
+                        f"{dk}방향 압력 우선순위에 동의/수정 1문장.\n"
+                        f"금지: 형식 설명 텍스트 출력"
+                    ) + STRICT_RULE
+                ),
+            ]
+
+            for round_num in range(1, 4):
+                yield f"data: {_json.dumps({'type':'round_start','round':round_num}, ensure_ascii=False)}\n\n"
+
+                for i, r in enumerate(ordered_workers):
+                    if await request.is_disconnected():
+                        return
+                    dir_ko  = r['direction']
+                    nm      = r['crossroad_name']
+                    is_last = (round_num == 3 and i == num_workers - 1)
+
+                    yield f"data: {_json.dumps({'type':'discuss_start','round':round_num,'worker_id':r['worker_id'],'direction':dir_ko,'crossroad_name':nm}, ensure_ascii=False)}\n\n"
+
+                    analyses = "\n".join(
+                        f"[{a['direction']}쪽 {a['crossroad_name']}] {a['content']}"
+                        for a in worker_results
+                    )
+                    chat_so_far = "\n".join(
+                        f"[R{d['round']} {d['direction']}쪽 {d['crossroad_name']}]: {d['content']}"
+                        for d in discuss_results
+                    ) if discuss_results else "없음"
+
+                    # 현재 워커 자신의 1차 분석만 분리
+                    my_analysis = next(
+                        (f"[내 담당 교차로 — {a['direction']}쪽 {a['crossroad_name']}]\n{a['content']}"
+                         for a in worker_results if a['direction'] == dir_ko),
+                        ""
+                    )
+                    other_analyses = "\n".join(
+                        f"[{a['direction']}쪽 {a['crossroad_name']}] {a['content']}"
+                        for a in worker_results if a['direction'] != dir_ko
+                    )
+
+                    instruction = ROUND_INSTRUCTIONS[round_num - 1](dir_ko, nm, is_last)
+                    prompt = (
+                        f"/think 반드시 한국어로만 답변하십시오.\n\n"
+                        f"[상황] 서울 교통 관제 센터 AI 에이전트 내부 회의.\n\n"
+                        f"⚠️ 너의 담당 교차로 수치만 사용할 것. 다른 교차로 수치를 네 것처럼 쓰지 말 것.\n\n"
+                        f"{my_analysis}\n\n"
+                        f"[다른 에이전트 분석 — 참고만]\n{other_analyses}\n\n"
+                        f"[지금까지 토론]\n{chat_so_far}\n\n"
+                        f"{instruction}"
+                    )
+                    try:
+                        result  = await worker_llms[i % len(worker_llms)].ainvoke(
+                            [{"role": "user", "content": prompt}]
+                        )
+                        content = strip_chinese((result.content if hasattr(result, 'content') else str(result)).strip())
+                    except Exception as e:
+                        content = f"오류: {e}"
+
+                    yield f"data: {_json.dumps({'type':'discuss_done','round':round_num,'worker_id':r['worker_id'],'direction':dir_ko,'crossroad_name':nm,'content':content}, ensure_ascii=False)}\n\n"
+
+                    discuss_results.append({
+                        'round': round_num, 'worker_id': r['worker_id'],
+                        'direction': dir_ko, 'crossroad_name': nm, 'content': content
+                    })
+
+            # 7. 오케스트레이터 종합
+            analysis_block = "\n\n".join(
+                f"[워커{r['worker_id']} {r['direction']}쪽 {r['crossroad_name']}]\n{r['content']}"
+                for r in worker_results
+            )
+            discuss_block = ""
+            for rn in range(1, 4):
+                rnd_items = [d for d in discuss_results if d['round'] == rn]
+                if rnd_items:
+                    discuss_block += f"[토론 {rn}라운드]\n"
+                    discuss_block += "\n".join(
+                        f"W{d['worker_id']}({d['direction']}): {d['content']}" for d in rnd_items
+                    ) + "\n\n"
+            # 오케스트레이터용 Python 계산 결과 블록 (LLM이 계산 안 하도록)
+            calc_lines = []
+            for r in worker_results:
+                if r.get('has_data') and r.get('delta') is not None:
+                    sign = "+" if r['delta'] >= 0 else ""
+                    by_dir = r.get('spd_by_dir') or {}
+                    dir_parts = [f"{_WORKER_DIR_KO.get(k, k)} {v}km/h" for k, v in by_dir.items() if v is not None]
+                    dir_str = f" [방향별: {', '.join(dir_parts)}]" if dir_parts else ""
+                    calc_lines.append(
+                        f"  {r['direction']}방향 ({r['crossroad_name']}): "
+                        f"평균 {r.get('speed', 'N/A')}km/h {r.get('state', '')}{dir_str} "
+                        f"→ 권고 {sign}{r['delta']}초"
+                    )
+                else:
+                    calc_lines.append(
+                        f"  {r['direction']}방향 ({r['crossroad_name']}): 데이터 없음 → 현장 확인 필요"
+                    )
+            calc_block = "\n".join(calc_lines)
+
+            orch_prompt = (
+                f"/think 반드시 한국어로만 답변하십시오.\n\n"
+                f"=== {center_nm} 신호 조정 권고 ===\n\n"
+                f"[코드 계산 결과 — 이 수치를 그대로 사용, 임의 변경 금지]\n"
+                f"{calc_block}\n\n"
+                f"[에이전트 토론 요약 (우선순위 참고용)]\n{discuss_block}\n"
+                f"아래 순서대로 반드시 모두 작성하세요 (순서 바꾸거나 항목 생략 금지):\n\n"
+                f"① 현황 요약\n"
+                f"   데이터 있는 방향마다 아래 형식으로 한 줄씩 출력:\n"
+                f"   · {{방향}}방향 ({{교차로명}}): 평균 Xkm/h | 북 Akm/h · 동 Bkm/h · 서 Ckm/h · 남 Dkm/h (측정값없는 방향 생략) | {{상태}}\n"
+                f"   ← 반드시 코드 계산 결과 [방향별] 수치를 그대로 사용할 것\n\n"
+                f"② {center_nm} 신호 조정 권고안\n"
+                f"   코드 계산값 그대로 (숫자 임의 변경 금지):\n"
+                f"   · {{방향}}방향: +N초 (또는 데이터없음이면 '현장 확인 필요')\n\n"
+                f"③ 예상 효과 1~2문장\n\n"
+                f"금지: 마크다운 헤더(###, ####, ##), 마무리 인사말, ① 현황 요약 생략"
+            )
+
+            yield f"data: {_json.dumps({'type':'orchestrator_start'}, ensure_ascii=False)}\n\n"
+
+            orch_result = await agent.ainvoke({"messages": [{"role": "user", "content": orch_prompt}]})
+            orch_text   = strip_chinese(extract_answer(orch_result))
+
+            yield f"data: {_json.dumps({'type':'orchestrator_done','content':orch_text}, ensure_ascii=False)}\n\n"
+
+        except Exception as e:
+            yield f"data: {_json.dumps({'type':'error','content':str(e)}, ensure_ascii=False)}\n\n"
+
+        yield 'data: {"type":"done"}\n\n'
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 # ── 실행 ────────────────────────────────────────────────────────────────────────

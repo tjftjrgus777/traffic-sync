@@ -31,9 +31,10 @@ public interface CrossroadRepository extends JpaRepository<CrossroadEntity, Stri
     //CCTV 목록 가져와
     @Query("""
         SELECT c FROM CrossroadEntity c
-        WHERE (6371 * acos(cos(radians(:lat)) * cos(radians(c.lat)) *
+        WHERE (6371 * acos(LEAST(1.0, GREATEST(-1.0,
+               cos(radians(:lat)) * cos(radians(c.lat)) *
                cos(radians(c.lon) - radians(:lon)) +
-               sin(radians(:lat)) * sin(radians(c.lat)))) <= :radiusKm
+               sin(radians(:lat)) * sin(radians(c.lat)))))) <= :radiusKm
     """)
     List<CrossroadEntity> findWithinRadius(@Param("lat") double lat,
                                            @Param("lon") double lon,

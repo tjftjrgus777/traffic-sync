@@ -9,6 +9,7 @@ import com.example.demo.scheduler.SupplementalDataScheduler;
 import com.example.demo.service.CrossroadSupplementalMappingService;
 import com.example.demo.service.SupplementalDataCacheService;
 import com.example.demo.service.ChatService;
+import com.example.demo.service.TopisMasterDataService;
 import com.example.demo.service.TrafficCacheService;
 import com.example.demo.service.V2xApiService;
 import com.example.demo.websocket.TrafficWebSocketHandler;
@@ -43,8 +44,8 @@ public class MapController {
     // WebSocket으로 내보내기 전 실제 속도/위험도/날씨 캐시를 TrafficStatus에 합친다.
     private final SupplementalDataCacheService supplementalDataCacheService;
     private final CrossroadSupplementalMappingService crossroadSupplementalMappingService;
-    // 선택 구역 변경 직후 보조 데이터 캐시가 이전 구역에 머물지 않도록 즉시 갱신한다.
     private final ObjectProvider<SupplementalDataScheduler> supplementalDataSchedulerProvider;
+    private final TopisMasterDataService topisMasterDataService;
 
     @Value("${kakao.map.app-key}")
     private String kakaoAppKey;
@@ -149,6 +150,23 @@ public class MapController {
         }
     }
 
+    // 멀티에이전트용 인근 교차로 조회 — 캐시/V2X 건드리지 않는 순수 DB 조회
+    @GetMapping("/api/crossroads/nearby")
+    @ResponseBody
+    public List<Map<String, Object>> getNearby(
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam(defaultValue = "2.5") double radius) {
+        return crossroadRepository.findWithinRadius(lat, lon, radius).stream()
+                .map(e -> Map.<String, Object>of(
+                        "crsrdId", e.getCrsrdId(),
+                        "crsrdNm", e.getCrsrdNm(),
+                        "lat",     e.getLat(),
+                        "lon",     e.getLon()
+                ))
+                .collect(Collectors.toList());
+    }
+
     // 구 단위 AI 리포트 — 메인 대시보드 구 클릭 시 호출
     @PostMapping("/api/district/report")
     @ResponseBody
@@ -170,6 +188,18 @@ public class MapController {
         supplementalDataSchedulerProvider.ifAvailable(scheduler -> {
             scheduler.refreshCurrentAreaSupplementalDataAsync();
         });
+    }
+
+    @PostMapping("/api/admin/sync-topis")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> syncTopis() {
+        try {
+            Map<String, Object> result = topisMasterDataService.syncMasterData();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("TOPIS master sync failed: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
     }
 
     private String normalizeGuName(String guName) {

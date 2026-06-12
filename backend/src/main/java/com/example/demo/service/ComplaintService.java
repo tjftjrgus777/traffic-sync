@@ -116,7 +116,7 @@ public class ComplaintService {
             String email = user.getEmail();
             if (email == null || email.isBlank()) return;
             try {
-                String subject = "[TrafficSync 민원] '" + c.getTitle() + "' 처리 현황 안내";
+                String subject = "[Syncro] '" + c.getTitle() + "' 처리 현황 안내";
                 String body = String.format(
                     "%s 님, 신청하신 민원의 처리 현황을 알려드립니다.\n\n" +
                     "■ 민원 제목: %s\n" +
@@ -124,7 +124,7 @@ public class ComplaintService {
                     "■ 접수 위치: %s\n" +
                     "■ 현재 상태: %s\n\n" +
                     "%s\n\n" +
-                    "TrafficSync 서울시 교통 관제 시스템",
+                    "Syncro 서울시 교통 관제 시스템",
                     user.getName(),
                     c.getTitle(),
                     c.getCategory() != null ? c.getCategory() : "—",

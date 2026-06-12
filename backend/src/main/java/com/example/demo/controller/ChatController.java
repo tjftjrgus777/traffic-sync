@@ -65,10 +65,12 @@ public class ChatController {
         List<Map<String, Object>> routeTraffic = (List<Map<String, Object>>) body.get("routeTraffic");
         @SuppressWarnings("unchecked")
         List<String> bottleneckIntNos = (List<String>) body.get("bottleneckIntNos");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> contexts = (List<Map<String, Object>>) body.get("contexts");
         if (question == null || question.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
-        Map<String, Object> result = chatService.simulationChat(intNo, question, simulation, routeTraffic, bottleneckIntNos, userEmail);
+        Map<String, Object> result = chatService.simulationChat(intNo, question, simulation, routeTraffic, bottleneckIntNos, contexts, userEmail);
         return ResponseEntity.ok(result);
     }
 

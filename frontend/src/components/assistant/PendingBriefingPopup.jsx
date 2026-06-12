@@ -15,6 +15,7 @@ export default function PendingBriefingPopup({ pending, onStart, onDismiss, shif
     <div style={{
       position: 'fixed', bottom: 28, right: rightOffset,
       zIndex: 10001, width: 360,
+      transition: 'right 0.3s cubic-bezier(0.32,0.72,0,1)',
       background: 'rgba(12,12,14,0.96)',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
       border: '1px solid rgba(255,255,255,0.09)', borderRadius: 14,

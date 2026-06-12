@@ -12,6 +12,18 @@ function getVWorldApiKey() {
   return raw;
 }
 
+// vworld DOM을 숨겨두는 stash div — React가 컨테이너를 언마운트해도 canvas를 보존
+function getStash() {
+  let stash = document.getElementById("vworld-dom-stash");
+  if (!stash) {
+    stash = document.createElement("div");
+    stash.id = "vworld-dom-stash";
+    stash.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none;visibility:hidden;";
+    document.body.appendChild(stash);
+  }
+  return stash;
+}
+
 /**
  * @param {{ startLL, selectedGuLL, markerEntitiesRef, destroyCallbackRef }}
  *   destroyCallbackRef: 뷰어 정리 전 호출할 콜백 ref (stopAnimation, clearTrafficLayer 등)
@@ -78,6 +90,8 @@ export function useVWorldViewer({ startLL, selectedGuLL, markerEntitiesRef, dest
       viewer.scene.screenSpaceCameraController.enableZoom = true;
       viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 2);
       if (viewer.scene.postProcessStages?.fxaa) viewer.scene.postProcessStages.fxaa.enabled = true;
+      // PVS(가시집합) 계산 RangeError 발생 시 렌더링 중단 방지
+      viewer.scene.rethrowRenderErrors = false;
 
       try {
         vworldMapRef.current?.getElementById?.("facility_build")?.show?.();
@@ -108,46 +122,72 @@ export function useVWorldViewer({ startLL, selectedGuLL, markerEntitiesRef, dest
       applyViewerOptions(viewer);
     };
 
+    const startNewMap = () => {
+      const options = {
+        mapId: containerRef.current.id,
+        initPosition: new vw.CameraPosition(
+          new vw.CoordZ(center.lon, center.lat, 1200),
+          new vw.Direction(0, -45, 0)
+        ),
+        logo: false,
+        navigation: true,
+      };
+      vw.ws3dInitCallBack = () => { previousCallback?.(); completeInit(); };
+      const map = new vw.Map();
+      map.setOption(options);
+      map.start();
+      vworldMapRef.current = map;
+      setTimeout(completeInit, 600);
+    };
+
     try {
       const existingViewer = window.ws3d?.viewer;
+      console.log('[VWorld] init effect 실행', {
+        hasExistingViewer: !!existingViewer,
+        isDestroyed: existingViewer?.isDestroyed?.(),
+        containerW: containerRef.current?.offsetWidth,
+        containerH: containerRef.current?.offsetHeight,
+      });
       if (existingViewer && !existingViewer.isDestroyed?.()) {
+        // stash에 보관된 vworld DOM을 컨테이너로 복원
+        const stash = getStash();
+        const container = containerRef.current;
+        console.log('[VWorld] 기존 viewer 재사용, stash 자식:', stash.children.length);
+        if (stash.children.length > 0 && container) {
+          while (stash.firstChild) {
+            container.appendChild(stash.firstChild);
+          }
+        }
+        // resize로 새 컨테이너 크기에 맞춤
+        try { existingViewer.resize?.(); } catch (e) {}
         applyViewerOptions(existingViewer);
       } else {
-        const options = {
-          mapId: containerRef.current.id,
-          initPosition: new vw.CameraPosition(
-            new vw.CoordZ(center.lon, center.lat, 1200),
-            new vw.Direction(0, -45, 0)
-          ),
-          logo: false,
-          navigation: true,
-        };
-        vw.ws3dInitCallBack = () => { previousCallback?.(); completeInit(); };
-        const map = new vw.Map();
-        map.setOption(options);
-        map.start();
-        vworldMapRef.current = map;
-        setTimeout(completeInit, 600);
+        console.log('[VWorld] 새 지도 생성');
+        startNewMap();
       }
     } catch (err) {
       console.error(err);
-      const existingViewer = window.ws3d?.viewer;
-      if (existingViewer && !existingViewer.isDestroyed?.()) {
-        applyViewerOptions(existingViewer);
-      } else {
-        setStatus(`VWorld 3D 지도 초기화 실패: ${err.message}`);
-      }
+      setStatus(`VWorld 3D 지도 초기화 실패: ${err.message}`);
     }
 
     return () => {
-      // 언마운트 시 다른 훅 정리 콜백 먼저 호출
       destroyCallbackRef?.current?.();
       const viewer = viewerRef.current;
       if (viewer && !viewer.isDestroyed?.()) {
-        Object.values(markerEntitiesRef?.current || {}).forEach(e => viewer.entities.remove(e));
+        Object.values(markerEntitiesRef?.current || {}).forEach(e => {
+          try { viewer.entities.remove(e); } catch (e2) {}
+        });
         if (viewer._routeSimClickHandler) {
           viewer._routeSimClickHandler.destroy?.();
           viewer._routeSimClickHandler = null;
+        }
+        // vworld는 destroy 불가 (내부 전역 상태 파괴됨) → DOM만 stash로 이동 보존
+        const container = containerRef.current;
+        const stash = getStash();
+        if (container && stash) {
+          while (container.firstChild) {
+            stash.appendChild(container.firstChild);
+          }
         }
       }
       if (markerEntitiesRef) markerEntitiesRef.current = {};

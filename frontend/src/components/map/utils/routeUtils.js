@@ -120,14 +120,12 @@ export function getSpeedAtProgress(routeTraffic, progress) {
   return getSegmentSpeedKph(segments[idx]);
 }
 
-// 경로 + 속도 데이터로 예상 소요시간 계산
 export function estimateTripFromTraffic(routePoints, routeTraffic) {
   const distance = routeLengthMeters(routePoints);
   const segments = getRouteTrafficSegments(routeTraffic);
   if (!distance || !segments.length) return null;
 
-  const segmentDistance = distance / segments.length;
-  let totalSec = 0, speedCount = 0, speedSum = 0;
+  let speedCount = 0;
   let minSpeedKph = null, missingSpeedCount = 0, bottleneckCount = 0;
 
   segments.forEach(segment => {
@@ -135,16 +133,12 @@ export function estimateTripFromTraffic(routePoints, routeTraffic) {
     const congestion = getSegmentCongestion(segment);
     if (congestion === "정체") bottleneckCount++;
     if (speed == null || speed <= 0) { missingSpeedCount++; return; }
-    totalSec += segmentDistance / (speed / 3.6);
-    speedSum += speed;
     speedCount++;
     minSpeedKph = minSpeedKph == null ? speed : Math.min(minSpeedKph, speed);
   });
 
   return {
     distance,
-    totalSec: missingSpeedCount === 0 && speedCount > 0 ? Math.round(totalSec) : null,
-    avgSpeedKph: speedCount > 0 ? Math.round(speedSum / speedCount) : null,
     minSpeedKph: minSpeedKph == null ? null : Math.round(minSpeedKph),
     bottleneckCount,
     speedMissing: missingSpeedCount > 0,

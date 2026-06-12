@@ -752,6 +752,8 @@ export default function MainDashboard({
   onToggleMute,
   isMicActive = false,
   onToggleMic,
+  notifQueue = [],
+  onDismissNotif,
 }) {
   const [time, setTime] = useState(new Date());
   const [loading, setLoading] = useState(false);
@@ -1122,33 +1124,10 @@ export default function MainDashboard({
         onGoComplaints={onGoComplaints}
         onGoMyPage={onGoMyPage}
         onLogout={onLogout}
+        notifQueue={notifQueue}
+        onDismissNotif={onDismissNotif}
         rightExtra={(
           <>
-            {onToggleMic && (
-              <button
-                onClick={onToggleMic}
-                title={isMicActive ? "AI 음성 끄기" : "AI 음성 켜기"}
-                style={{
-                  background: isMicActive ? "rgba(255,60,60,0.15)" : "transparent",
-                  // border: `1px solid ${isMicActive ? "rgba(255,60,60,0.4)" : V.line}`,
-                  border: 0,
-                  borderRadius: 999,
-                  width: 32, height: 32,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer",
-                  fontSize: 15,
-                  flexShrink: 0,
-                  animation: isMicActive ? "micPulse 1s ease infinite" : "none",
-                  transition: "border-color .2s, background .2s",
-                }}
-              >
-                <img
-                  src={isMicActive ? "/icons/microphone.png" : "/icons/microphone_off.png"}
-                  alt=""
-                  style={{width: 18, height: 18, objectFit: "contain", filter: "invert(1)", opacity: isMicActive ? 1 : 0.9, }}
-                />
-              </button>
-            )}
             {onToggleMute && (
               <button
                 onClick={onToggleMute}

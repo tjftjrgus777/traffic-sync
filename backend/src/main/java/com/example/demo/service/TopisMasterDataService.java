@@ -19,10 +19,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -151,11 +157,27 @@ public class TopisMasterDataService {
                 .distinct()
                 .toList();
 
-        List<TopisLinkVertexInfo> result = new ArrayList<>();
-        for (String linkId : linkIds) {
-            result.addAll(topisApiService.fetchLinkVertexInfos(linkId));
+        int threads = Math.min(12, Math.max(1, linkIds.size()));
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        List<TopisLinkVertexInfo> result = Collections.synchronizedList(new ArrayList<>());
+        try {
+            List<Callable<Void>> tasks = linkIds.stream()
+                    .<Callable<Void>>map(linkId -> () -> {
+                        result.addAll(topisApiService.fetchLinkVertexInfos(linkId));
+                        return null;
+                    })
+                    .toList();
+            List<Future<Void>> futures = executor.invokeAll(tasks, 30, TimeUnit.MINUTES);
+            long failed = futures.stream().filter(f -> {
+                try { f.get(); return false; } catch (Exception e) { return true; }
+            }).count();
+            if (failed > 0) {
+                log.warn("TOPIS vertex fetch: {} links failed or timed out", failed);
+            }
+        } finally {
+            executor.shutdownNow();
         }
-        return result;
+        return new ArrayList<>(result);
     }
 
     private TopisLinkVertexEntity toVertexEntity(TopisLinkVertexInfo info, long updatedAtMs) {

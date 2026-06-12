@@ -32,7 +32,7 @@ const TABS = [
 const CHAT_W = 480;
 const CHATBOT_ICON = "/icons/chatbot.webp";
 
-export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulation, onGoMyPage, onLogout, onGoComplaints, selectedGu, wsData, setWsData, initialCenter, wsStatus, lastUpdate, stations = [], isMuted, onToggleMute, isMicActive, onToggleMic, }) {
+export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulation, onGoMyPage, onLogout, onGoComplaints, selectedGu, wsData, setWsData, initialCenter, wsStatus, lastUpdate, stations = [], isMuted, onToggleMute, isMicActive, onToggleMic, notifQueue = [], onDismissNotif, }) {
   const [time,         setTime]         = useState(new Date());
   const [selected,     setSelected]     = useState(null);
   const [activeTab,    setActiveTab]    = useState("map");
@@ -114,7 +114,7 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
   }, [fetchComplaints, selectedGu?.name]);
 
   const bottlenecks = [...wsData]
-    .filter(c => c.congestion === "혼잡" || c.congestion === "서행")
+    .filter(c => c.congestion === "정체" || c.congestion === "혼잡" || c.congestion === "서행")
     .sort((a, b) => (a.speed ?? Number.MAX_SAFE_INTEGER) - (b.speed ?? Number.MAX_SAFE_INTEGER));
   const risks       = [...wsData].filter(isHighRisk).sort((a, b) => riskRank(b) - riskRank(a));
   const validSpeeds = wsData.map(c => c.speed).filter(Number.isFinite);
@@ -139,19 +139,16 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
         onGoMyPage={onGoMyPage}
         onLogout={onLogout}
         complaintCount={complaints.filter(c => c.status !== "완료").length}
-        // rightExtra={(
-        //   <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: "#7a7a7a" }}>
-        //     갱신: <span style={{ color: "#aab4c8" }}>{lastUpdate ? lastUpdate.toLocaleTimeString("ko-KR") : "-"}</span>
-        //   </span>
-        // )}
+        notifQueue={notifQueue}
+        onDismissNotif={onDismissNotif}
         rightExtra={(
           <>
-            {onToggleMic && (
+            {onToggleMute && (
               <button
-                onClick={onToggleMic}
-                title={isMicActive ? "AI 음성 끄기" : "AI 음성 켜기"}
+                onClick={onToggleMute}
+                title={isMuted ? "음소거 해제" : "음소거"}
                 style={{
-                  background: isMicActive ? "rgba(255,60,60,0.15)" : "transparent",
+                  background: isMuted ? "#1a0a0a" : "transparent",
                   border: 0,
                   borderRadius: 999,
                   width: 32,
@@ -163,31 +160,22 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
                   flexShrink: 0,
                 }}
               >
-                <img           src={isMicActive ? "/icons/microphone.png" : "/icons/microphone_off.png"}
-                  alt="" 
-                  style={{ width: 18, height: 18, objectFit: "contain", filter: "invert(1)", opacity: isMicActive ? 1 : 0.75,
-                  }}
-                />
-              </button>
-            )}
-
-            {onToggleMute && (
-              <button onClick={onToggleMute}
-                title={isMuted ? "음소거 해제" : "음소거"}
-                style={{ background: isMuted ? "#1a0a0a" : "transparent", border: 0, borderRadius: 999, width: 32, 
-                  height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
-                }}
-              >
                 <img
                   src={isMuted ? "/icons/mute.png" : "/icons/speaker.png"}
                   alt=""
-                  style={{ width: 18, height: 18, objectFit: "contain", filter: "invert(1)", opacity: isMuted ? 1 : 0.9, }}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    objectFit: "contain",
+                    filter: "invert(1)",
+                    opacity: isMuted ? 1 : 0.9,
+                  }}
                 />
               </button>
             )}
           </>
         )}
-        
+
       />
 {/* 메인 — chatOpen 시 그리드에 챗봇 컬럼 추가 */}
       <div style={{
@@ -397,6 +385,7 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
             <AIChatBot
               selected={selected}
               onClose={() => setChatOpen(false)}
+              isMuted={isMuted}
             />
           </div>
         )}

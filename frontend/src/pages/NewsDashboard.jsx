@@ -130,7 +130,7 @@ function NewsCard({ item }) {
   );
 }
 
-export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulation, onGoComplaints, onGoMyPage, onLogout, selectedGu }) {
+export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulation, onGoComplaints, onGoMyPage, onLogout, selectedGu, notifQueue = [], onDismissNotif }) {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMenu, setSelectedMenu] = useState("all");
@@ -209,6 +209,8 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
         onGoComplaints={onGoComplaints}
         onGoMyPage={onGoMyPage}
         onLogout={onLogout}
+        notifQueue={notifQueue}
+        onDismissNotif={onDismissNotif}
       />
 {/* ── 검색바 ── */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "10px 16px", borderBottom: `1px solid ${V.line}`, background: "#050505", flexShrink: 0 }}>

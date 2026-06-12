@@ -184,6 +184,7 @@ public class SupplementalDataCacheService {
                 .orElse(null);
 
         applySpeed(status, speed);
+        applyDirectionalSpeeds(status);
         applyRisk(status, risk);
 
         // 속도 API가 아직 없으면 신호 잔여시간으로만 임시 혼잡도를 계산한다.
@@ -203,6 +204,41 @@ public class SupplementalDataCacheService {
         status.setSpeedKph(speed.getSpeedKph());
         status.setTravelTimeSec(speed.getTravelTimeSec());
         status.setSpeedStale(speed.isStale());
+    }
+
+    // 방향별 진입 링크 → 속도 캐시를 조회해 speedKphByDirection을 채운다.
+    // 방향별 속도가 하나라도 있으면 대표 speedKph는 그 중 최저(가장 막힌 진입)로 덮어쓴다.
+    private void applyDirectionalSpeeds(TrafficStatus status) {
+        Map<String, CrossroadRoadLinkMapping> directional = getDirectionalMappings(status.getCrsrdId());
+        if (directional.isEmpty()) {
+            status.setSpeedKphByDirection(null);
+            return;
+        }
+
+        Map<String, Double> speedByDirection = new LinkedHashMap<>();
+        boolean anyFresh = false;
+        for (Map.Entry<String, CrossroadRoadLinkMapping> entry : directional.entrySet()) {
+            RoadSpeedSnapshot snapshot = speedLinkId(entry.getValue()).flatMap(this::getSpeed).orElse(null);
+            if (snapshot == null || snapshot.getSpeedKph() == null) {
+                continue;
+            }
+            speedByDirection.put(entry.getKey(), snapshot.getSpeedKph());
+            if (!snapshot.isStale()) {
+                anyFresh = true;
+            }
+        }
+
+        if (speedByDirection.isEmpty()) {
+            status.setSpeedKphByDirection(null);
+            return;
+        }
+
+        status.setSpeedKphByDirection(speedByDirection);
+        double worst = speedByDirection.values().stream().mapToDouble(Double::doubleValue).min().orElse(Double.NaN);
+        if (!Double.isNaN(worst)) {
+            status.setSpeedKph(worst);
+            status.setSpeedStale(!anyFresh);
+        }
     }
 
     private void applyRisk(TrafficStatus status, RoadRiskSnapshot risk) {

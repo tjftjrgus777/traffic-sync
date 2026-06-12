@@ -48,14 +48,9 @@ export function useClapDetection({
         const DELTA     = 0.15;  // 이전 프레임 대비 최소 급등량 (핵심 필터)
 
         let prevRms = 0;
-        let debugMax = 0;
-        let debugTimer = setInterval(() => {
-          if (debugMax > 0.02) console.log('[Clap] 최근 최대 RMS:', debugMax.toFixed(3), ' 임계값:', THRESHOLD, ' delta:', DELTA);
-          debugMax = 0;
-        }, 2000);
 
         function tick() {
-          if (destroyed) { clearInterval(debugTimer); return; }
+          if (destroyed) return;
           frameRef.current = requestAnimationFrame(tick);
 
           analyser.getFloatTimeDomainData(buf);
@@ -65,7 +60,6 @@ export function useClapDetection({
           const rms = Math.sqrt(sum / buf.length);
           const delta = rms - prevRms;
           prevRms = rms;
-          if (rms > debugMax) debugMax = rms;
 
           // 절대 볼륨 AND 급등 둘 다 충족할 때만 박수로 판정
           if (rms > THRESHOLD && delta > DELTA && !isClapActive.current && !cooldownRef.current) {

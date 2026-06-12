@@ -22,6 +22,8 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,9 +118,16 @@ public class SupplementalDataScheduler {
             Map<String, CrossroadRoadLinkMapping> mappings =
                     crossroadSupplementalMappingService.loadOrCreateMappings(crossroads);
             supplementalDataCacheService.updateMappings(mappings);
-            supplementalDataCacheService.updateDirectionalMappings(Map.of());
-            log.info("Crossroad supplemental mapping refreshed: crossroads={}, mapped={}, elapsedMs={}",
-                    crossroads.size(), mappings.size(), System.currentTimeMillis() - startedAtMs);
+
+            // 각 교차로가 실제로 가진 V2X 신호 방향 → 진입 링크를 이 방향에 스냅해 키를 일치시킨다.
+            Map<String, Set<String>> availableDirections = signalDirectionsByCrossroad();
+            Map<String, Map<String, CrossroadRoadLinkMapping>> directionalMappings =
+                    crossroadSupplementalMappingService.loadOrCreateDirectionalMappings(crossroads, availableDirections);
+            supplementalDataCacheService.updateDirectionalMappings(directionalMappings);
+
+            log.info("Crossroad supplemental mapping refreshed: crossroads={}, mapped={}, directional={}, elapsedMs={}",
+                    crossroads.size(), mappings.size(), directionalMappings.size(),
+                    System.currentTimeMillis() - startedAtMs);
         } catch (Exception e) {
             log.warn("Crossroad supplemental mapping refresh failed: {}", e.getMessage());
         }
@@ -331,6 +340,17 @@ public class SupplementalDataScheduler {
         }
     }
 
+    // 현재 수집된 V2X 신호에서 교차로별 신호 방향 코드 집합을 추출한다.
+    private Map<String, Set<String>> signalDirectionsByCrossroad() {
+        Map<String, Set<String>> directions = new HashMap<>();
+        trafficCacheService.getAllSignals().forEach((crsrdId, status) -> {
+            if (status != null && status.getSignals() != null && !status.getSignals().isEmpty()) {
+                directions.put(crsrdId, new HashSet<>(status.getSignals().keySet()));
+            }
+        });
+        return directions;
+    }
+
     private void broadcastCurrentTrafficStatuses() {
         Map<String, com.example.demo.model.TrafficStatus> currentSignals = trafficCacheService.getAllSignals();
         if (currentSignals.isEmpty()) {
@@ -387,19 +407,6 @@ public class SupplementalDataScheduler {
         }
         if (mapping.getLineString() != null && !mapping.getLineString().isBlank()) {
             return mapping.getLineString();
-        }
-        if (mapping.getLinkId() != null && !mapping.getLinkId().isBlank()) {
-            return mapping.getLinkId();
-        }
-        return "";
-    }
-
-    private String speedCacheKey(CrossroadRoadLinkMapping mapping) {
-        if (mapping == null) {
-            return "";
-        }
-        if (mapping.getSpeedLinkId() != null && !mapping.getSpeedLinkId().isBlank()) {
-            return mapping.getSpeedLinkId();
         }
         if (mapping.getLinkId() != null && !mapping.getLinkId().isBlank()) {
             return mapping.getLinkId();

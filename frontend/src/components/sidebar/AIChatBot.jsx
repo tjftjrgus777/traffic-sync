@@ -3,6 +3,7 @@ import { useClapDetection } from "../../hooks/useClapDetection";
 import { ThinkingBlock, InlineSteps } from "./ChatSteps";
 
 const PYTHON_BASE    = import.meta.env.VITE_PYTHON_URL    || "http://localhost:8001";
+const API_BASE       = (import.meta.env.VITE_API_URL       || "http://localhost:8080").replace(/\/+$/, "");
 const GOOGLE_TTS_KEY = import.meta.env.VITE_GOOGLE_TTS_KEY || "";
 
 const INITIAL_MSG = [
@@ -17,6 +18,7 @@ const PRESETS = [
   { label: "병목 TOP3",   q: "지금 가장 막히는 교차로 3곳 알려줘" },
   { label: "신호 최적화", q: "현재 가장 정체가 심한 교차로의 신호 조정 방법을 알려줘" },
   { label: "날씨 현황",   q: "현재 날씨 상황이 교통에 어떤 영향을 미치고 있어?" },
+  { label: "주변 분석",   q: "주변 교차로 분석해줘", multi: true },
 ];
 
 // 마크다운 기호 제거 (TTS 읽기 전처리 — 링크 텍스트도 풀어줌)
@@ -34,7 +36,7 @@ const MSG_STORAGE_KEY       = 'ts_chatbot_messages';
 const COLLAPSED_STORAGE_KEY = 'ts_chatbot_collapsed';
 const LIVE_STORAGE_KEY      = 'ts_chatbot_live';
 
-export default function AIChatBot({ selected, onClose }) {
+export default function AIChatBot({ selected, onClose, isMuted = false }) {
   const [messages, setMessages] = useState(() => {
     try {
       const saved = sessionStorage.getItem(MSG_STORAGE_KEY);
@@ -43,6 +45,7 @@ export default function AIChatBot({ selected, onClose }) {
   });
   const [input,          setInput]          = useState("");
   const [loading,        setLoading]        = useState(false);
+  const [emailSent,      setEmailSent]      = useState({});  // idx → 'sending'|'sent'|'error'
   // 스트리밍 중단 복원: 마지막으로 저장된 liveSteps부터 시작
   const [liveSteps, setLiveSteps] = useState(() => {
     try {
@@ -71,6 +74,15 @@ export default function AIChatBot({ selected, onClose }) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, liveSteps]);
+
+  const isMutedRef = useRef(isMuted)
+  useEffect(() => {
+    isMutedRef.current = isMuted
+    if (isMuted) {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; setSpeaking(false); window.__chatbotSpeaking = false; }
+      if (actionAudioRef.current) { actionAudioRef.current.pause(); actionAudioRef.current = null; }
+    }
+  }, [isMuted]);
 
   // 세션 유지 — 닫았다 열어도 메시지·추론·접힘 상태 모두 보존
   useEffect(() => {
@@ -114,7 +126,7 @@ export default function AIChatBot({ selected, onClose }) {
 
   // 전체 답변 TTS (자동재생)
   const speakText = useCallback(async (text) => {
-    if (!GOOGLE_TTS_KEY || !text) return;
+    if (!GOOGLE_TTS_KEY || !text || isMutedRef.current) return;
     stopSpeaking();
     setSpeaking(true);
     window.__chatbotSpeaking = true;
@@ -131,7 +143,7 @@ export default function AIChatBot({ selected, onClose }) {
 
   // 도구 호출 알림 TTS — 이전 도구 알림 즉시 교체 (큐 없음)
   const speakAction = useCallback(async (label) => {
-    if (!GOOGLE_TTS_KEY || !label) return;
+    if (!GOOGLE_TTS_KEY || !label || isMutedRef.current) return;
     try {
       const content = await _tts(label, 1.4);
       if (content) {
@@ -202,12 +214,142 @@ export default function AIChatBot({ selected, onClose }) {
     }, []),
   });
 
+  // 라우팅은 백엔드 LLM이 판단 (route_multi 이벤트로 응답)
+
+  // ── 멀티에이전트 스트리밍 ──────────────────────────────────────
+  async function _sendMulti(q, coordOverride = null) {
+    // coordOverride: route_multi 이벤트에서 받은 { lat, lon, crsrdId, crsrdNm, preSteps }
+    // selected가 null(교차로 미선택)일 때 백엔드가 찾아준 좌표 사용
+    const lat      = coordOverride?.lat      ?? selected?.lat;
+    const lon      = coordOverride?.lon      ?? selected?.lon;
+    const crsrdId  = coordOverride?.crsrdId  ?? selected?.crsrdId;
+    const crsrdNm  = coordOverride?.crsrdNm  ?? selected?.crsrdNm ?? "선택 교차로";
+    const preSteps = coordOverride?.preSteps ?? [];
+
+    setMessages(prev => [...prev, { role: "user", text: q, steps: [] }]);
+    setInput("");
+    setLoading(true);
+
+    const multiMsgIdx = { current: -1 };
+    setMessages(prev => {
+      multiMsgIdx.current = prev.length;
+      return [...prev, { role: "multi_group", centerName: crsrdNm, preSteps, workers: [], discussions: [], orchestrator: null, loadingWorkers: true, loadingDiscuss: false, currentRound: 0 }];
+    });
+
+    const abortCtrl = new AbortController();
+    abortCtrlRef.current = abortCtrl;
+    userStoppedRef.current = false;
+
+    try {
+      const res = await fetch(`${PYTHON_BASE}/api/agent/multi-analyze/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lat, lon, crsrdId, crsrdNm,
+          userEmail: JSON.parse(localStorage.getItem("ts_user") || "{}").email || null,
+        }),
+        signal: abortCtrl.signal,
+      });
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          let data;
+          try { data = JSON.parse(line.slice(6)); } catch { continue; }
+
+          if (data.type === "done") {
+            window.dispatchEvent(new CustomEvent("multiAnalyzeDone"));
+            break;
+          }
+          if (data.type === "analyze_init") {
+            window.dispatchEvent(new CustomEvent("multiAnalyzeInit", { detail: data }));
+          }
+          if (data.type === "error") {
+            setMessages(prev => prev.map((m, i) =>
+              i === multiMsgIdx.current ? { ...m, loadingWorkers: false, error: data.content } : m
+            ));
+          } else if (data.type === "worker_start") {
+            setMessages(prev => prev.map((m, i) =>
+              i === multiMsgIdx.current ? {
+                ...m,
+                workers: [...m.workers.filter(w => w.worker_id !== data.worker_id),
+                  { worker_id: data.worker_id, direction: data.direction, crossroad_name: data.crossroad_name, loading: true, content: "" }],
+              } : m
+            ));
+          } else if (data.type === "worker_done") {
+            setMessages(prev => prev.map((m, i) =>
+              i === multiMsgIdx.current ? {
+                ...m,
+                workers: m.workers.map(w =>
+                  w.worker_id === data.worker_id ? { ...w, loading: false, content: data.content } : w
+                ),
+              } : m
+            ));
+          } else if (data.type === "discussion_start") {
+            setMessages(prev => prev.map((m, i) =>
+              i === multiMsgIdx.current ? { ...m, loadingWorkers: false, loadingDiscuss: true } : m
+            ));
+          } else if (data.type === "round_start") {
+            setMessages(prev => prev.map((m, i) =>
+              i === multiMsgIdx.current ? { ...m, currentRound: data.round, loadingDiscuss: true } : m
+            ));
+          } else if (data.type === "discuss_start") {
+            setMessages(prev => prev.map((m, i) =>
+              i === multiMsgIdx.current ? {
+                ...m,
+                discussions: [...(m.discussions || []),
+                  { round: data.round, worker_id: data.worker_id, direction: data.direction, crossroad_name: data.crossroad_name, loading: true, content: "" }],
+              } : m
+            ));
+          } else if (data.type === "discuss_done") {
+            setMessages(prev => prev.map((m, i) =>
+              i === multiMsgIdx.current ? {
+                ...m,
+                discussions: (m.discussions || []).map(d =>
+                  d.round === data.round && d.worker_id === data.worker_id ? { ...d, loading: false, content: data.content } : d
+                ),
+              } : m
+            ));
+          } else if (data.type === "orchestrator_start") {
+            setMessages(prev => prev.map((m, i) =>
+              i === multiMsgIdx.current ? { ...m, loadingDiscuss: false, loadingOrch: true } : m
+            ));
+          } else if (data.type === "orchestrator_done") {
+            setMessages(prev => prev.map((m, i) =>
+              i === multiMsgIdx.current ? { ...m, loadingOrch: false, orchestrator: data.content } : m
+            ));
+            speakText(data.content);
+          }
+        }
+      }
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        setMessages(prev => prev.map((m, i) =>
+          i === multiMsgIdx.current ? { ...m, loadingWorkers: false, error: err.message } : m
+        ));
+      }
+    } finally {
+      abortCtrlRef.current = null;
+      setLoading(false);
+    }
+  }
+
   // ── 채팅 전송 ─────────────────────────────────────────────────────
   const sendChat = useCallback(async (preset) => {
     const q = (preset ?? input).trim();
     if (!q || loading) return;
     await _send(q);
-  }, [input, loading]);
+  }, [input, loading, selected]);
 
   async function _send(q, retryCount = 0) {
     const MAX_RETRY = 2;
@@ -232,7 +374,10 @@ export default function AIChatBot({ selected, onClose }) {
         body: JSON.stringify({
           question:  q,
           crsrdId:   selected?.crsrdId ?? null,
+          crsrdNm:   selected?.crsrdNm ?? null,
           userEmail: JSON.parse(localStorage.getItem("ts_user") || "{}").email || null,
+          lat:       selected?.lat ?? null,
+          lon:       selected?.lon ?? null,
         }),
         signal: abortCtrl.signal,
       });
@@ -241,8 +386,10 @@ export default function AIChatBot({ selected, onClose }) {
       const decoder = new TextDecoder();
       let buffer = "";
       let currentSteps = [];
+      let routedToMulti = false;
+      let routeMultiData = null;
 
-      while (true) {
+      outer: while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
@@ -255,7 +402,14 @@ export default function AIChatBot({ selected, onClose }) {
           let data;
           try { data = JSON.parse(line.slice(6)); } catch { continue; }
 
-          if (data.type === "done") break;
+          if (data.type === "done") break outer;
+          if (data.type === "route_multi") {
+            // 백엔드 LLM이 멀티에이전트 분석으로 판단 → 재라우팅
+            routedToMulti = true;
+            routeMultiData = { ...data, preSteps: [...currentSteps] }; // 탐색 과정 스텝 포함
+            reader.cancel().catch(() => {});
+            break outer;
+          }
           if (data.type === "answer") {
             setMessages(prev => [...prev, { role: "ai", text: data.content, steps: currentSteps }]);
             setLiveSteps([]);
@@ -272,6 +426,17 @@ export default function AIChatBot({ selected, onClose }) {
             setLiveSteps([...currentSteps]);
           }
         }
+      }
+
+      if (routedToMulti) {
+        clearTimeout(abortTimer);
+        abortCtrlRef.current = null;
+        setLoading(false);
+        setLiveSteps([]);
+        // _send가 추가한 유저 메시지 제거 — _sendMulti가 다시 추가
+        setMessages(prev => prev.slice(0, -1));
+        await _sendMulti(q, routeMultiData);
+        return;
       }
     } catch (err) {
       clearTimeout(abortTimer);
@@ -354,8 +519,32 @@ export default function AIChatBot({ selected, onClose }) {
               <span style={{ animation: "chatDotBlink 1s ease infinite" }}>●</span> 재생 중 · 클릭해서 중지
             </button>
           )}
+          <button
+            onClick={() => {
+              if (loading) return;
+              try {
+                sessionStorage.removeItem(MSG_STORAGE_KEY);
+                sessionStorage.removeItem(COLLAPSED_STORAGE_KEY);
+                sessionStorage.removeItem(LIVE_STORAGE_KEY);
+              } catch {}
+              setMessages(INITIAL_MSG);
+              setLiveSteps([]);
+              setCollapsedSteps({});
+              setEmailSent({});
+            }}
+            disabled={loading}
+            title="대화 삭제"
+            style={{
+              marginLeft: "auto",
+              background: "none", border: "none",
+              color: "rgba(255,255,255,0.3)", fontSize: 11,
+              cursor: loading ? "default" : "pointer", padding: "0 4px", lineHeight: 1,
+              opacity: loading ? 0.3 : 1,
+            }}
+          >
+            🗑
+          </button>
           <button onClick={onClose} style={{
-            marginLeft: "auto",
             background: "none", border: "none",
             color: "rgba(255,255,255,0.3)", fontSize: 14,
             cursor: "pointer", padding: "0 2px", lineHeight: 1,
@@ -368,18 +557,21 @@ export default function AIChatBot({ selected, onClose }) {
           borderBottom: "1px solid rgba(255,255,255,0.04)",
           display: "flex", gap: 5, flexWrap: "wrap", flexShrink: 0,
         }}>
-          {PRESETS.map(({ label, q }) => (
-            <button key={label} onClick={() => sendChat(q)} disabled={loading} style={{
-              padding: "4px 10px", fontSize: 11, borderRadius: 5,
-              border: "1px solid rgba(255,255,255,0.08)",
-              background: "rgba(255,255,255,0.04)",
-              color: loading ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.5)",
-              cursor: loading ? "default" : "pointer",
-              fontFamily: "inherit",
-            }}>
-              {label}
-            </button>
-          ))}
+          {PRESETS.map(({ label, q, multi }) => {
+            const disabled = loading || (multi && !selected?.lat);
+            return (
+              <button key={label} onClick={() => sendChat(q)} disabled={disabled} style={{
+                padding: "4px 10px", fontSize: 11, borderRadius: 5,
+                border: multi ? "1px solid rgba(120,200,255,0.2)" : "1px solid rgba(255,255,255,0.08)",
+                background: multi ? "rgba(80,160,255,0.07)" : "rgba(255,255,255,0.04)",
+                color: disabled ? "rgba(255,255,255,0.18)" : multi ? "rgba(120,200,255,0.8)" : "rgba(255,255,255,0.5)",
+                cursor: disabled ? "default" : "pointer",
+                fontFamily: "inherit",
+              }}>
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         {/* 메시지 영역 */}
@@ -389,7 +581,129 @@ export default function AIChatBot({ selected, onClose }) {
           display: "flex", flexDirection: "column", gap: 12,
         }}>
           {messages.map((m, idx) =>
-            m.role === "user" ? (
+            m.role === "multi_group" ? (
+              <div key={idx} style={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: "98%" }}>
+
+                {/* 교차로 탐색 과정 (좌표 자동검색 시) */}
+                {m.preSteps?.length > 0 && (
+                  <InlineSteps
+                    steps={m.preSteps}
+                    label={`교차로 탐색 과정 · ${m.preSteps.length}단계`}
+                    collapsed={collapsedSteps[`${idx}-pre`] === true}
+                    onToggle={() => setCollapsedSteps(p => ({ ...p, [`${idx}-pre`]: !p[`${idx}-pre`] }))}
+                  />
+                )}
+
+                {/* 워커 분석 블록 — InlineSteps 스타일 */}
+                {(m.loadingWorkers || m.workers.length > 0) && (() => {
+                  const wKey = `${idx}-workers`;
+                  const wCollapsed = collapsedSteps[wKey] ?? false;
+                  const allDone = !m.loadingWorkers && m.workers.every(w => !w.loading);
+                  return (
+                    <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden" }}>
+                      <button onClick={() => setCollapsedSteps(p => ({ ...p, [wKey]: !p[wKey] }))} style={{
+                        width: "100%", display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
+                        background: "rgba(255,255,255,0.025)", border: "none", cursor: "pointer",
+                        color: "rgba(255,255,255,0.38)", fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
+                      }}>
+                        {!allDone && <span style={{ display: "inline-flex", gap: 2, alignItems: "center", marginRight: 2 }}>
+                          {[0,1,2].map(i => <span key={i} style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.45)", display: "inline-block", animation: `chatDotBlink 1.2s ease ${i*0.2}s infinite` }} />)}
+                        </span>}
+                        {allDone && <span style={{ fontSize: 8, transition: "transform .2s", transform: wCollapsed ? "rotate(-90deg)" : "none", display: "inline-block" }}>▾</span>}
+                        {allDone ? `에이전트 분석 · ${m.workers.length}개` : `에이전트 분석 중${m.workers.length > 0 ? ` · ${m.workers.length}개` : ""}`}
+                        <span style={{ marginLeft: "auto", fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{m.centerName}</span>
+                      </button>
+                      {(!wCollapsed || !allDone) && (
+                        <div style={{ padding: "6px 12px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
+                          {m.workers.map(w => (
+                            <div key={w.worker_id} style={{ display: "flex", gap: 10, animation: "chatFadeIn .15s ease" }}>
+                              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", minWidth: 52, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
+                                W{w.worker_id} {w.direction}
+                              </span>
+                              <span style={{ fontSize: 10, color: w.loading ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.48)", lineHeight: 1.55, fontFamily: "system-ui,sans-serif" }}>
+                                {w.loading ? "분석 중..." : (w.content.length > 120 ? w.content.slice(0, 120) + "…" : w.content)}
+                              </span>
+                            </div>
+                          ))}
+                          {m.loadingWorkers && m.workers.length === 0 && (
+                            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", fontFamily: "system-ui,sans-serif" }}>인근 교차로 조회 중...</div>
+                          )}
+                        </div>
+                      )}
+                      {!allDone && <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }}><div style={{ height: "100%", background: "rgba(255,255,255,0.14)", animation: "chatProgressBar 2.4s ease infinite" }} /></div>}
+                    </div>
+                  );
+                })()}
+
+                {/* 3라운드 토론 블록 */}
+                {[
+                  { num: 1, label: "토론 1라운드 · 문제 파악" },
+                  { num: 2, label: "토론 2라운드 · 수치 제안" },
+                  { num: 3, label: "토론 3라운드 · 합의" },
+                ].map(({ num, label }) => {
+                  const items = (m.discussions || []).filter(d => d.round === num);
+                  const isActive = m.currentRound === num && m.loadingDiscuss;
+                  const allDone = items.length > 0 && items.every(d => !d.loading) && !isActive;
+                  if (items.length === 0 && !isActive) return null;
+                  const rKey = `${idx}-r${num}`;
+                  const rCollapsed = collapsedSteps[rKey] ?? false;
+                  return (
+                    <div key={`round-${num}`} style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden" }}>
+                      <button onClick={() => allDone && setCollapsedSteps(p => ({ ...p, [rKey]: !p[rKey] }))} style={{
+                        width: "100%", display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
+                        background: "rgba(255,255,255,0.025)", border: "none", cursor: allDone ? "pointer" : "default",
+                        color: "rgba(255,255,255,0.38)", fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
+                      }}>
+                        {!allDone && <span style={{ display: "inline-flex", gap: 2, alignItems: "center", marginRight: 2 }}>
+                          {[0,1,2].map(i => <span key={i} style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.45)", display: "inline-block", animation: `chatDotBlink 1.2s ease ${i*0.2}s infinite` }} />)}
+                        </span>}
+                        {allDone && <span style={{ fontSize: 8, transition: "transform .2s", transform: rCollapsed ? "rotate(-90deg)" : "none", display: "inline-block" }}>▾</span>}
+                        {allDone ? `${label} · ${items.length}개` : label}
+                      </button>
+                      {(!rCollapsed || !allDone) && (
+                        <div style={{ padding: "6px 12px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
+                          {items.map(d => (
+                            <div key={`d-${d.round}-${d.worker_id}`} style={{ display: "flex", gap: 10, animation: "chatFadeIn .15s ease" }}>
+                              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", minWidth: 52, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
+                                W{d.worker_id} {d.direction}
+                              </span>
+                              <span style={{ fontSize: 10, color: d.loading ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.48)", lineHeight: 1.55, fontFamily: "system-ui,sans-serif" }}>
+                                {d.loading ? "작성 중..." : (d.content.length > 140 ? d.content.slice(0, 140) + "…" : d.content)}
+                              </span>
+                            </div>
+                          ))}
+                          {isActive && items.length === 0 && (
+                            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", fontFamily: "system-ui,sans-serif" }}>대기 중...</div>
+                          )}
+                        </div>
+                      )}
+                      {!allDone && <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }}><div style={{ height: "100%", background: "rgba(255,255,255,0.14)", animation: "chatProgressBar 2.4s ease infinite" }} /></div>}
+                    </div>
+                  );
+                })}
+
+                {/* 오케스트레이터 — 일반 AI 답변처럼 */}
+                {m.loadingOrch && (
+                  <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", background: "rgba(255,255,255,0.025)", color: "rgba(255,255,255,0.38)", fontSize: 11, fontFamily: "system-ui,sans-serif" }}>
+                      <span style={{ display: "inline-flex", gap: 2, alignItems: "center" }}>
+                        {[0,1,2].map(i => <span key={i} style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.45)", display: "inline-block", animation: `chatDotBlink 1.2s ease ${i*0.2}s infinite` }} />)}
+                      </span>
+                      <span style={{ marginLeft: 2 }}>종합 분석 중</span>
+                    </div>
+                    <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }}><div style={{ height: "100%", background: "rgba(255,255,255,0.14)", animation: "chatProgressBar 2.4s ease infinite" }} /></div>
+                  </div>
+                )}
+                {m.orchestrator && (
+                  <div style={{ fontSize: 13, lineHeight: 1.75, color: "rgba(255,255,255,0.82)", whiteSpace: "pre-line", padding: "2px 2px 0" }}>
+                    {m.orchestrator}
+                  </div>
+                )}
+                {m.error && (
+                  <div style={{ fontSize: 11, color: "rgba(255,100,100,0.7)", paddingLeft: 4 }}>오류: {m.error}</div>
+                )}
+              </div>
+            ) : m.role === "user" ? (
               <div key={idx} style={{ display: "flex", justifyContent: "flex-end" }}>
                 <div style={{
                   maxWidth: "80%", padding: "9px 13px",
@@ -436,6 +750,49 @@ export default function AIChatBot({ selected, onClose }) {
                 }}>
                   {m.text}
                 </div>
+                {/* 이메일 발송 버튼 — 로그인 상태이고 초기 인사 메시지가 아닐 때만 표시 */}
+                {idx > 0 && JSON.parse(localStorage.getItem("ts_user") || "{}").email && (
+                  <div style={{ paddingLeft: 2 }}>
+                    {emailSent[idx] === "sent" ? (
+                      <span style={{ fontSize: 11, color: "rgba(100,200,120,0.7)" }}>✓ 이메일 발송 완료</span>
+                    ) : emailSent[idx] === "error" ? (
+                      <span style={{ fontSize: 11, color: "rgba(255,100,100,0.7)" }}>발송 실패 — 다시 시도</span>
+                    ) : (
+                      <button
+                        disabled={emailSent[idx] === "sending"}
+                        onClick={async () => {
+                          const userEmail = JSON.parse(localStorage.getItem("ts_user") || "{}").email;
+                          if (!userEmail) return;
+                          setEmailSent(prev => ({ ...prev, [idx]: "sending" }));
+                          try {
+                            const res = await fetch(`${API_BASE}/api/email/send`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                to: userEmail,
+                                subject: "[Syncro] 분석결과를 알려드립니다",
+                                body: m.text,
+                              }),
+                            });
+                            setEmailSent(prev => ({ ...prev, [idx]: res.ok ? "sent" : "error" }));
+                          } catch {
+                            setEmailSent(prev => ({ ...prev, [idx]: "error" }));
+                          }
+                        }}
+                        style={{
+                          padding: "3px 10px", fontSize: 11, borderRadius: 5,
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          background: emailSent[idx] === "sending" ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.05)",
+                          color: emailSent[idx] === "sending" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.4)",
+                          cursor: emailSent[idx] === "sending" ? "default" : "pointer",
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        {emailSent[idx] === "sending" ? "발송 중..." : "📧 이메일로 받기"}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )
           )}
@@ -543,6 +900,11 @@ export default function AIChatBot({ selected, onClose }) {
         @keyframes micPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(255,60,60,0.4); }
           50%       { box-shadow: 0 0 0 6px rgba(255,60,60,0); }
+        }
+        @keyframes mapPingPulse {
+          0%   { transform: translate(-50%,-50%) scale(1);   opacity: 1; }
+          60%  { transform: translate(-50%,-50%) scale(2.8); opacity: 0.1; }
+          100% { transform: translate(-50%,-50%) scale(1);   opacity: 1; }
         }
       `}</style>
     </>

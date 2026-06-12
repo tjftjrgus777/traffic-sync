@@ -12,6 +12,11 @@ final class GeoDistanceUtils {
     private GeoDistanceUtils() {
     }
 
+    // 두 지점 사이 방위각(0~360°). 진입 방향 계산에 사용한다.
+    static double bearingBetween(GeoPoint from, GeoPoint to) {
+        return bearingDegrees(from, to);
+    }
+
     static double haversineMeters(GeoPoint a, GeoPoint b) {
         double dLat = Math.toRadians(b.getLat() - a.getLat());
         double dLon = Math.toRadians(b.getLon() - a.getLon());
@@ -29,11 +34,11 @@ final class GeoDistanceUtils {
 
     static ClosestPoint closestPointOnPolyline(GeoPoint point, List<GeoPoint> vertices) {
         if (vertices == null || vertices.isEmpty()) {
-            return new ClosestPoint(Double.MAX_VALUE, null, Double.NaN);
+            return new ClosestPoint(Double.MAX_VALUE, null, Double.NaN, Double.NaN);
         }
         if (vertices.size() == 1) {
             double distance = haversineMeters(point, vertices.get(0));
-            return new ClosestPoint(distance, vertices.get(0), bearingDegrees(point, vertices.get(0)));
+            return new ClosestPoint(distance, vertices.get(0), bearingDegrees(point, vertices.get(0)), Double.NaN);
         }
 
         double metersPerDegreeLon = METERS_PER_DEGREE_LAT * Math.cos(Math.toRadians(point.getLat()));
@@ -42,11 +47,13 @@ final class GeoDistanceUtils {
 
         double best = Double.MAX_VALUE;
         GeoPoint closestPoint = null;
+        int bestSegmentIndex = -1;
         for (int i = 0; i < vertices.size() - 1; i++) {
             SegmentProjection projection = pointToSegment(point, vertices.get(i), vertices.get(i + 1));
             if (projection.distanceMeters() < best) {
                 best = projection.distanceMeters();
                 closestPoint = projection.closestPoint();
+                bestSegmentIndex = i;
             }
         }
 
@@ -62,7 +69,12 @@ final class GeoDistanceUtils {
             }
         }
 
-        return new ClosestPoint(best, closestPoint, bearingDegrees(point, bearingPoint));
+        // 링크 진행 방향(정점 i → i+1)의 방위각. 진입/진출(상행/하행) 구분에 사용한다.
+        double segmentBearing = bestSegmentIndex < 0
+                ? Double.NaN
+                : bearingDegrees(vertices.get(bestSegmentIndex), vertices.get(bestSegmentIndex + 1));
+
+        return new ClosestPoint(best, closestPoint, bearingDegrees(point, bearingPoint), segmentBearing);
     }
 
     private static SegmentProjection pointToSegment(GeoPoint point, GeoPoint start, GeoPoint end) {
@@ -122,7 +134,7 @@ final class GeoDistanceUtils {
         return (bearing + 360.0) % 360.0;
     }
 
-    record ClosestPoint(double distanceMeters, GeoPoint closestPoint, double bearingDegrees) {
+    record ClosestPoint(double distanceMeters, GeoPoint closestPoint, double bearingDegrees, double segmentBearingDegrees) {
     }
 
     private record SegmentProjection(double distanceMeters, GeoPoint closestPoint) {

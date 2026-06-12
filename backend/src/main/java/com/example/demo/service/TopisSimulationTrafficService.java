@@ -47,6 +47,7 @@ public class TopisSimulationTrafficService {
     private final TopisLinkVertexRepository linkVertexRepository;
     private final TopisApiService topisApiService;
     private final SupplementalDataCacheService supplementalDataCacheService;
+    private final SignalService signalService;
 
     @Value("${topis.route-traffic.max-match-distance-meters:90}")
     private double maxMatchDistanceMeters;
@@ -791,7 +792,6 @@ public class TopisSimulationTrafficService {
                 .build()));
         return geometries;
     }
-
     private List<RouteNode> routeNodes(Object raw) {
         if (!(raw instanceof List<?> rawNodes)) {
             return List.of();
@@ -965,14 +965,6 @@ public class TopisSimulationTrafficService {
 
     private static String safeDirection(String axisDir) {
         return axisDir == null || axisDir.isBlank() ? "미확인" : axisDir;
-    }
-
-    private static boolean booleanValue(Map<String, Object> map, String key) {
-        Object value = map == null ? null : map.get(key);
-        if (value instanceof Boolean bool) {
-            return bool;
-        }
-        return value != null && Boolean.parseBoolean(String.valueOf(value));
     }
 
     private static String stringValue(Map<?, ?> map, String key) {

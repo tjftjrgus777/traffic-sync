@@ -33,6 +33,8 @@ export default function AppHeader({
   rightExtra,
   fetchMsg,
   complaintCount = 0,
+  notifQueue = [],
+  onDismissNotif,
 }) {
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -167,7 +169,7 @@ export default function AppHeader({
 
   // ── 데스크톱 헤더 (기존 그대로) ──────────────────────────────────
   return (
-    <div style={{ background: V.bg0, borderBottom: `1px solid ${V.line}`, padding: "0 20px", height: 92, display: "flex", alignItems: "center", gap: 10, flexShrink: 0, position: "sticky", top: 0, zIndex: 100, fontFamily: V.sans, overflow: "hidden", whiteSpace: "nowrap" }}>
+    <div style={{ background: V.bg0, borderBottom: `1px solid ${V.line}`, padding: "0 20px", height: 92, display: "flex", alignItems: "center", gap: 10, flexShrink: 0, position: "sticky", top: 0, zIndex: 100, fontFamily: V.sans, overflowX: "clip", overflowY: "visible", whiteSpace: "nowrap" }}>
       <button onClick={onGoMain} style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 210, flexShrink: 0, background: "transparent", border: 0, padding: 0, cursor: "pointer", textAlign: "left", fontFamily: V.sans }}>
         <div>
           <div style={{ fontWeight: 800, fontSize: 20, color: V.ink0 }}>Syncro 교통 관제 시스템</div>
@@ -181,16 +183,18 @@ export default function AppHeader({
           const isCivil  = tab === "complaints";
           const dotColor = isActive ? V.blu : isCivil ? V.org : V.ink3;
           return (
-            <button key={tab} onClick={() => go(tab)}
-              style={{ appearance: "none", border: 0, background: isActive ? "#141414" : "transparent", color: isActive ? V.blu : "#fff", padding: "8px 12px", borderRadius: 999, fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: isActive ? "inset 0 0 0 1px #2a2a2a" : "none", fontFamily: V.sans, position: "relative", whiteSpace: "nowrap", flexShrink: 0, lineHeight: 1.15 }}>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor, display: "inline-block" }} />
-              {label}
-              {isCivil && complaintCount > 0 && (
-                <span style={{ position: "absolute", top: 4, right: 6, minWidth: 16, height: 16, background: V.org, borderRadius: 999, fontFamily: V.mono, fontSize: 9, fontWeight: 700, color: "#000", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
-                  {complaintCount}
-                </span>
-              )}
-            </button>
+            <div key={tab} style={{ position: "relative" }}>
+              <button onClick={() => go(tab)}
+                style={{ appearance: "none", border: 0, background: isActive ? "#141414" : "transparent", color: isActive ? V.blu : "#fff", padding: "8px 12px", borderRadius: 999, fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: isActive ? "inset 0 0 0 1px #2a2a2a" : "none", fontFamily: V.sans, position: "relative", whiteSpace: "nowrap", flexShrink: 0, lineHeight: 1.15 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: isCivil && notifQueue.length > 0 ? V.org : dotColor, display: "inline-block" }} />
+                {label}
+                {isCivil && notifQueue.length > 0 && (
+                  <span style={{ position: "absolute", top: 4, right: 6, minWidth: 16, height: 16, background: V.org, borderRadius: 999, fontFamily: V.mono, fontSize: 9, fontWeight: 700, color: "#000", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                    {notifQueue.length}
+                  </span>
+                )}
+              </button>
+            </div>
           );
         })}
       </div>

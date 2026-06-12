@@ -1,5 +1,23 @@
 // AI 신호 분석 챗봇 컴포넌트
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Fragment } from "react";
+
+// 시뮬레이션 답변 포맷: 현시N 앞 줄바꿈, 교차로 전환 시 빈 줄 삽입
+function formatSimAnswer(text) {
+  return text
+    .replace(/\s+(현시\d+)/g, '\n  $1')          // 현시N 앞에 줄바꿈 + 들여쓰기
+    .replace(/(→\s*\d+s)\s+([가-힣])/g, '$1\n\n$2') // → Ns 뒤 교차로명 앞 빈 줄
+    .trim();
+}
+
+// **볼드** 마크다운을 <strong>으로 변환해 렌더링
+function renderBold(text) {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1
+      ? <strong key={i} style={{ color: "#7dd3fc", fontWeight: 700 }}>{part}</strong>
+      : <Fragment key={i}>{part}</Fragment>
+  );
+}
 
 const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 const CHATBOT_ICON = "/icons/chatbot.webp";
@@ -32,6 +50,7 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailState, setEmailState] = useState({});  // idx → 'sending'|'sent'|'error'
 
   const buildBody = (question, intNoVal, simVal, rt) => {
     const body = { question, intNo: intNoVal ?? null, userEmail: getUserEmail() };
@@ -130,11 +149,63 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
 
           <div style={{ flex: 1, minHeight: 150, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
             {messages.map((m, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: m.role === "user" ? "flex-end" : "flex-start", gap: 4 }}>
                 <div style={{ maxWidth: "92%", padding: "9px 13px", borderRadius: 2, background: m.role === "user" ? "rgba(78,166,255,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${m.role === "user" ? "#2a3a5a" : "#1a1a1a"}`, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-line", color: "#e7ecf5" }}>
                   {m.role === "ai" && <div style={{ fontSize: 11, color: "#4ea6ff", marginBottom: 3 }}>Qwen3 분석</div>}
-                  {m.text}
+                  {m.role === "ai" ? renderBold(formatSimAnswer(m.text)) : m.text}
                 </div>
+                {/* 이메일 버튼 — AI 메시지이고 초기 안내 메시지가 아닐 때만 */}
+                {m.role === "ai" && i > 0 && getUserEmail() && (
+                  emailState[i] === "sent" ? (
+                    <span style={{ fontSize: 11, color: "rgba(100,200,120,0.8)", paddingLeft: 2 }}>✓ 상세 리포트 이메일 발송 완료</span>
+                  ) : emailState[i] === "error" ? (
+                    <span style={{ fontSize: 11, color: "rgba(255,100,100,0.8)", paddingLeft: 2 }}>발송 실패 — 다시 시도</span>
+                  ) : (
+                    <button
+                      disabled={emailState[i] === "sending" || loading}
+                      onClick={async () => {
+                        const userEmail = getUserEmail();
+                        if (!userEmail) return;
+                        setEmailState(prev => ({ ...prev, [i]: "sending" }));
+                        try {
+                          // 상세 Webster 리포트를 별도 요청
+                          const detailRes = await fetch(`${API_BASE}/api/simulation-chat`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(buildBody(
+                              "위 신호 조정 결과를 Webster 공식 계산 과정(실측 속도, Y값, Co 계산식, 현시별 배분 이유)을 포함한 상세 이메일 리포트로 작성해줘.",
+                              intNo, simulation, routeTraffic
+                            )),
+                          });
+                          const detailData = await detailRes.json();
+                          const detailText = detailData.answer || m.text;
+                          const emailRes = await fetch(`${API_BASE}/api/email/send`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              to: userEmail,
+                              subject: `[Syncro] ${intNm || "교차로"} 분석결과를 알려드립니다`,
+                              body: detailText,
+                            }),
+                          });
+                          setEmailState(prev => ({ ...prev, [i]: emailRes.ok ? "sent" : "error" }));
+                        } catch {
+                          setEmailState(prev => ({ ...prev, [i]: "error" }));
+                        }
+                      }}
+                      style={{
+                        ...btnBase,
+                        padding: "3px 10px", fontSize: 11,
+                        border: "1px solid #2a3a5a",
+                        background: emailState[i] === "sending" ? "transparent" : "rgba(78,166,255,0.08)",
+                        color: emailState[i] === "sending" ? "#3a3a3a" : "#4ea6ff",
+                        cursor: (emailState[i] === "sending" || loading) ? "default" : "pointer",
+                      }}
+                    >
+                      {emailState[i] === "sending" ? "리포트 생성 중..." : "📧 상세 리포트 이메일"}
+                    </button>
+                  )
+                )}
               </div>
             ))}
             {loading && (

@@ -52,7 +52,7 @@ export function StepRows({ steps }) {
   );
 }
 
-export function InlineSteps({ steps, collapsed, onToggle }) {
+export function InlineSteps({ steps, collapsed, onToggle, label }) {
   if (!steps || steps.length === 0) return null;
   return (
     <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden", marginBottom: 4 }}>
@@ -62,7 +62,7 @@ export function InlineSteps({ steps, collapsed, onToggle }) {
         color: "rgba(255,255,255,0.38)", fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
       }}>
         <span style={{ fontSize: 8, transition: "transform .2s", transform: collapsed ? "rotate(-90deg)" : "none", display: "inline-block" }}>▾</span>
-        추론 과정 · {steps.length}단계
+        {label ?? `추론 과정 · ${steps.length}단계`}
       </button>
       {!collapsed && <StepRows steps={steps} />}
     </div>

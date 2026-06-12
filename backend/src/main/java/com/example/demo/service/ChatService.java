@@ -62,13 +62,17 @@ public class ChatService {
     // 시뮬레이션 페이지 챗봇 — 병목 교차로 다중 신호계획 조립 후 AI 분석
     public Map<String, Object> simulationChat(String intNo, String question, List<Map<String, Object>> simulation,
                                                List<Map<String, Object>> routeTraffic,
-                                               List<String> bottleneckIntNos, String userEmail) {
+                                               List<String> bottleneckIntNos,
+                                               List<Map<String, Object>> frontendContexts, String userEmail) {
         try {
             ObjectNode body = objectMapper.createObjectNode();
             body.put("question", question);
 
-            // 병목 교차로 다중 신호계획 (우선) vs 단일 (fallback)
-            if (bottleneckIntNos != null && !bottleneckIntNos.isEmpty()) {
+            // 프론트에서 미리 fetch한 contexts가 있으면 그대로 사용 (시점 불일치 방지)
+            // 없으면 DB에서 직접 조회 (fallback)
+            if (frontendContexts != null && !frontendContexts.isEmpty()) {
+                body.set("contexts", objectMapper.valueToTree(frontendContexts));
+            } else if (bottleneckIntNos != null && !bottleneckIntNos.isEmpty()) {
                 List<Map<String, Object>> contexts = new java.util.ArrayList<>();
                 for (String id : bottleneckIntNos) {
                     if (id != null && !id.isBlank()) {
@@ -112,6 +116,43 @@ public class ChatService {
             if (!adj.isMissingNode() && !adj.isNull()) {
                 result.put("adjustment", objectMapper.convertValue(adj, Object.class));
             }
+            JsonNode rep = root.path("report");
+            String reportText = null;
+            if (!rep.isMissingNode() && !rep.isNull() && !rep.asText("").isBlank()) {
+                reportText = rep.asText();
+                result.put("report", reportText);
+            }
+
+            // report 또는 answer 있고 userEmail 있으면 Spring이 직접 이메일 발송
+            if (userEmail != null && !userEmail.isBlank() && (reportText != null || !root.path("answer").asText("").isBlank())) {
+                String answer = root.path("answer").asText("");
+                String now = java.time.LocalDateTime.now()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy년 M월 d일 HH:mm"));
+                StringBuilder sb = new StringBuilder();
+                sb.append("[AI 신호 자동조정 분석 보고서]\n발행일시: ").append(now).append("\n\n");
+                sb.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                sb.append("■ 조정 요약\n");
+                sb.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                sb.append(answer).append("\n");
+                if (reportText != null) {
+                    sb.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                    sb.append("■ 상세 분석 (Webster 공식 기반)\n");
+                    sb.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                    sb.append(reportText).append("\n");
+                }
+                sb.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                sb.append("본 메일은 Syncro 교통 관제 시스템에서 자동 발송되었습니다.\n");
+                sb.append("감사합니다.\n\n");
+                sb.append("Syncro 교통 관제 시스템 드림");
+                String emailBody = sb.toString();
+                try {
+                    emailService.send(userEmail, "[Syncro] 분석결과를 알려드립니다", emailBody);
+                    log.info("[SIM-EMAIL] 발송 완료 → {}", userEmail);
+                } catch (Exception emailEx) {
+                    log.error("[SIM-EMAIL] 발송 실패 → {}: {}", userEmail, emailEx.getMessage());
+                }
+            }
+
             return result;
 
         } catch (WebClientResponseException e) {

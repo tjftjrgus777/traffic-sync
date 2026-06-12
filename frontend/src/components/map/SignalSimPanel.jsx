@@ -180,7 +180,7 @@ export default function SignalSimPanel({ intNo, intNm, onPhaseChange, phaseOverr
         INT_NO: {intNo} · 현시수: {displayPhases.length}
         {ctx.traffic?.speedKph != null && (
           <span style={{ marginLeft: 8, color: ctx.traffic.realTime ? "#22c55e" : "#f59e0b" }}>
-            · 실시간 {Math.round(ctx.traffic.speedKph)}km/h
+            · 실시간 {(() => { const v = Math.round(ctx.traffic.speedKph * 10) / 10; return v % 1 === 0 ? v : v.toFixed(1); })()}km/h
           </span>
         )}
       </div>

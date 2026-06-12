@@ -32,9 +32,14 @@ public class TrafficStatus {
     private String congestion;
 
     // TOPIS 도로 속도 API에서 가져온 실제 구간 속도/통행시간.
+    // speedKph는 방향별 진입 속도가 있으면 그 중 최저(가장 막힌 진입)를 대표값으로 사용한다.
     private Double speedKph;
     private Integer travelTimeSec;
     private boolean speedStale;
+
+    // 방향별 진입 속도(km/h). key는 신호와 동일한 V2X 방향 코드(nt/et/st/wt/ne/se/sw/nw).
+    // 교차로에는 여러 진입 도로가 있으므로 단일 speedKph로 표현할 수 없는 부분을 보완한다.
+    private Map<String, Double> speedKphByDirection;
 
     // 도로위험도 API에서 가져온 실제 위험 지수/등급.
     private Double riskIndex;

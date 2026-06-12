@@ -30,6 +30,8 @@ import VoiceAssistantPanel from './components/assistant/VoiceAssistantPanel'
 import AIFloatingButton from './components/assistant/AIFloatingButton'
 import PendingBriefingPopup from './components/assistant/PendingBriefingPopup'
 import { AssistantKeyframes } from './components/assistant/assistantStyles'
+import ComplaintNotificationBanner from './components/common/ComplaintNotificationBanner'
+import { useComplaintNotification } from './hooks/useComplaintNotification'
 
 export default function App() {
   // localStorage에 로그인 정보 있으면 바로 메인, 없으면 로그인 페이지
@@ -42,7 +44,23 @@ export default function App() {
   const [simulationMounted, setSimulationMounted] = useState(false)
 
   useEffect(() => {
-    if (page === 'simulation') setSimulationMounted(true)
+    if (page !== 'simulation') return
+
+    setSimulationMounted(true)
+
+    // VWorld/Cesium은 display:none 상태였다가 다시 보이면
+    // canvas 크기와 렌더 상태가 갱신되지 않는 경우가 있어 강제로 복구 이벤트를 보낸다.
+    const fireActivate = () => {
+      window.dispatchEvent(new CustomEvent('traffic-sync:simulation-activate'))
+    }
+
+    const t1 = setTimeout(fireActivate, 80)
+    const t2 = setTimeout(fireActivate, 450)
+
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+    }
   }, [page])
 
   // 여러 화면이 공유하는 데이터 상태
@@ -56,6 +74,19 @@ export default function App() {
   const [areaFetchState, setAreaFetchState] = useState({ status: 'idle', guName: null, count: 0 })
   const [readyArea, setReadyArea] = useState({ guName: null, count: 0 })
   const [navNotice, setNavNotice] = useState('')
+  const [notifQueue, setNotifQueue] = useState([])
+
+  const isLoggedIn = page !== 'login' && page !== 'civil'
+
+  const handleNewComplaint = useCallback((c) => {
+    if (isLoggedIn) setNotifQueue(prev => [...prev, c])
+  }, [isLoggedIn])
+  useComplaintNotification(handleNewComplaint)
+
+
+  const onDismissNotif = useCallback((id) => {
+    setNotifQueue(prev => prev.filter(c => c.id !== id))
+  }, [])
 
   // 로그인 브리핑 카드
   const [loginBriefing, setLoginBriefing] = useState(null) // { name, gu, weatherDesc, temp, pendingCount }
@@ -194,72 +225,6 @@ export default function App() {
   // 민원 관리 페이지에서는 전역 AI 챗봇 플로팅 버튼/패널을 숨긴다.
   const showAssistantOverlay = page !== 'complaints'
 
-  if (page === 'news') return (
-    <NewsDashboard
-      onGoMain={() => setPage('main')}
-      onGoMap={goMap}
-      onGoCctv={() => setPage('cctv')}
-      onGoSimulation={goSimulation}
-      onGoComplaints={() => setPage('complaints')}
-      onGoMyPage={() => setPage('mypage')}
-      onLogout={() => setPage('login')}
-      selectedGu={selectedGu}
-    />
-  )
-
-  if (page === 'simulation') return (
-    <SimulationDashboard
-      onGoMain={() => setPage('main')}
-      onGoMap={goMap}
-      onGoNews={() => setPage('news')}
-      onGoCctv={() => setPage('cctv')}
-      onGoComplaints={() => setPage('complaints')}
-      onGoMyPage={() => setPage('mypage')}
-      onLogout={() => setPage('login')}
-      selectedGu={selectedGu}
-      isMuted={assistant.isMuted}
-      onToggleMute={assistant.toggleMute}
-      isMicActive={assistant.voiceUI.active && !assistant.voiceMinimized}
-      onToggleMic={assistant.onFloatingClick}
-    />
-  )
-
-  if (page === 'cctv') return (
-    <CctvDashboard
-      onGoMain={() => setPage('main')}
-      onGoMap={goMap}
-      onGoNews={() => setPage('news')}
-      onGoSimulation={goSimulation}
-      onGoComplaints={() => setPage('complaints')}
-      onGoMyPage={() => setPage('mypage')}
-      onLogout={() => setPage('login')}
-      selectedGu={selectedGu}
-    />
-  )
-
-  if (page === 'map') return (
-    <MapDashboard
-      onGoMain={() => setPage('main')}
-      onGoCctv={() => setPage('cctv')}
-      onGoNews={() => setPage('news')}
-      onGoSimulation={goSimulation}
-      onGoComplaints={() => setPage('complaints')}
-      onGoMyPage={() => setPage('mypage')}
-      onLogout={() => setPage('login')}
-      selectedGu={selectedGu}
-      wsData={wsData}
-      setWsData={setWsData}
-      initialCenter={mapCenter}
-      wsStatus={wsStatus}
-      lastUpdate={lastUpdate}
-      stations={stations}
-      isMuted={assistant.isMuted}
-      onToggleMute={assistant.toggleMute}
-      isMicActive={assistant.voiceUI.active && !assistant.voiceMinimized}
-      onToggleMic={assistant.onFloatingClick}
-    />
-  )
-
   // ── 메인 대시보드 + AI 어시스턴트 팝업들 ────────────────────────
   return (
     <>
@@ -285,42 +250,26 @@ export default function App() {
             onToggleMute={assistant.toggleMute}
             isMicActive={assistant.voiceUI.active && !assistant.voiceMinimized}
             onToggleMic={assistant.onFloatingClick}
+            notifQueue={notifQueue}
+            onDismissNotif={onDismissNotif}
+            wsData={wsData}
           />
         </div>
       )}
 
-      {page === 'mypage' && (
-        <MyPage onBack={() => setPage('main')} />
-      )}
 
-      {page === 'complaints' && (
-        <ComplaintManagePage
+      {page === 'news' && (
+        <NewsDashboard
           onGoMain={() => setPage('main')}
           onGoMap={goMap}
-          onGoNews={() => setPage('news')}
           onGoCctv={() => setPage('cctv')}
           onGoSimulation={goSimulation}
           onGoComplaints={() => setPage('complaints')}
           onGoMyPage={() => setPage('mypage')}
           onLogout={() => setPage('login')}
-          headerSelectedGu={selectedGu}
-          onBack={() => setPage('map')}
-        />
-      )}
-
-      <NavBlockToast message={assistant.navBlockMsg || navNotice} />
-
-      {/* 음성 어시스턴트 채팅 팝업 (최소화 상태가 아닐 때만) */}
-      {showAssistantOverlay && assistant.voiceUI.active && !assistant.voiceMinimized && (
-        <VoiceAssistantPanel
-          voiceUI={assistant.voiceUI}
-          voiceSTTActive={assistant.voiceSTTActive}
-          msgEndRef={assistant.msgEndRef}
-          onStartSTT={assistant.startVoiceSTT}
-          onStopTTS={assistant.stopAllTTS}
-          onMinimize={assistant.minimizeVoiceUI}
-          onClose={assistant.closeVoiceUI}
-          onEmailConfirm={assistant.handleEmailConfirmClick}
+          selectedGu={null}
+          notifQueue={notifQueue}
+          onDismissNotif={onDismissNotif}
         />
       )}
 
@@ -333,7 +282,9 @@ export default function App() {
           onGoComplaints={() => setPage('complaints')}
           onGoMyPage={() => setPage('mypage')}
           onLogout={() => setPage('login')}
-          selectedGu={selectedGu}
+          selectedGu={null}
+          notifQueue={notifQueue}
+          onDismissNotif={onDismissNotif}
         />
       )}
 
@@ -357,8 +308,56 @@ export default function App() {
           onToggleMute={assistant.toggleMute}
           isMicActive={assistant.voiceUI.active && !assistant.voiceMinimized}
           onToggleMic={assistant.onFloatingClick}
+          notifQueue={notifQueue}
+          onDismissNotif={onDismissNotif}
         />
       )}
+      {page === 'mypage' && (
+        <MyPage onBack={() => setPage('main')} />
+      )}
+
+      {page === 'complaints' && (
+        <ComplaintManagePage
+          onGoMain={() => setPage('main')}
+          onGoMap={goMap}
+          onGoNews={() => setPage('news')}
+          onGoCctv={() => setPage('cctv')}
+          onGoSimulation={goSimulation}
+          onGoComplaints={() => setPage('complaints')}
+          onGoMyPage={() => setPage('mypage')}
+          onLogout={() => setPage('login')}
+          headerSelectedGu={selectedGu}
+          onBack={() => setPage('map')}
+          notifQueue={notifQueue}
+          onDismissNotif={onDismissNotif}
+        />
+      )}
+
+      <NavBlockToast message={assistant.navBlockMsg || navNotice} />
+
+      {showMain && (
+        <ComplaintNotificationBanner
+          queue={notifQueue}
+          onDismiss={onDismissNotif}
+          isMuted={assistant.isMuted}
+          popupOpen={!!assistant.pendingBriefing}
+        />
+      )}
+
+      {/* 음성 어시스턴트 채팅 팝업 (최소화 상태가 아닐 때만) */}
+      {showMain && showAssistantOverlay && assistant.voiceUI.active && !assistant.voiceMinimized && (
+        <VoiceAssistantPanel
+          voiceUI={assistant.voiceUI}
+          voiceSTTActive={assistant.voiceSTTActive}
+          msgEndRef={assistant.msgEndRef}
+          onStartSTT={assistant.startVoiceSTT}
+          onStopTTS={assistant.stopAllTTS}
+          onMinimize={assistant.minimizeVoiceUI}
+          onClose={assistant.closeVoiceUI}
+          onEmailConfirm={assistant.handleEmailConfirmClick}
+        />
+      )}
+
 
       {showMain && (
         <MainDashboard
@@ -381,6 +380,8 @@ export default function App() {
           onToggleMute={assistant.toggleMute}
           isMicActive={assistant.voiceUI.active && !assistant.voiceMinimized}
           onToggleMic={assistant.onFloatingClick}
+          notifQueue={notifQueue}
+          onDismissNotif={onDismissNotif}
         />
       )}
 
@@ -398,7 +399,7 @@ export default function App() {
       )}
 
       {/* AI 플로팅 버튼 */}
-      {showAssistantOverlay && (
+      {showMain && showAssistantOverlay && (
         <AIFloatingButton
           active={assistant.voiceUI.active}
           minimized={assistant.voiceMinimized}
@@ -407,11 +408,12 @@ export default function App() {
       )}
 
       {/* 구 분석 시작 확인 팝업 */}
-      {showAssistantOverlay && (
+      {showMain && showAssistantOverlay && (
         <PendingBriefingPopup
           pending={assistant.pendingBriefing}
           onStart={assistant.acceptPendingBriefing}
           onDismiss={assistant.dismissPendingBriefing}
+          shifted={assistant.voiceUI.active && !assistant.voiceMinimized}
         />
       )}
     </>

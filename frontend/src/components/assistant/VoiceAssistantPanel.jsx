@@ -131,14 +131,6 @@ export default function VoiceAssistantPanel({
         </div>
       )}
 
-      {/* ── 새 질문하기 버튼 (세션 종료 후) ── */}
-      {voiceUI.status === 'done' && (
-        <div style={{ padding: '10px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-          <button onClick={onStartSTT} style={{ width: '100%', padding: '9px 0', borderRadius: 8, fontSize: 13, fontWeight: 600, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            🎤 새 질문하기
-          </button>
-        </div>
-      )}
 
       {/* ── 진행 바 ── */}
       {showProgress && (

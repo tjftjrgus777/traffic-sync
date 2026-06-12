@@ -4,6 +4,7 @@ const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:8080").repla
 
 export default function SimSliderPanel({
   intNo, intNm, onSave, onAutoApplied, aiSuggestedValues, aiAdjustKey,
+  initialPhases, initialCycleVal,
 }) {
   const [phases, setPhases] = useState([]);
   const [cycleVal, setCycleVal] = useState(null);
@@ -48,10 +49,26 @@ export default function SimSliderPanel({
   }, []);
 
   // intNo 변경 시 phases 로드
+  // VehicleSignalPanel이 이미 가져온 initialPhases가 있으면 그걸 쓰고, 없으면 DB fetch
   useEffect(() => {
     if (!intNo) return;
     setSliders({});
     setSaved(false);
+
+    if (initialPhases?.length > 0) {
+      setPhases(initialPhases);
+      setCycleVal(initialCycleVal ?? null);
+      if (pendingAiRef.current && !animatingRef.current) {
+        const target = pendingAiRef.current;
+        pendingAiRef.current = null;
+        const fromVals = Object.fromEntries(initialPhases.map(p => [p.no, p.sec]));
+        runAnimation(target, initialPhases, fromVals, (simulation) => {
+          onAutoApplied?.(simulation);
+        });
+      }
+      return;
+    }
+
     setLoading(true);
     fetch(`${API_BASE}/api/signal/simulation/context/${intNo}`)
       .then(r => r.json())
@@ -59,7 +76,6 @@ export default function SimSliderPanel({
         const loaded = d.phases || [];
         setPhases(loaded);
         setCycleVal(d.cycleVal ?? null);
-        // phases 로드 완료 시점에 pending AI값이 있으면 바로 애니메이션 실행
         if (pendingAiRef.current && loaded.length && !animatingRef.current) {
           const target = pendingAiRef.current;
           pendingAiRef.current = null;
@@ -73,7 +89,24 @@ export default function SimSliderPanel({
       .finally(() => setLoading(false));
   }, [intNo, runAnimation]);
 
-  // AI 제안값 도착 시 — phases가 이미 있으면 즉시, 없으면 pending으로 저장
+  // initialPhases 변경 시 — 기준값 갱신 + remount 후 pending AI 있으면 소비
+  useEffect(() => {
+    if (!initialPhases?.length) return;
+    if (Object.keys(sliders).length === 0) {
+      setPhases(initialPhases);
+      setCycleVal(initialCycleVal ?? null);
+      if (pendingAiRef.current && !animatingRef.current) {
+        const target = pendingAiRef.current;
+        pendingAiRef.current = null;
+        const fromVals = Object.fromEntries(initialPhases.map(p => [p.no, p.sec]));
+        runAnimation(target, initialPhases, fromVals, (simulation) => {
+          onAutoApplied?.(simulation);
+        });
+      }
+    }
+  }, [initialPhases]);
+
+  // AI 제안값 도착 시 — phases가 있으면 즉시 실행, 없으면 pending으로 저장
   useEffect(() => {
     if (!aiSuggestedValues) return;
     if (animatingRef.current) return;
@@ -83,7 +116,6 @@ export default function SimSliderPanel({
         onAutoApplied?.(simulation);
       });
     } else {
-      // phases 아직 로딩 중 → 로드 완료 시 적용
       pendingAiRef.current = aiSuggestedValues;
     }
   }, [aiAdjustKey]);

@@ -37,7 +37,11 @@ let _muted = false                 // 음소거 여부
  * @param {number} rate  말하기 속도 (1.0 기본, 라벨 등 짧은 문구는 1.4로 빠르게)
  */
 export function speakAsync(text, rate = 1.0) {
-  if (_muted || !GOOGLE_TTS_KEY || !text) return Promise.resolve()
+  if (_muted || !GOOGLE_TTS_KEY || !text) {
+    console.log('[TTS] speakAsync skip — muted:', _muted, 'noKey:', !GOOGLE_TTS_KEY, 'noText:', !text)
+    return Promise.resolve()
+  }
+  console.log('[TTS] speakAsync 시작 —', text.slice(0, 40))
 
   const p = _ttsChain.then(async () => {
     try {

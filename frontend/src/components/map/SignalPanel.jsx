@@ -22,6 +22,14 @@ const SIGNAL_TYPES = [
   { key: "pdsg", label: "보행" },
 ];
 
+// 방향별 진입 속도 색상 (백엔드 혼잡도 기준과 동일: 정체<15, 서행<25, 원활).
+function speedColor(speed) {
+  if (!Number.isFinite(speed)) return "#6b7280";
+  if (speed < 15) return "#ef4444";
+  if (speed < 25) return "#f59e0b";
+  return "#22c55e";
+}
+
 // ── TrafficLight ──────────────────────────────────────────────────────────────
 /**
  * 신호등 1개 컴포넌트
@@ -159,7 +167,7 @@ function TrafficLight({ status, rmndCs, elapsed }) {
  * @param {Object} signals - mappedSignals 전체 객체 (모든 방향 포함)
  * @param {number} elapsed - TrafficLight에 전달할 경과 시간
  */
-function DirCard({ dir, label, arrow, signals, elapsed }) {
+function DirCard({ dir, label, arrow, signals, speeds, elapsed }) {
   // 해당 방향의 SignalDirection 객체 추출
   // SignalDirection: { stsg, ltsg, pdsg, utsg, bssg, bcsg } 각각 DirectionSignal | null
   const d = signals?.[dir];
@@ -167,6 +175,10 @@ function DirCard({ dir, label, arrow, signals, elapsed }) {
 
   // 실제 데이터가 있는 신호 종류만 필터링 (d[key]가 null/undefined면 제외)
   const activeSigs = SIGNAL_TYPES.filter(({ key }) => !!d[key]);
+
+  // 이 방향으로 교차로에 진입하는 도로의 실시간 속도(km/h). 없으면 수집 중.
+  const speed = speeds?.[dir];
+  const hasSpeed = Number.isFinite(speed);
 
   return (
     <div style={{
@@ -198,6 +210,23 @@ function DirCard({ dir, label, arrow, signals, elapsed }) {
             </div>
           );
         })}
+      </div>
+
+      {/* 이 방향 진입 속도 (TOPIS 진입 링크 기준) */}
+      <div style={{
+        display: "flex", alignItems: "baseline", gap: 3,
+        borderTop: "1px solid rgba(42,36,24,0.8)", paddingTop: 6, marginTop: 2,
+      }}>
+        {hasSpeed ? (
+          <>
+            <span style={{ fontSize: 16, fontWeight: 800, fontFamily: "monospace", color: speedColor(speed) }}>
+              {speed}
+            </span>
+            <span style={{ fontSize: 11, color: "#9ca3af" }}>km/h 진입</span>
+          </>
+        ) : (
+          <span style={{ fontSize: 11, color: "#4b5563" }}>속도 수집 중</span>
+        )}
       </div>
     </div>
   );
@@ -234,6 +263,8 @@ export default function SignalPanel({ cr }) {
   // mappedSignals: signalUtils.mapKeys()가 변환한 방향별 신호 맵
   // 원본 API 키 nt/et/st/wt → north/east/south/west 로 이미 변환됨
   const s = cr.mappedSignals || {};
+  // speedByDirection: 방향별 진입 속도 맵 (키는 signals와 동일하게 north/east/... 로 변환됨)
+  const spd = cr.speedByDirection || {};
 
   // totDt 포맷 변환: "20260511181500" → "2026-05-11 18:15"
   const t = cr.totDt;
@@ -263,15 +294,15 @@ export default function SignalPanel({ cr }) {
       {/* 셋 중 하나라도 데이터 있을 때만 행 전체 렌더 */}
       {(s.north || s.northeast || s.northwest) && (
         <div style={{ display: "flex", gap: 8, minWidth: 0 }}>
-          {s.northwest && <DirCard dir="northwest" label="북서" arrow="↖" signals={s} elapsed={elapsed} />}
-          {s.north     && <DirCard dir="north"     label="북"   arrow="↑" signals={s} elapsed={elapsed} />}
-          {s.northeast && <DirCard dir="northeast" label="북동" arrow="↗" signals={s} elapsed={elapsed} />}
+          {s.northwest && <DirCard dir="northwest" label="북서" arrow="↖" signals={s} speeds={spd} elapsed={elapsed} />}
+          {s.north     && <DirCard dir="north"     label="북"   arrow="↑" signals={s} speeds={spd} elapsed={elapsed} />}
+          {s.northeast && <DirCard dir="northeast" label="북동" arrow="↗" signals={s} speeds={spd} elapsed={elapsed} />}
         </div>
       )}
 
       {/* ── 가운데 행: 서 / 중앙 박스 / 동 ─────────────────────────────────── */}
       <div style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}>
-        <DirCard dir="west" label="서" arrow="←" signals={s} elapsed={elapsed} />
+        <DirCard dir="west" label="서" arrow="←" signals={s} speeds={spd} elapsed={elapsed} />
 
         {/* 중앙 박스: 교차로 이름 + 위험도 도넛 차트 */}
         <div style={{
@@ -310,16 +341,16 @@ export default function SignalPanel({ cr }) {
           </div>
         </div>
 
-        <DirCard dir="east" label="동" arrow="→" signals={s} elapsed={elapsed} />
+        <DirCard dir="east" label="동" arrow="→" signals={s} speeds={spd} elapsed={elapsed} />
       </div>
 
       {/* ── 남쪽 행: 남서 / 남 / 남동 ──────────────────────────────────────── */}
       {/* 셋 중 하나라도 데이터 있을 때만 행 전체 렌더 */}
       {(s.south || s.southeast || s.southwest) && (
         <div style={{ display: "flex", gap: 8, minWidth: 0 }}>
-          {s.southwest && <DirCard dir="southwest" label="남서" arrow="↙" signals={s} elapsed={elapsed} />}
-          {s.south     && <DirCard dir="south"     label="남"   arrow="↓" signals={s} elapsed={elapsed} />}
-          {s.southeast && <DirCard dir="southeast" label="남동" arrow="↘" signals={s} elapsed={elapsed} />}
+          {s.southwest && <DirCard dir="southwest" label="남서" arrow="↙" signals={s} speeds={spd} elapsed={elapsed} />}
+          {s.south     && <DirCard dir="south"     label="남"   arrow="↓" signals={s} speeds={spd} elapsed={elapsed} />}
+          {s.southeast && <DirCard dir="southeast" label="남동" arrow="↘" signals={s} speeds={spd} elapsed={elapsed} />}
         </div>
       )}
     </div>

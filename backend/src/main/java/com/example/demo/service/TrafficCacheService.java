@@ -70,8 +70,6 @@ public class TrafficCacheService {
                 .toList();
     }
 
-    // 전체 조회 메서드 (전체 교차로ID → 신호 상태 맵 반환, 수정 불가능한 형태로 반환)
-    //dead Code - 현재는 사용되지 않지만, 추후 전체 신호 상태를 한 번에 조회할 필요가 있을 때 활용 가능
     public Map<String, TrafficStatus> getAllSignals() {
         return Collections.unmodifiableMap(signalCache);
     }

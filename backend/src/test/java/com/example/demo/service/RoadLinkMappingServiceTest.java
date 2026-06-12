@@ -9,6 +9,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -75,37 +76,40 @@ class RoadLinkMappingServiceTest {
         crossroad.setLat(37.0000);
         crossroad.setLon(127.0000);
 
+        // 각 링크는 교차로(37.0000, 127.0000) 기준으로 정 북/동/남/서 방향에 배치.
+        // far endpoint가 명확히 해당 방위를 가리키도록 가까운 점 → 먼 점 순서로 배치.
         TopisLinkGeometry north = TopisLinkGeometry.builder()
                 .linkId("LN")
                 .vertices(List.of(
-                        new GeoPoint(37.0001, 126.9999),
-                        new GeoPoint(37.0001, 127.0001)
+                        new GeoPoint(37.0002, 127.0000),
+                        new GeoPoint(37.0003, 127.0000)
                 ))
                 .build();
         TopisLinkGeometry east = TopisLinkGeometry.builder()
                 .linkId("LE")
                 .vertices(List.of(
-                        new GeoPoint(36.9999, 127.0001),
-                        new GeoPoint(37.0001, 127.0001)
+                        new GeoPoint(37.0000, 127.0002),
+                        new GeoPoint(37.0000, 127.0003)
                 ))
                 .build();
         TopisLinkGeometry south = TopisLinkGeometry.builder()
                 .linkId("LS")
                 .vertices(List.of(
-                        new GeoPoint(36.9999, 126.9999),
-                        new GeoPoint(36.9999, 127.0001)
+                        new GeoPoint(36.9998, 127.0000),
+                        new GeoPoint(36.9997, 127.0000)
                 ))
                 .build();
         TopisLinkGeometry west = TopisLinkGeometry.builder()
                 .linkId("LW")
                 .vertices(List.of(
-                        new GeoPoint(36.9999, 126.9999),
-                        new GeoPoint(37.0001, 126.9999)
+                        new GeoPoint(37.0000, 126.9998),
+                        new GeoPoint(37.0000, 126.9997)
                 ))
                 .build();
 
         Map<String, Map<String, CrossroadRoadLinkMapping>> mappings =
-                service.mapCrossroadsToDirectionalLinks(List.of(crossroad), List.of(north, east, south, west));
+                service.mapCrossroadsToDirectionalLinks(List.of(crossroad), List.of(north, east, south, west),
+                        Map.of("C1", Set.of("nt", "et", "st", "wt")));
 
         assertThat(mappings).containsKey("C1");
         assertThat(mappings.get("C1")).containsKeys("nt", "et", "st", "wt");

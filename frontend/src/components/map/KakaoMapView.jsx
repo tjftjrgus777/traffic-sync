@@ -55,6 +55,7 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
   const cctvClusterer = useRef(null);  // CCTV 줌아웃 클러스터
   const trafficClusterer = useRef(null); // 교통량 지점 줌아웃 클러스터
   const signalClusterer = useRef(null); // 신호등 마커 줌아웃 클러스터
+  const analyzeOverlays = useRef({ lines: [], pings: [], timer: null }); // 멀티에이전트 분석 오버레이
 
   // ── State: 바뀌면 리렌더 트리거 ────────────────────────────────────────────
   const [ready,    setReady]    = useState(false); // SDK 로드 완료 여부 (false면 로딩 스피너)
@@ -88,6 +89,75 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
     setForecastDir("up");
   }, [activeStation]);
 
+
+  // ── 멀티에이전트 분석 다이아몬드 오버레이 ─────────────────────────────────
+  useEffect(() => {
+    function clearAnalyzeOverlays() {
+      const ao = analyzeOverlays.current;
+      if (ao.timer) { clearInterval(ao.timer); ao.timer = null; }
+      ao.lines.forEach(l => l.setMap(null));
+      ao.pings.forEach(p => p.setMap(null));
+      ao.lines = []; ao.pings = [];
+    }
+
+    function onInit(e) {
+      if (!mapObj.current || !window.kakao?.maps) return;
+      clearAnalyzeOverlays();
+      const kakao = window.kakao;
+      const { center, workers } = e.detail;
+      const centerPos = new kakao.maps.LatLng(center.lat, center.lon);
+
+      workers.forEach(w => {
+        if (w.lat == null || w.lon == null) return;
+        const wPos = new kakao.maps.LatLng(w.lat, w.lon);
+
+        // 중심→워커 연결선
+        const line = new kakao.maps.Polyline({
+          path: [centerPos, wPos],
+          strokeWeight: 5,
+          strokeColor: "#000000",
+          strokeOpacity: 0.85,
+          strokeStyle: "shortdash",
+          map: mapObj.current,
+        });
+        analyzeOverlays.current.lines.push(line);
+
+        // 워커 위치 핑 오버레이
+        const pingEl = document.createElement("div");
+        pingEl.style.cssText = `
+          width:36px;height:36px;border-radius:50%;
+          border:3px solid rgba(0,0,0,0.95);
+          background:rgba(0,0,0,0.2);
+          animation:mapPingPulse 1.4s ease-out infinite;
+          transform:translate(-50%,-50%);
+        `;
+        const ping = new kakao.maps.CustomOverlay({
+          position: wPos, content: pingEl,
+          xAnchor: 0.5, yAnchor: 0.5, zIndex: 10,
+          map: mapObj.current,
+        });
+        analyzeOverlays.current.pings.push(ping);
+      });
+
+      // 선 투명도 맥박 애니메이션
+      let phase = 0;
+      analyzeOverlays.current.timer = setInterval(() => {
+        phase += 0.12;
+        const op = 0.35 + 0.45 * Math.abs(Math.sin(phase));
+        analyzeOverlays.current.lines.forEach(l => l.setOptions({ strokeOpacity: op }));
+      }, 60);
+    }
+
+    function onDone() { clearAnalyzeOverlays(); }
+
+    window.addEventListener("multiAnalyzeInit", onInit);
+    window.addEventListener("multiAnalyzeDone", onDone);
+    return () => {
+      window.removeEventListener("multiAnalyzeInit", onInit);
+      window.removeEventListener("multiAnalyzeDone", onDone);
+      clearAnalyzeOverlays();
+    };
+  }, [ready]);
 
   // ── useEffect 1: 카카오맵 SDK 동적 로드 ────────────────────────────────────
   // 카카오맵 SDK는 index.html에 미리 넣지 않고 컴포넌트 마운트 시 동적으로 삽입.
@@ -290,10 +360,8 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
 
   // 민원 클릭 시 해당 위치로 이동
   useEffect(() => {
-    console.log('[민원이동] lat:', complaintCenter?.lat, 'lng:', complaintCenter?.lng);
     if (!ready || !mapObj.current || !complaintCenter?.lat || !complaintCenter?.lng) return;
     const pos = new window.kakao.maps.LatLng(complaintCenter.lat, complaintCenter.lng);
-    console.log('[민원이동] panTo 실행', pos);
     mapObj.current.setCenter(pos);
     mapObj.current.setLevel(4);
   }, [ready, complaintCenter?._t]);
@@ -685,7 +753,7 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
       {/* 우상단: 교통 상태 범례 (pointerEvents:none → 지도 클릭 방해 안 함) */}
       <div style={{ position: "absolute", top: 10, right: 10, background: "rgba(18,14,10,0.88)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, padding: "8px 11px", zIndex: 10, pointerEvents: "none", backdropFilter: "blur(4px)" }}>
         <div style={{ fontSize: 11, color: "#aab4c8", fontWeight: 700, marginBottom: 8 }}>교통 상태</div>
-        {[["#2ee07a", "원활 (40km/h+)"], ["#ffaa33", "서행 (20~40km/h)"], ["#ff5566", "혼잡 (~20km/h)"]].map(([c, l]) => (
+        {[["#2ee07a", "원활 (25km/h+)"], ["#ffaa33", "서행 (15~25km/h)"], ["#ff5566", "정체 (~15km/h)"]].map(([c, l]) => (
           <div key={l} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5 }}>
             <div style={{ width: 9, height: 9, borderRadius: "50%", background: c }} />
             <span style={{ fontSize: 11, color: "#aab4c8" }}>{l}</span>
