@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -84,10 +85,11 @@ public class TrafficScheduler {
             // V2X API 호출하여 교차로별 최신 신호 상태 가져오기
             Map<String, TrafficStatus> freshData = v2xApiService.fetchSignalData(crossroads);
 
-            // V2X API 타임아웃 등으로 빈 결과가 오면 캐시를 빈 맵으로 덮어쓰지 않고 건너뜀
+            // V2X 신호가 비어도(예: 서울 실시간 피드 NODATA) 속도·위험도·날씨 보조데이터는 보여주도록
+            // DB 교차로 목록으로 빈 신호 스켈레톤을 만든다. 신호가 다시 들어오면 다음 폴링이 전체 수집으로 복귀한다.
             if (freshData.isEmpty()) {
-                log.warn("폴링: V2X API 빈 결과 (DB 교차로 {}개) — 캐시 유지, 다음 폴링에서 재시도", crossroads.size());
-                return;
+                log.warn("폴링: V2X 신호 빈 결과 (DB 교차로 {}개) — 신호 없이 보조데이터로 폴백", crossroads.size());
+                freshData = buildSkeletons(crossroads);
             }
 
             // 프론트와 챗봇이 같은 값을 쓰도록 실제 보조 API 캐시와 계산 지표를 합친다.
@@ -102,5 +104,23 @@ public class TrafficScheduler {
         } catch (Exception e) {
             log.error("폴링 중 오류 발생: {}", e.getMessage(), e);
         }
+    }
+
+    // V2X 신호가 없을 때 DB 교차로 목록으로 빈 신호 TrafficStatus를 만든다.
+    // 신호는 비어 있지만 crsrdId·좌표가 있어 enrich 단계에서 속도·위험도·날씨를 붙일 수 있다.
+    private Map<String, TrafficStatus> buildSkeletons(List<CrossroadInfo> crossroads) {
+        Map<String, TrafficStatus> skeletons = new HashMap<>();
+        for (CrossroadInfo c : crossroads) {
+            TrafficStatus status = new TrafficStatus();
+            status.setCrsrdId(c.getCrsrdId());
+            status.setCrsrdNm(c.getCrsrdNm());
+            status.setLat(c.getLat());
+            status.setLon(c.getLon());
+            status.setGuName(c.getGuName());
+            status.setSignals(new HashMap<>());
+            status.setServerTimeMs(System.currentTimeMillis());
+            skeletons.put(c.getCrsrdId(), status);
+        }
+        return skeletons;
     }
 }

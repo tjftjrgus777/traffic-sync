@@ -528,6 +528,18 @@ _WB_DELTA_MAX  = 5      # 현시별 최대 변화량(초)
 _WB_MIN_GREEN  = 15     # 최소 녹색시간(초)
 
 
+def _wb_uniform_delay(cycle: float, L: float, sum_Y: float) -> float:
+    """Webster 균일지체(첫째 항) — 차량 1대당 평균 지체(초).
+    d = C(1-λ)² / (2(1 - ΣY)),  λ=(C-L)/C 이므로 1-λ=L/C, λ·x=ΣY 가정.
+    교통량(flow)이 없어 과포화 지체 항은 제외한 추정치.
+    """
+    if cycle <= 0:
+        return 0.0
+    lam = max((cycle - L) / cycle, 0.0)          # 유효녹색 비율
+    denom = 2.0 * max(1.0 - sum_Y, 0.05)          # 1-ΣY (과포화 방지 하한)
+    return cycle * (1.0 - lam) ** 2 / denom
+
+
 def _wb_speed_to_Y(u: float | None) -> tuple[float, str]:
     """
     진입 링크 속도(km/h) → (ΣY 추정값, 혼잡등급 설명)
@@ -631,11 +643,37 @@ def compute_webster_adjustments(
             })
             assigned += new_sec
 
+        applied_cycle = sum(r["new_sec"] for r in phase_rows)
+
+        # ── 효과 추정: Webster 균일지체 변화 + 병목 방향 처리용량 변화 ──────────────
+        delay_before = _wb_uniform_delay(cycle_val, L, sum_Y)
+        delay_after  = _wb_uniform_delay(applied_cycle, L, sum_Y)
+        delay_saved  = round(delay_before - delay_after, 1)
+
+        # 처리용량(=유효녹색비율 g/C)이 가장 많이 늘어난 비보행 현시 = 병목 수혜 방향
+        cap_gain_pct = 0
+        cap_phase = None
+        for r in phase_rows:
+            if r["is_ped"] or r["orig_sec"] <= 0:
+                continue
+            before_ratio = r["orig_sec"] / cycle_val if cycle_val else 0
+            after_ratio  = r["new_sec"] / applied_cycle if applied_cycle else 0
+            if before_ratio <= 0:
+                continue
+            gain = (after_ratio / before_ratio - 1.0) * 100
+            if gain > cap_gain_pct:
+                cap_gain_pct = round(gain)
+                cap_phase = r
+
         adjustments.append({
             "intNo": int_no,
             "phases": [{"no": r["no"], "sec": r["new_sec"]} for r in phase_rows],
+            "delayBefore": round(delay_before, 1),
+            "delayAfter": round(delay_after, 1),
+            "delaySaved": delay_saved,
+            "capacityGainPct": cap_gain_pct,
+            "capacityPhaseNo": cap_phase["no"] if cap_phase else None,
         })
-        applied_cycle = sum(r["new_sec"] for r in phase_rows)
         calc_details.append({
             "int_no":        int_no,
             "int_nm":        int_nm,
@@ -650,6 +688,11 @@ def compute_webster_adjustments(
             "applied_cycle": applied_cycle,
             "cycle_val":     cycle_val,
             "phases":        phase_rows,
+            "delay_before":  round(delay_before, 1),
+            "delay_after":   round(delay_after, 1),
+            "delay_saved":   delay_saved,
+            "cap_gain_pct":  cap_gain_pct,
+            "cap_phase_no":  cap_phase["no"] if cap_phase else None,
         })
 
     return adjustments, calc_details
@@ -727,6 +770,15 @@ def _build_email_report(calc_details: list) -> str:
             lines.append(f"\n  1회 적용주기: {ac}s  (목표 {cf}s, {gap}s 미달 — 점진조정 특성)")
         else:
             lines.append(f"\n  1회 적용주기: {ac}s")
+
+        # 효과 추정 (방어 가능한 지표만)
+        lines.append("")
+        lines.append("◎ 효과 추정")
+        db, da, ds = d.get("delay_before", 0), d.get("delay_after", 0), d.get("delay_saved", 0)
+        ds_word = "단축" if ds > 0 else ("증가" if ds < 0 else "변화없음")
+        lines.append(f"  Webster 균일지체: {db}s → {da}s  (1대당 {abs(ds):.1f}s {ds_word})")
+        if d.get("cap_gain_pct") and d.get("cap_phase_no"):
+            lines.append(f"  병목 방향(현시{d['cap_phase_no']}) 처리용량: 약 +{d['cap_gain_pct']}% (유효녹색 비율 기준)")
     lines += [
         "",
         "=" * 52,

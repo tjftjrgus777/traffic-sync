@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -132,10 +133,19 @@ public class MapController {
             }
 
             if (signals.isEmpty()) {
-                log.warn("V2X API 3회 재시도 후에도 빈 결과 (DB 교차로 {}개) — 캐시 유지", crossroads.size());
+                // V2X 신호가 없어도(예: 서울 실시간 피드 NODATA) 선택 구역 교차로를 빈 신호 스켈레톤으로 만들어
+                // 속도·위험도·날씨 보조데이터는 보여준다. 신호가 들어오면 정기 폴링이 전체 수집으로 복귀한다.
+                log.warn("V2X 신호 3회 재시도 후에도 빈 결과 (DB 교차로 {}개) — 신호 없이 보조데이터로 폴백", crossroads.size());
+                Map<String, TrafficStatus> skeletons = buildSkeletons(crossroads);
+                cacheService.updateAllSignals(skeletons);
+                // 선택 구역 속도/위험도를 즉시 수집하고 다시 브로드캐스트(비동기)
+                refreshSupplementalDataForCurrentArea();
+                supplementalDataCacheService.enrichTrafficStatuses(skeletons);
+                cacheService.updateAllSignals(skeletons);
+                webSocketHandler.broadcast(skeletons);
                 return ResponseEntity.ok(Map.of(
-                    "count", cacheService.getAllSignals().size(),
-                    "message", "V2X API 일시 불안정 — 기존 캐시 유지 중"
+                    "count", skeletons.size(),
+                    "message", "신호 없이 보조데이터로 표시 중"
                 ));
             }
 
@@ -195,6 +205,24 @@ public class MapController {
         supplementalDataSchedulerProvider.ifAvailable(scheduler -> {
             scheduler.refreshCurrentAreaSupplementalDataAsync();
         });
+    }
+
+    // V2X 신호가 없을 때 선택 구역 교차로 목록으로 빈 신호 TrafficStatus를 만든다.
+    // crsrdId·좌표·구이름이 있어 enrich 단계에서 속도·위험도·날씨를 붙일 수 있다.
+    private Map<String, TrafficStatus> buildSkeletons(List<CrossroadInfo> crossroads) {
+        Map<String, TrafficStatus> skeletons = new HashMap<>();
+        for (CrossroadInfo c : crossroads) {
+            TrafficStatus status = new TrafficStatus();
+            status.setCrsrdId(c.getCrsrdId());
+            status.setCrsrdNm(c.getCrsrdNm());
+            status.setLat(c.getLat());
+            status.setLon(c.getLon());
+            status.setGuName(c.getGuName());
+            status.setSignals(new HashMap<>());
+            status.setServerTimeMs(System.currentTimeMillis());
+            skeletons.put(c.getCrsrdId(), status);
+        }
+        return skeletons;
     }
 
     @PostMapping("/api/admin/sync-topis")

@@ -39,16 +39,12 @@ function segmentKey(segment) {
   return `${segment.fromIntNo ?? ""}->${segment.toIntNo ?? ""}`;
 }
 
-function improveBottleneckSpeedKph(speedKph, hasAdjustment = false) {
+function improveBottleneckSpeedKph(speedKph) {
+  // 신호 조정 효과를 속도로 임의 환산하지 않는다(근거 없는 수치 금지).
+  // 실측 속도를 그대로 유지하고, 개선 효과는 Webster 지체/처리용량 지표로 표시한다.
   const speed = Number(speedKph);
   if (!Number.isFinite(speed) || speed <= 0) return null;
-  if (!hasAdjustment) return speed;
-
-  // 신호 조정이 적용된 병목구간은 기존 프로젝트 흐름처럼
-  // 정체 속도를 완화 속도로 재계산한다.
-  // 너무 과장되지 않도록 최소 +8km/h, 최대 45km/h로 제한한다.
-  const improved = Math.max(speed + 8, speed * 1.55);
-  return Math.round(Math.min(improved, 45) * 10) / 10;
+  return Math.round(speed * 10) / 10;
 }
 
 function congestionBySpeedKph(speedKph) {
@@ -83,7 +79,7 @@ function buildOptimizedRouteTraffic(routeTraffic, appliedAdjustmentsMap = {}, is
 
     const selected = segment.selectedTraffic ?? segment.up ?? segment.down;
     const beforeSpeed = Number(selected?.speedKph);
-    const afterSpeed = improveBottleneckSpeedKph(beforeSpeed, true);
+    const afterSpeed = improveBottleneckSpeedKph(beforeSpeed);
     if (!Number.isFinite(afterSpeed)) return segment;
 
     const selectedLinkId = selected?.linkId;
@@ -739,7 +735,7 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
                       ? <span style={{ color: "#64748b" }}>속도 수집 불가 — TOPIS 미수집 구간입니다. 신호계획 기반으로 수동 조정하세요.</span>
                       : routeAnalysisLoading ? <AnalysisLoadingBlock />
                       : routeAnalysis ? routeAnalysis
-                      : isOptimized ? "관제사가 병목구간의 직진 신호 시간을 늘려 통과속도가 개선된 상태입니다."
+                      : isOptimized ? "관제사가 병목구간 병목 방향의 녹색시간을 늘려 처리용량을 확대한 상태입니다. (개선 효과는 아래 Webster 지표 참고)"
                       : "경로 중간 구간에서 속도 저하가 발생했습니다. AI 병목 분석 후 신호제어를 적용할 수 있습니다."}
                   </div>
                 </>
@@ -792,6 +788,44 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
                     : totalAdj > 0 ? `AI 분석 완료 (${totalAdj}개 교차로) — 병목지 선택 후 관제사 제어 버튼 클릭`
                     : routeTraffic?.segments?.length ? "병목구간 확인 완료 — AI 병목 분석을 실행하세요"
                     : "출발지와 목적지를 선택하면 속도 API 기반 병목구간을 표시합니다"}
+                </div>
+              );
+            })()}
+
+            {/* 신호 조정 효과 (Webster 기반 — 근거 있는 지표만) */}
+            {(() => {
+              const appliedAdjs = Object.entries(aiAdjustmentsMap || {})
+                .filter(([intNo]) => appliedIntNos.has(String(intNo)))
+                .map(([, adj]) => adj);
+              if (appliedAdjs.length === 0) return null;
+
+              const caps = appliedAdjs.map(a => Number(a.capacityGainPct)).filter(Number.isFinite);
+              const saves = appliedAdjs.map(a => Number(a.delaySaved)).filter(Number.isFinite);
+              const avgCap = caps.length ? Math.round(caps.reduce((s, v) => s + v, 0) / caps.length) : null;
+              const sumSave = saves.length ? Math.round(saves.reduce((s, v) => s + v, 0) * 10) / 10 : null;
+
+              return (
+                <div style={{ ...cardStyle, flexShrink: 0, borderColor: "rgba(34,197,94,0.4)" }}>
+                  <div style={{ fontWeight: 800, color: "#4ade80", fontSize: 13, marginBottom: 8 }}>신호 조정 효과 (Webster 기반 추정)</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                    <div style={{ background: "rgba(34,197,94,0.08)", borderRadius: 6, padding: "8px 10px" }}>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>병목 방향 처리용량</div>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: "#4ade80" }}>{avgCap != null ? `+${avgCap}%` : "—"}</div>
+                    </div>
+                    <div style={{ background: "rgba(96,165,250,0.08)", borderRadius: 6, padding: "8px 10px" }}>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>균일지체(1대당)</div>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: "#60a5fa" }}>{sumSave != null ? `${sumSave > 0 ? "−" : "+"}${Math.abs(sumSave)}s` : "—"}</div>
+                    </div>
+                  </div>
+                  {appliedAdjs.map((a, i) => (
+                    <div key={i} style={{ fontSize: 11.5, color: "#94a3b8", lineHeight: 1.7 }}>
+                      교차로 {a.intNo}: 처리용량 {a.capacityGainPct != null ? `+${a.capacityGainPct}%` : "—"}
+                      {Number.isFinite(Number(a.delayBefore)) && ` · 지체 ${a.delayBefore}s→${a.delayAfter}s`}
+                    </div>
+                  ))}
+                  <div style={{ fontSize: 10.5, color: "#64748b", marginTop: 6, lineHeight: 1.5 }}>
+                    ※ 처리용량 = 병목 방향 유효녹색 비율(g/C) 증가분. 지체 = Webster 균일지체. 방향별 교통량 미계측으로 과포화 지체는 제외한 추정치.
+                  </div>
                 </div>
               );
             })()}
