@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://172.28.6.40:5173"})
+@CrossOrigin(origins = "*")
 public class MapController {
 
 

@@ -16,6 +16,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -60,7 +62,7 @@ sim_llm = ChatOllama(
 # ── 멀티에이전트 워커 LLM (exaone3.5:2.4b × 4, 포트별 독립 인스턴스) ────────────────
 WORKER_MODEL  = "exaone3.5:2.4b"
 WORKER_PORTS  = [11435, 11436, 11437, 11438]
-SPRING_BASE   = "http://localhost:8080"
+SPRING_BASE   = "http://34.158.208.63:8080"
 
 worker_llms = [
     ChatOllama(
@@ -377,12 +379,22 @@ async def agent_stream_with_cancel(request: Request, prompt: str):
                 pass
 
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:8080"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+class ForceCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.method == "OPTIONS":
+            return Response(headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "600",
+            })
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
+
+app.add_middleware(ForceCORSMiddleware)
 
 # ── 요청/응답 모델 ───────────────────────────────────────────────────────────────
 

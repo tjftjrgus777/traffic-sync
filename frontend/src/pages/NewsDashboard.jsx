@@ -148,7 +148,7 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API_BASE}/api/news/latest?limit=200`)
+    fetch(`${API_BASE}/api/news/latest?limit=10000`)
       .then(r => r.json())
       .then(d => { setNews(d.news || []); setLoading(false); })
       .catch(() => setLoading(false));

@@ -324,16 +324,20 @@ class GroqAnalyzer:
 # [DatabaseManager — 즉시 단건 삽입]
 # ================================================================
 class DatabaseManager:
-    WALLET_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'wallet')
+    WALLET_PATH = os.getenv(
+        "ORACLE_WALLET_PATH",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'wallet')
+    )
 
     def connect(self):
+        pwd = os.getenv("ORACLE_PASSWORD", "")
         return oracledb.connect(
-            user="ADMIN",
-            password="Heeyoun1220!",
-            dsn="koreapoint_high",
+            user=os.getenv("ORACLE_USER", "ADMIN"),
+            password=pwd,
+            dsn=os.getenv("ORACLE_DSN", "koreapoint_high"),
             config_dir=self.WALLET_PATH,
             wallet_location=self.WALLET_PATH,
-            wallet_password="Heeyoun1220!"
+            wallet_password=pwd
         )
 
     def save_one(self, news: dict, cursor, connection, table: str) -> bool:

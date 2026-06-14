@@ -12,7 +12,23 @@
       "Bash(sed -n '270,340p' hooks/useAssistant.js)",
       "Bash(sed -i '' -e 's|<span>문서번호 SYN-DOC-0[0-9]</span>|<span></span>|' -e 's|<td class=\"k\">작성 팀</td><td>Syncro</td><td class=\"k\">문서 버전</td><td>v2.0 \\(전면 개정\\)</td>|<td class=\"k\">작성 팀</td><td>Syncro</td><td class=\"k\">작성자</td><td>kimsua · heeyoun · jinminkyeong · seokhyun</td>|' -e 's| v2.0</span>|</span>|' 0*.html)",
       "Bash(sed -i '' '/<td class=\"k\">작성자<\\\\/td><td colspan=\"3\">kimsua · heeyoun · jinminkyeong · seokhyun<\\\\/td>/d' 01_요구사항정의서.html)",
-      "Bash(./mvnw compile *)"
+      "Bash(./mvnw compile *)",
+      "Bash(ngrok version *)",
+      "Bash(xargs cat)",
+      "Bash(cat /Users/parkheeyoun/.hermes/.env | grep GEMINI)",
+      "Read(//Users/parkheeyoun/.hermes/**)",
+      "Bash(find /Users/parkheeyoun -name \"*.env\" -not -path \"*/node_modules/*\" -not -path \"*/.git/*\" -not -path \"*/venv/*\" 2>/dev/null | xargs grep -l \"AIza\" 2>/dev/null)",
+      "Read(//Users/parkheeyoun/**)",
+      "Bash(find /opt/homebrew /usr/local -name \"gcloud\" 2>/dev/null | head -3)",
+      "Read(//opt/homebrew/**)",
+      "Bash(/opt/homebrew/bin/gcloud version *)",
+      "Bash(cat > *)",
+      "Bash(/opt/homebrew/bin/gcloud compute *)",
+      "Bash(wait)",
+      "Bash(npm install *)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   }
 }

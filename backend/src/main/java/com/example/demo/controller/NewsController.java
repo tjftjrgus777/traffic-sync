@@ -18,7 +18,7 @@ public class NewsController {
 
     @GetMapping("/news/latest")
     public ResponseEntity<?> getLatestNews(
-            @RequestParam(defaultValue = "200") int limit,
+            @RequestParam(defaultValue = "10000") int limit,
             @RequestParam(required = false) String category
     ) {
         List<TrafficNewsEntity> news;
