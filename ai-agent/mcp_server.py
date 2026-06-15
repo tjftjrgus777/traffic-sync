@@ -19,7 +19,8 @@ from mcp.server.stdio import stdio_server       # stdin/stdout 기반 통신 처
 from mcp.types import Tool, TextContent         # Tool: 도구 스펙 정의, TextContent: 응답 포맷
 
 # ── 외부 서버 주소 상수 ─────────────────────────────────────────────────────────
-SPRING_BASE = "http://localhost:8080"           # Spring Boot 백엔드 주소
+import os
+SPRING_BASE = os.environ.get("SPRING_BASE_URL", "http://localhost:8080")  # Spring Boot 백엔드 주소
 ANYTHINGLLM_BASE = "http://localhost:3001"      # AnythingLLM RAG 서버 주소
 ANYTHINGLLM_API_KEY = "EEZ2246-Z5JM2NG-K9XSXQ3-CNKF9W7"  # AnythingLLM 인증 키
 

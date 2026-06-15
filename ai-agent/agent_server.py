@@ -307,6 +307,7 @@ async def lifespan(app: FastAPI):
             "command": PYTHON_BIN,
             "args": [MCP_SERVER_PATH],
             "transport": "stdio",
+            "env": {**os.environ, "SPRING_BASE_URL": SPRING_BASE},
         }
     })
 

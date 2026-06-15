@@ -90,6 +90,13 @@ public class TrafficScheduler {
             if (freshData.isEmpty()) {
                 log.warn("폴링: V2X 신호 빈 결과 (DB 교차로 {}개) — 신호 없이 보조데이터로 폴백", crossroads.size());
                 freshData = buildSkeletons(crossroads);
+            } else if (freshData.size() < crossroads.size()) {
+                // 신호 API가 일부 교차로만 반환한 경우 — 누락된 교차로를 스켈레톤으로 채워 항상 DB 전체를 브로드캐스트한다.
+                int signalCount = freshData.size();
+                Map<String, TrafficStatus> skeletons = buildSkeletons(crossroads);
+                skeletons.forEach(freshData::putIfAbsent);
+                log.warn("폴링: 부분 신호 결과 {}/{} — 누락 {}개 스켈레톤 보완",
+                        signalCount, crossroads.size(), crossroads.size() - signalCount);
             }
 
             // 프론트와 챗봇이 같은 값을 쓰도록 실제 보조 API 캐시와 계산 지표를 합친다.
