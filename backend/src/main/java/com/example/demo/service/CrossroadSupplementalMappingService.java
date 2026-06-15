@@ -56,45 +56,8 @@ public class CrossroadSupplementalMappingService {
                         .collect(Collectors.toMap(CrossroadSupplementalMappingEntity::getCrsrdId, Function.identity()));
 
         Map<String, CrossroadSupplementalMappingEntity> entitiesToSave = new LinkedHashMap<>();
-        Map<String, TopisLinkGeometry> dbGeometries = loadDbLinkGeometries();
-        if (!dbGeometries.isEmpty()) {
-            log.info("Using DB TOPIS_LINK_VERTEX geometries for supplemental mapping: links={}", dbGeometries.size());
-            Map<String, CrossroadRoadLinkMapping> dbMappings =
-                    roadLinkMappingService.mapCrossroadsToNearestLinks(crossroadsById.values().stream().toList(), dbGeometries.values());
-            for (CrossroadRoadLinkMapping mapping : dbMappings.values()) {
-                CrossroadSupplementalMappingEntity entity = toEntity(
-                        existingByCrossroadId.get(mapping.getCrsrdId()),
-                        mapping,
-                        crossroadsById.get(mapping.getCrsrdId()),
-                        true);
-                entitiesToSave.put(entity.getCrsrdId(), entity);
-                result.put(mapping.getCrsrdId(), toMapping(entity));
-            }
 
-            int retainedExistingCount = 0;
-            for (CrossroadInfo crossroad : crossroadsById.values()) {
-                if (result.containsKey(crossroad.getCrsrdId())) {
-                    continue;
-                }
-                CrossroadSupplementalMappingEntity entity = existingByCrossroadId.get(crossroad.getCrsrdId());
-                if (applyGuName(entity, crossroad)) {
-                    entitiesToSave.put(entity.getCrsrdId(), entity);
-                }
-                if (hasAnyMapping(entity)) {
-                    result.put(crossroad.getCrsrdId(), toMapping(entity));
-                    retainedExistingCount++;
-                }
-            }
-
-            if (!entitiesToSave.isEmpty()) {
-                mappingRepository.saveAll(entitiesToSave.values());
-            }
-
-            log.info("Crossroad supplemental mappings ready: requested={}, source=db-topis-link-vertex, rebuilt={}, retainedExisting={}, mapped={}",
-                    crossroadsById.size(), dbMappings.size(), retainedExistingCount, result.size());
-            return result;
-        }
-
+        // 1. DB 매핑 테이블에서 먼저 확인 — 완전한 것은 바로 사용
         List<CrossroadInfo> incompleteMappings = new ArrayList<>();
         int dbHitCount = 0;
         int partialDbHitCount = 0;
@@ -115,16 +78,35 @@ public class CrossroadSupplementalMappingService {
             }
         }
 
+        // 2. 미완성 교차로만 TOPIS_LINK_VERTEX로 재매핑
         int createdCount = 0;
         if (!incompleteMappings.isEmpty()) {
-            Map<String, CrossroadRoadLinkMapping> createdMappings = createNearestLinkMappings(incompleteMappings);
-            for (CrossroadRoadLinkMapping mapping : createdMappings.values()) {
-                CrossroadSupplementalMappingEntity entity =
-                        toEntity(existingByCrossroadId.get(mapping.getCrsrdId()), mapping, crossroadsById.get(mapping.getCrsrdId()));
-                entitiesToSave.put(entity.getCrsrdId(), entity);
-                result.put(mapping.getCrsrdId(), toMapping(entity));
+            Map<String, TopisLinkGeometry> dbGeometries = loadDbLinkGeometries();
+            if (!dbGeometries.isEmpty()) {
+                log.info("Remapping {} incomplete crossroads using TOPIS_LINK_VERTEX (links={})",
+                        incompleteMappings.size(), dbGeometries.size());
+                Map<String, CrossroadRoadLinkMapping> newMappings =
+                        roadLinkMappingService.mapCrossroadsToNearestLinks(incompleteMappings, dbGeometries.values());
+                for (CrossroadRoadLinkMapping mapping : newMappings.values()) {
+                    CrossroadSupplementalMappingEntity entity = toEntity(
+                            existingByCrossroadId.get(mapping.getCrsrdId()),
+                            mapping,
+                            crossroadsById.get(mapping.getCrsrdId()),
+                            true);
+                    entitiesToSave.put(entity.getCrsrdId(), entity);
+                    result.put(mapping.getCrsrdId(), toMapping(entity));
+                }
+                createdCount = newMappings.size();
+            } else {
+                Map<String, CrossroadRoadLinkMapping> createdMappings = createNearestLinkMappings(incompleteMappings);
+                for (CrossroadRoadLinkMapping mapping : createdMappings.values()) {
+                    CrossroadSupplementalMappingEntity entity =
+                            toEntity(existingByCrossroadId.get(mapping.getCrsrdId()), mapping, crossroadsById.get(mapping.getCrsrdId()));
+                    entitiesToSave.put(entity.getCrsrdId(), entity);
+                    result.put(mapping.getCrsrdId(), toMapping(entity));
+                }
+                createdCount = createdMappings.size();
             }
-            createdCount = createdMappings.size();
         }
 
         if (!entitiesToSave.isEmpty()) {

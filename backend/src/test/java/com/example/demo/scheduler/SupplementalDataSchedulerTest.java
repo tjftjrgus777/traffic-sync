@@ -3,6 +3,7 @@ package com.example.demo.scheduler;
 import com.example.demo.model.context.CrossroadRoadLinkMapping;
 import com.example.demo.model.context.RoadRiskSnapshot;
 import com.example.demo.model.context.RoadSpeedSnapshot;
+import com.example.demo.repository.CrossroadRepository;
 import com.example.demo.service.RoadRiskApiService;
 import com.example.demo.service.CrossroadSupplementalMappingService;
 import com.example.demo.service.SupplementalDataCacheService;
@@ -113,7 +114,8 @@ class SupplementalDataSchedulerTest {
                 mock(CrossroadSupplementalMappingService.class),
                 new TrafficCacheService(),
                 supplementalCache,
-                mock(TrafficWebSocketHandler.class)
+                mock(TrafficWebSocketHandler.class),
+                mock(CrossroadRepository.class)
         );
         ReflectionTestUtils.setField(scheduler, "topisSpeedMaxConcurrency", 4);
         ReflectionTestUtils.setField(scheduler, "topisSpeedMaxWaitMs", 12_000L);

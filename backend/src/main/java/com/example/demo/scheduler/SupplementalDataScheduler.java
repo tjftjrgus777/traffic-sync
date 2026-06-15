@@ -5,6 +5,8 @@ import com.example.demo.model.context.CrossroadRoadLinkMapping;
 import com.example.demo.model.context.RoadRiskSnapshot;
 import com.example.demo.model.context.RoadSpeedSnapshot;
 import com.example.demo.model.context.WeatherSnapshot;
+import com.example.demo.entity.CrossroadEntity;
+import com.example.demo.repository.CrossroadRepository;
 import com.example.demo.service.RoadRiskApiService;
 import com.example.demo.service.CrossroadSupplementalMappingService;
 import com.example.demo.service.SupplementalDataCacheService;
@@ -54,6 +56,7 @@ public class SupplementalDataScheduler {
     private final TrafficCacheService trafficCacheService;
     private final SupplementalDataCacheService supplementalDataCacheService;
     private final TrafficWebSocketHandler webSocketHandler;
+    private final CrossroadRepository crossroadRepository;
 
     @Value("${traffic.supplemental.parallelism:24}")
     private int supplementalParallelism;
@@ -105,12 +108,28 @@ public class SupplementalDataScheduler {
         }
     }
 
-    @Scheduled(initialDelay = 10000, fixedRateString = "${road-link.mapping.interval-ms:86400000}")
+    @Scheduled(initialDelay = 10000)
     public void refreshRoadLinkMappings() {
         long startedAtMs = System.currentTimeMillis();
         List<CrossroadInfo> crossroads = trafficCacheService.getCrossroads();
         if (crossroads.isEmpty()) {
-            log.debug("Crossroad cache is empty; road link mapping skipped");
+            crossroads = crossroadRepository.findWithinRadius(
+                    trafficCacheService.getCenterLat(),
+                    trafficCacheService.getCenterLon(),
+                    trafficCacheService.getCenterRadius()
+            ).stream()
+                    .filter(e -> e.getLat() != null && e.getLon() != null)
+                    .map(e -> {
+                        CrossroadInfo info = new CrossroadInfo();
+                        info.setCrsrdId(e.getCrsrdId());
+                        info.setCrsrdNm(e.getCrsrdNm());
+                        info.setLat(e.getLat());
+                        info.setLon(e.getLon());
+                        return info;
+                    }).toList();
+        }
+        if (crossroads.isEmpty()) {
+            log.debug("Crossroad cache and DB both empty; road link mapping skipped");
             return;
         }
 
@@ -128,6 +147,7 @@ public class SupplementalDataScheduler {
             log.info("Crossroad supplemental mapping refreshed: crossroads={}, mapped={}, directional={}, elapsedMs={}",
                     crossroads.size(), mappings.size(), directionalMappings.size(),
                     System.currentTimeMillis() - startedAtMs);
+            CompletableFuture.runAsync(this::refreshRoadRisks);
         } catch (Exception e) {
             log.warn("Crossroad supplemental mapping refresh failed: {}", e.getMessage());
         }
@@ -256,11 +276,11 @@ public class SupplementalDataScheduler {
     public void refreshCurrentAreaSupplementalDataAsync() {
         CompletableFuture.runAsync(() -> {
                     refreshRoadLinkMappings();
-                    refreshRoadSpeeds();
+                    CompletableFuture<Void> speed   = CompletableFuture.runAsync(this::refreshRoadSpeeds);
+                    CompletableFuture<Void> risk    = CompletableFuture.runAsync(this::refreshRoadRisks);
+                    CompletableFuture<Void> weather = CompletableFuture.runAsync(this::refreshWeather);
+                    CompletableFuture.allOf(speed, risk, weather).join();
                     broadcastCurrentTrafficStatuses();
-                    if (roadRiskRefreshOnAreaChange) {
-                        refreshRoadRisks();
-                    }
                 })
                 .exceptionally(e -> {
                     log.warn("Async current area supplemental refresh failed: {}", e.getMessage());
