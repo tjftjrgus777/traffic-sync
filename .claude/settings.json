@@ -31,7 +31,8 @@
       "Bash(python3 -c \"import markdown\")",
       "Bash(npx --yes md-to-pdf --version)",
       "Bash(npx md-to-pdf *)",
-      "Bash(cp \"/Users/parkheeyoun/Obsidan/Trafic-acinc/syncro/예상 질문.md\" /tmp/예상질문.md && npx md-to-pdf /tmp/예상질문.md 2>&1 && cp /tmp/예상질문.pdf \"/Users/parkheeyoun/Desktop/예상 질문.pdf\")"
+      "Bash(cp \"/Users/parkheeyoun/Obsidan/Trafic-acinc/syncro/예상 질문.md\" /tmp/예상질문.md && npx md-to-pdf /tmp/예상질문.md 2>&1 && cp /tmp/예상질문.pdf \"/Users/parkheeyoun/Desktop/예상 질문.pdf\")",
+      "Bash(vercel alias *)"
     ],
     "additionalDirectories": [
       "/tmp",
