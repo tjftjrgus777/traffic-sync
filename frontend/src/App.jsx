@@ -38,6 +38,16 @@ export default function App() {
   const [page, setPage] = useState(() =>
     localStorage.getItem('ts_user') ? 'main' : 'login'
   )
+  const [themeMode, setThemeMode] = useState('dark')
+
+  useEffect(() => {
+    document.documentElement.dataset.syncroTheme = themeMode
+    localStorage.removeItem('syncro_theme')
+  }, [themeMode])
+
+  const toggleThemeMode = useCallback(() => {
+    setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')
+  }, [])
 
   // VWorld 3D viewer 재초기화 오류 방지용.
   // 시뮬레이션 페이지에 한 번 들어간 뒤에는 컴포넌트를 unmount하지 않고 숨김 처리만 한다.
@@ -179,6 +189,7 @@ export default function App() {
         const gu   = selectedGu?.name || '강남구'
         const API  = (import.meta.env.VITE_API_URL || 'http://localhost:8080').replace(/\/+$/, '')
 
+        setThemeMode('dark')
         setPage(data.isTempPw ? 'mypage' : 'main')
 
         // 임시 비번이면 브리핑 없이 마이페이지로
@@ -253,6 +264,8 @@ export default function App() {
             notifQueue={notifQueue}
             onDismissNotif={onDismissNotif}
             wsData={wsData}
+            themeMode={themeMode}
+            onToggleTheme={toggleThemeMode}
           />
         </div>
       )}
@@ -270,6 +283,8 @@ export default function App() {
           selectedGu={null}
           notifQueue={notifQueue}
           onDismissNotif={onDismissNotif}
+          themeMode={themeMode}
+          onToggleTheme={toggleThemeMode}
         />
       )}
 
@@ -285,6 +300,8 @@ export default function App() {
           selectedGu={null}
           notifQueue={notifQueue}
           onDismissNotif={onDismissNotif}
+          themeMode={themeMode}
+          onToggleTheme={toggleThemeMode}
         />
       )}
 
@@ -310,6 +327,8 @@ export default function App() {
           onToggleMic={assistant.onFloatingClick}
           notifQueue={notifQueue}
           onDismissNotif={onDismissNotif}
+          themeMode={themeMode}
+          onToggleTheme={toggleThemeMode}
         />
       )}
       {page === 'mypage' && (
@@ -330,6 +349,8 @@ export default function App() {
           onBack={() => setPage('map')}
           notifQueue={notifQueue}
           onDismissNotif={onDismissNotif}
+          themeMode={themeMode}
+          onToggleTheme={toggleThemeMode}
         />
       )}
 
@@ -382,6 +403,8 @@ export default function App() {
           onToggleMic={assistant.onFloatingClick}
           notifQueue={notifQueue}
           onDismissNotif={onDismissNotif}
+          themeMode={themeMode}
+          onToggleTheme={toggleThemeMode}
         />
       )}
 

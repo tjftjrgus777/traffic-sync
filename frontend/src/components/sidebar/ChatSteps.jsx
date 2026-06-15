@@ -29,7 +29,21 @@ export function ThinkingDots() {
   );
 }
 
-export function StepRows({ steps }) {
+function stepTheme(themeMode) {
+  const isLight = themeMode === "light";
+  return {
+    border: isLight ? "rgba(148,163,184,0.28)" : "rgba(255,255,255,0.06)",
+    headerBg: isLight ? "rgba(241,245,249,0.86)" : "rgba(255,255,255,0.025)",
+    headerText: isLight ? "#64748b" : "rgba(255,255,255,0.38)",
+    label: isLight ? "#64748b" : "rgba(255,255,255,0.28)",
+    body: isLight ? "#475569" : "rgba(255,255,255,0.48)",
+    rail: isLight ? "rgba(148,163,184,0.22)" : "rgba(255,255,255,0.04)",
+    progress: isLight ? "rgba(96,165,250,0.38)" : "rgba(255,255,255,0.14)",
+  };
+}
+
+export function StepRows({ steps, themeMode = "dark" }) {
+  const c = stepTheme(themeMode);
   return (
     <div style={{ padding: "6px 12px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
       {steps.map((step, i) => {
@@ -39,10 +53,10 @@ export function StepRows({ steps }) {
           : (step.content ?? "");
         return (
           <div key={i} style={{ display: "flex", gap: 10, animation: "chatFadeIn .15s ease" }}>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", minWidth: 54, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
+            <span style={{ fontSize: 10, color: c.label, minWidth: 54, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
               {label}
             </span>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.48)", lineHeight: 1.55, wordBreak: "break-all", fontFamily: "system-ui,sans-serif" }}>
+            <span style={{ fontSize: 10, color: c.body, lineHeight: 1.55, wordBreak: "break-all", fontFamily: "system-ui,sans-serif" }}>
               {text.length > 140 ? text.slice(0, 140) + "…" : text}
             </span>
           </div>
@@ -52,37 +66,39 @@ export function StepRows({ steps }) {
   );
 }
 
-export function InlineSteps({ steps, collapsed, onToggle, label }) {
+export function InlineSteps({ steps, collapsed, onToggle, label, themeMode = "dark" }) {
   if (!steps || steps.length === 0) return null;
+  const c = stepTheme(themeMode);
   return (
-    <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden", marginBottom: 4 }}>
+    <div style={{ border: `1px solid ${c.border}`, borderRadius: 6, overflow: "hidden", marginBottom: 4 }}>
       <button onClick={onToggle} style={{
         width: "100%", display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
-        background: "rgba(255,255,255,0.025)", border: "none", cursor: "pointer",
-        color: "rgba(255,255,255,0.38)", fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
+        background: c.headerBg, border: "none", cursor: "pointer",
+        color: c.headerText, fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
       }}>
         <span style={{ fontSize: 8, transition: "transform .2s", transform: collapsed ? "rotate(-90deg)" : "none", display: "inline-block" }}>▾</span>
         {label ?? `추론 과정 · ${steps.length}단계`}
       </button>
-      {!collapsed && <StepRows steps={steps} />}
+      {!collapsed && <StepRows steps={steps} themeMode={themeMode} />}
     </div>
   );
 }
 
-export function ThinkingBlock({ steps }) {
+export function ThinkingBlock({ steps, themeMode = "dark" }) {
+  const c = stepTheme(themeMode);
   return (
-    <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden" }}>
+    <div style={{ border: `1px solid ${c.border}`, borderRadius: 6, overflow: "hidden" }}>
       <div style={{
         display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
-        background: "rgba(255,255,255,0.025)", color: "rgba(255,255,255,0.38)", fontSize: 11,
+        background: c.headerBg, color: c.headerText, fontSize: 11,
         fontFamily: "system-ui,sans-serif",
       }}>
         <ThinkingDots />
         <span style={{ marginLeft: 2 }}>추론 중{steps.length > 0 ? ` · ${steps.length}단계` : ""}</span>
       </div>
-      {steps.length > 0 && <StepRows steps={steps} />}
-      <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }}>
-        <div style={{ height: "100%", background: "rgba(255,255,255,0.14)", animation: "chatProgressBar 2.4s ease infinite" }} />
+      {steps.length > 0 && <StepRows steps={steps} themeMode={themeMode} />}
+      <div style={{ height: 1, background: c.rail }}>
+        <div style={{ height: "100%", background: c.progress, animation: "chatProgressBar 2.4s ease infinite" }} />
       </div>
     </div>
   );

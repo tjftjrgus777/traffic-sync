@@ -1,1134 +1,227 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TrafficSync — 데이터 흐름도</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Syncro — 데이터흐름도</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-  font-size: 10pt;
-  color: #1a202c;
-  background: #fff;
-  line-height: 1.6;
-}
-@media print {
-  body { font-size: 9pt; }
-  .page-break { page-break-before: always; }
-  .no-break { page-break-inside: avoid; }
-  .cover { page-break-after: always; }
-}
-
-/* ── 표지 ── */
-.cover {
-  height: 100vh;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
-  color: #fff; text-align: center; padding: 60px;
-}
-.cover-badge {
-  background: rgba(59,130,246,0.25); border: 1px solid rgba(59,130,246,0.5);
-  border-radius: 20px; padding: 6px 22px; font-size: 11pt; color: #93c5fd;
-  margin-bottom: 36px; letter-spacing: 2px;
-}
-.cover h1 { font-size: 32pt; font-weight: 900; color: #fff; margin-bottom: 6px; }
-.cover h2 { font-size: 22pt; font-weight: 700; color: #60a5fa; margin-bottom: 40px; }
-.cover-divider { width: 60px; height: 3px; background: linear-gradient(90deg,#3b82f6,#60a5fa); margin: 0 auto 40px; border-radius: 2px; }
-.cover-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; font-size: 10.5pt; color: #94a3b8; margin-bottom: 48px; text-align: left; min-width: 360px; }
-.cover-meta span { color: #cbd5e1; font-weight: 600; }
-.cover-doc-id { font-size: 9pt; color: #475569; letter-spacing: 1px; }
-
-/* ── 본문 ── */
-.content { max-width: 940px; margin: 0 auto; padding: 50px 40px; }
-.section-title { font-size: 15pt; font-weight: 800; color: #0f172a; border-left: 5px solid #2563eb; padding-left: 14px; margin: 40px 0 16px; }
-.sub-title { font-size: 12pt; font-weight: 700; color: #1e3a5f; margin: 28px 0 12px; padding-bottom: 5px; border-bottom: 1.5px solid #e2e8f0; }
-.sub-sub { font-size: 10.5pt; font-weight: 700; color: #334155; margin: 18px 0 8px; }
-
-/* ── 표 ── */
-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 12px 0 20px; }
-thead th { background: #1e3a5f; color: #fff; padding: 9px 10px; text-align: center; font-weight: 700; border: 1px solid #1e3a5f; }
-tbody td { padding: 7px 10px; border: 1px solid #d1d5db; vertical-align: top; line-height: 1.5; }
-tbody tr:nth-child(even) td { background: #f8fafc; }
-.center { text-align: center; }
-.mono { font-family: 'Consolas', monospace; font-size: 8.5pt; color: #1d4ed8; }
-
-/* ── 목차 ── */
-.toc-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; border-bottom: 1px dashed #e2e8f0; }
-.toc-item .num { color: #2563eb; font-weight: 700; min-width: 30px; }
-.toc-item .dots { flex: 1; border-bottom: 1px dotted #d1d5db; margin: 0 6px; }
-.toc-item .pg { color: #64748b; font-size: 9.5pt; }
-.toc-sub { padding-left: 28px; font-size: 9.5pt; color: #374151; border-bottom: 1px dashed #f1f5f9; }
-
-/* ── 개정이력 ── */
-.hist-table td { text-align: center; }
-
-/* ── 칩/배지 ── */
-.chip { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 8pt; font-weight: 700; margin-right: 3px; vertical-align: middle; }
-.chip-blue   { background: #dbeafe; color: #1d4ed8; }
-.chip-green  { background: #d1fae5; color: #065f46; }
-.chip-amber  { background: #fef3c7; color: #92400e; }
-.chip-red    { background: #fee2e2; color: #991b1b; }
-.chip-purple { background: #ede9fe; color: #5b21b6; }
-.chip-slate  { background: #f1f5f9; color: #334155; }
-
-/* ── 플로우 다이어그램 컨테이너 ── */
-.flow-wrap {
-  background: #fff;
-  border: 1.5px solid #1a1a2e;
-  border-radius: 8px;
-  padding: 20px 24px 16px;
-  margin: 14px 0 28px;
-  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-}
-.flow-title {
-  color: #111827;
-  font-size: 9.5pt; font-weight: 700;
-  letter-spacing: 0; text-transform: none;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #d1d5db;
-  font-family: 'Malgun Gothic', sans-serif;
-}
-
-/* 스텝 박스 */
-.step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 4px; }
-.step-num {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: #fff; border: 2px solid #111827; color: #111827;
-  font-size: 9pt; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; margin-top: 2px;
-  font-family: 'Malgun Gothic', sans-serif;
-}
-.step-box {
-  flex: 1; border-radius: 8px; padding: 10px 14px;
-  background: #fff; border: 1.5px solid #1a1a2e; color: #111827;
-  font-family: 'Malgun Gothic', sans-serif;
-  font-size: 9pt; line-height: 1.65;
-}
-.step-box.db, .step-box.api, .step-box.proc,
-.step-box.cache, .step-box.front, .step-box.ws {
-  background: #fff;
-  border: 1.5px solid #1a1a2e;
-  color: #111827;
-}
-
-.step-box .label { display: none; }
-
-.step-box .name { font-weight: 700; font-size: 10pt; display: block; margin-bottom: 4px; color: #111827; }
-.step-box .detail { font-size: 8.5pt; color: #374151; }
-.step-box .data-row {
-  margin-top: 6px; font-size: 8.5pt;
-  background: #f3f4f6; border: 1px solid #d1d5db;
-  border-radius: 4px; padding: 5px 9px;
-  font-family: 'Consolas', monospace;
-  color: #1f2937; line-height: 1.7;
-}
-
-/* 연결선 */
-.step-connector {
-  margin-left: 12px; width: 0; height: 16px;
-  border-left: 2px solid #9ca3af;
-}
-.step-connector-label {
-  margin-left: 28px; font-size: 8pt; color: #6b7280;
-  margin-bottom: 2px; margin-top: -4px;
-  font-family: 'Malgun Gothic', sans-serif;
-}
-
-/* 분기 */
-.branch-wrap { display: grid; gap: 10px; margin: 4px 0; }
-.branch-item { border-left: 3px solid #d1d5db; padding-left: 12px; }
-.branch-label { font-size: 8pt; color: #6b7280; margin-bottom: 6px; font-style: italic; font-family: 'Malgun Gothic', sans-serif; }
-
-/* 인라인 코드 */
-code { font-family: 'Consolas', monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 3px; font-size: 8.5pt; color: #1d4ed8; }
-
-/* 참고 박스 */
-.info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 9.5pt; color: #1e40af; }
-.warn-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 9pt; color: #78350f; margin: 12px 0 18px; }
-
-hr { border: none; border-top: 1px solid #e2e8f0; margin: 32px 0; }
-p { margin-bottom: 10px; line-height: 1.7; }
-
-/* 요약 카드 행 */
-.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
-.summary-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; background: #f8fafc; }
-.summary-card .sc-title { font-size: 9pt; font-weight: 700; color: #1e3a5f; margin-bottom: 6px; }
-.summary-card .sc-body { font-size: 8.5pt; color: #374151; line-height: 1.6; }
-
-/* 매핑 구조 박스 */
-.mapping-box {
-  background: #f3f4f6; border: 1.5px solid #1a1a2e; border-radius: 8px;
-  padding: 20px 22px; margin: 14px 0;
-  font-family: 'Consolas', monospace; font-size: 9pt;
-  color: #111827; line-height: 2;
-}
-.mb-comment { color: #6b7280; font-style: italic; }
-.mb-table { color: #111827; font-weight: 700; }
-.mb-field { color: #1d4ed8; }
-.mb-value { color: #059669; }
-.mb-arrow { color: #9ca3af; }
-
-/* enrich 테이블 */
-.enrich-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 12px 0; }
-.enrich-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; padding: 10px 12px; }
-.enrich-card .ec-src { font-size: 8pt; color: #6b7280; margin-bottom: 4px; }
-.enrich-card .ec-field { font-size: 8.5pt; font-weight: 700; color: #1e3a5f; margin-bottom: 3px; }
-.enrich-card .ec-rule { font-size: 8pt; color: #374151; font-family: 'Consolas', monospace; }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:10pt;color:#1b1f24;background:#fff;line-height:1.7}
+.cover{max-width:210mm;margin:0 auto;min-height:97vh;padding:28mm 22mm 20mm;display:flex;flex-direction:column;justify-content:space-between}
+.cover-top{border-top:3px solid #16263e;padding-top:12px;display:flex;justify-content:space-between;font-size:9.5pt;color:#5a6472}
+.cover-docno{font-size:9.5pt;color:#5a6472;letter-spacing:3px;margin-bottom:16px}
+.cover-title{font-size:28pt;font-weight:700;color:#16263e;line-height:1.3}
+.cover-sub{font-size:12.5pt;color:#3a4656;margin-top:10px;font-weight:500}
+.cover-rule{width:100%;height:1px;background:#16263e;margin:26px 0}
+.cover-desc{font-size:10pt;color:#4a525c;max-width:560px}
+.cover-meta{width:100%;border-collapse:collapse;margin-top:34px;font-size:9.5pt}
+.cover-meta td{border:1px solid #c9ced6;padding:7px 12px}
+.cover-meta td.k{background:#f2f4f7;width:120px;font-weight:700;color:#16263e}
+.cover-bottom{border-bottom:3px solid #16263e;padding-bottom:12px;display:flex;justify-content:space-between;font-size:9pt;color:#5a6472}
+.page{max-width:210mm;margin:0 auto;padding:14mm 20mm}
+.doc-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #16263e;padding-bottom:6px;margin-bottom:24px;font-size:9pt;color:#5a6472}
+.doc-head b{font-size:10.5pt;color:#16263e}
+h1.sec{font-size:14.5pt;font-weight:700;color:#16263e;border-bottom:2px solid #16263e;padding-bottom:6px;margin:34px 0 14px}
+h2{font-size:11.5pt;font-weight:700;color:#16263e;margin:22px 0 8px}
+p{margin:0 0 8px;color:#2a3138}
+ul,ol{margin:0 0 10px 20px}
+li{margin-bottom:3px;color:#2a3138}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:9pt}
+th{background:#1f3147;color:#fff;font-weight:600;padding:7px 10px;border:1px solid #1f3147;text-align:left}
+td{padding:6px 10px;border:1px solid #c8ccd2;vertical-align:top;line-height:1.55;color:#262c33;background:#fff;word-break:keep-all}
+code{font-family:Consolas,'D2Coding',monospace;font-size:8.5pt;background:#f1f3f5;border:1px solid #e1e4e8;padding:0 4px;color:#1c3050}
+.note{border:1px solid #c8ccd2;border-left:3px solid #16263e;background:#fafbfc;padding:10px 14px;margin:12px 0;font-size:9.5pt;color:#333}
+.note b{color:#16263e}
+.diagram{border:1px solid #2a3a52;padding:14px 16px;margin:14px 0}
+.diagram-title{font-size:9.5pt;font-weight:700;color:#16263e;border-left:3px solid #16263e;padding-left:8px;margin-bottom:12px}
+.flow{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin:6px 0}
+.fnode{border:1px solid #2a3a52;background:#fff;padding:8px 12px;text-align:center;min-width:104px;display:flex;flex-direction:column;justify-content:center}
+.fnode .t{font-size:9.5pt;font-weight:700;color:#16263e}
+.fnode .s{font-size:8pt;color:#6a7380;margin-top:2px}
+.farr{color:#8a93a0;font-size:12pt;align-self:center}
+.fline{font-size:8.5pt;color:#5a6472;margin:4px 0 10px;padding-left:4px}
+pre{font-family:Consolas,'D2Coding',monospace;font-size:8.5pt;background:#f7f8fa;border:1px solid #d8dce2;padding:12px 14px;margin:10px 0 16px;line-height:1.6;overflow-x:auto;color:#22303f}
+.footer{max-width:210mm;margin:24px auto 0;padding:10px 20mm 26px;border-top:1px solid #c9ced6;display:flex;justify-content:space-between;font-size:8.5pt;color:#7c848e}
+@media print{.page-break{page-break-before:always}}
 </style>
 </head>
 <body>
 
-<!-- 표지 -->
 <div class="cover">
-  <div class="cover-badge">분석 단계 · 기술 문서</div>
-  <h1>TrafficSync</h1>
-  <h2>데이터 흐름도</h2>
-  <div class="cover-divider"></div>
-  <div class="cover-meta">
-    <div>문서 번호</div><div><span>TS-AN-DFD-001</span></div>
-    <div>버전</div><div><span>v2.0</span></div>
-    <div>작성일</div><div><span>2025년 5월</span></div>
-    <div>작성자</div><div><span>박희윤</span></div>
-    <div>상태</div><div><span>최종</span></div>
-    <div>분류</div><div><span>내부용</span></div>
+  <div class="cover-top"><span>Syncro | 교통 관제 시스템</span><span></span></div>
+  <div>
+    <div class="cover-docno">SYNCRO PROJECT DOCUMENTATION</div>
+    <div class="cover-title">데이터흐름도</div>
+    <div class="cover-sub">실시간 V2X 기반 AI 교통 관제 시스템 Syncro</div>
+    <div class="cover-rule"></div>
+    <div class="cover-desc">
+      본 문서는 Syncro의 데이터 수집·통합·전파 흐름과 AI 분석 요청의 처리 경로를 흐름도 중심으로 기술한다.
+      각 흐름의 단계는 실제 구현 코드의 호출 순서와 일치한다.
+    </div>
+    <table class="cover-meta">
+      <tr><td class="k">작성 팀</td><td>Syncro</td><td class="k">작성자</td><td>kimsua · heeyoun · jinminkyeong · seokhyun</td></tr>
+      <tr><td class="k">작성일</td><td>2026. 06. 13.</td><td class="k">문서 분류</td><td>데이터흐름도</td></tr>
+      <tr><td class="k">시스템명</td><td>Syncro (교통 관제 시스템)</td><td class="k">작성 기준</td><td>구현 코드 기준</td></tr>
+    </table>
   </div>
-  <div class="cover-doc-id">TrafficSync · Data Flow Diagram · 시나리오별 상세 흐름</div>
+  <div class="cover-bottom"><span>Syncro Team</span><span></span></div>
 </div>
 
-<div class="content">
+<div class="page page-break">
+<div class="doc-head"><b>데이터흐름도</b><span>Syncro | 교통 관제 시스템</span></div>
 
-<!-- 개정이력 -->
-<div class="section-title">개정 이력</div>
-<table class="hist-table">
-  <thead><tr><th style="width:70px">버전</th><th style="width:100px">작성일</th><th style="width:70px">작성자</th><th>변경 내용</th></tr></thead>
-  <tbody>
-    <tr><td>v1.0</td><td>2025-05</td><td>박희윤</td><td>초안 작성 — Level 0/1/2 DFD</td></tr>
-    <tr><td>v2.0</td><td>2025-05</td><td>박희윤</td><td>전면 개정 — 추상적 DFD 기호 제거, 시나리오별 단계 흐름 + 실제 테이블·필드명 명시, 링크 매핑 로직 상세화</td></tr>
-    <tr><td>v2.1</td><td>2026-05</td><td>박희윤</td><td>시나리오 G(뉴스 수집·감성 분석) 추가, TRAFFIC_NEWS·TRAFFIC_STATION 테이블 명세 추가, News Flask :5001 서버 구성 추가, 타임라인·API 목록 보완</td></tr>
-  </tbody>
-</table>
-
-<!-- 목차 -->
-<div class="section-title">목 차</div>
-<div style="margin:16px 0 36px">
-  <div class="toc-item"><span class="num">1</span><span>문서 목적 및 시스템 구성 요소 개요</span><span class="dots"></span><span class="pg">3p</span></div>
-  <div class="toc-item"><span class="num">2</span><span>DB 테이블 및 메모리 캐시 구조</span><span class="dots"></span><span class="pg">4p</span></div>
-  <div class="toc-item"><span class="num">3</span><span>핵심 매핑 구조 — 교차로 ↔ 도로 링크</span><span class="dots"></span><span class="pg">5p</span></div>
-  <div class="toc-item"><span class="num">4</span><span>시나리오 A — 구(區) 선택 시 전체 데이터 수집 흐름</span><span class="dots"></span><span class="pg">6p</span></div>
-  <div class="toc-item toc-sub">4.1 V2X 신호 수집 (즉시)</div>
-  <div class="toc-item toc-sub">4.2 도로 링크 매핑 계산 (즉시 or DB 재사용)</div>
-  <div class="toc-item toc-sub">4.3 TOPIS 속도 조회 + 위험도 조회</div>
-  <div class="toc-item toc-sub">4.4 enrich() — 통합 후 WebSocket 브로드캐스트</div>
-  <div class="toc-item"><span class="num">5</span><span>시나리오 B — 10초 정기 폴링 (상시 운영)</span><span class="dots"></span><span class="pg">8p</span></div>
-  <div class="toc-item"><span class="num">6</span><span>시나리오 C — 60초 TOPIS 속도 갱신</span><span class="dots"></span><span class="pg">9p</span></div>
-  <div class="toc-item"><span class="num">7</span><span>시나리오 D — 300초 도로위험도 갱신</span><span class="dots"></span><span class="pg">9p</span></div>
-  <div class="toc-item"><span class="num">8</span><span>시나리오 E — AI 챗봇 질의응답 (SSE 스트리밍)</span><span class="dots"></span><span class="pg">10p</span></div>
-  <div class="toc-item"><span class="num">9</span><span>시나리오 F — 교통량 예측 (XGBoost · Flask :5002)</span><span class="dots"></span><span class="pg">11p</span></div>
-  <div class="toc-item"><span class="num">10</span><span>시나리오 G — 뉴스 수집 및 감성 분석 (News Flask :5001)</span><span class="dots"></span><span class="pg">12p</span></div>
-  <div class="toc-item"><span class="num">11</span><span>enrich() 합산 로직 상세</span><span class="dots"></span><span class="pg">13p</span></div>
-  <div class="toc-item"><span class="num">12</span><span>전체 타이밍 타임라인</span><span class="dots"></span><span class="pg">14p</span></div>
-  <div class="toc-item"><span class="num">13</span><span>외부 API 목록 및 인증 방식</span><span class="dots"></span><span class="pg">14p</span></div>
+<h1 class="sec">1. 메인 처리 파이프라인 — V2X 30초 주기</h1>
+<div class="diagram">
+  <div class="diagram-title">실시간 신호 수집 → 통합 → 전파</div>
+  <div class="flow">
+    <div class="fnode"><span class="t">V2X API</span><span class="s">국토교통부</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">V2xApiService</span><span class="s">파싱 · 센티넬 폐기</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">enrichTrafficStatus()</span><span class="s">속도·위험도·날씨 합산</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">signalCache</span><span class="s">교차로ID → TrafficStatus</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">WebSocket</span><span class="s">/ws/traffic 브로드캐스트</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">React</span><span class="s">대시보드 갱신</span></div>
+  </div>
+  <div class="fline">주기 30초(initialDelay 10초). 구역 수집 진행 중이면 해당 회차 건너뜀. 빈 응답 시 캐시를 덮어쓰지 않고 유지.</div>
 </div>
-
-<hr/>
-
-<!-- ─── 1. 개요 ───────────────────────────────────────────── -->
-<div class="section-title">1. 문서 목적 및 시스템 구성 요소 개요</div>
-
-<p>본 문서는 TrafficSync에서 데이터가 <strong>어떤 경로로, 어떤 형태로, 어느 타이밍에</strong> 흐르는지를 시나리오별로 기술한다. 개발자뿐 아니라 발표 검토자도 "신호 데이터가 어떻게 속도 정보와 합쳐지는가"를 이해할 수 있도록, 추상적 기호 대신 실제 테이블명·필드명·메서드명을 명시한다.</p>
-
 <table>
-  <thead>
-    <tr><th style="width:220px">구성 요소</th><th>설명</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Spring Boot 백엔드 · :8080</strong></td>
-      <td>REST API, WebSocket 브로드캐스트, 스케줄러(10초·60초·300초), Oracle DB 접근</td>
-    </tr>
-    <tr>
-      <td><strong>Python AI 에이전트 · :8001</strong></td>
-      <td>FastAPI + LangGraph ReAct 에이전트, MCP 도구 9개, Ollama 호출, SSE 스트리밍</td>
-    </tr>
-    <tr>
-      <td><strong>React 프론트엔드 · :5173</strong></td>
-      <td>카카오맵 렌더링, WebSocket 실시간 수신, AI 챗봇, CCTV 관제 (UTIC iframe)</td>
-    </tr>
-    <tr>
-      <td><strong>Oracle Autonomous DB</strong></td>
-      <td>교차로, 사용자, CCTV, 신호, 도로링크 매핑 영구 저장. Wallet 기반 TLS 연결.</td>
-    </tr>
-    <tr>
-      <td><strong>Ollama LLM · :11434</strong></td>
-      <td>qwen3:30b-a3b 로컬 모델. Python AI 서버만 호출. temperature=0.3, ctx=8192</td>
-    </tr>
-    <tr>
-      <td><strong>News Flask 서버 · :5001</strong></td>
-      <td>Python Flask + BERT + Groq. RSS 뉴스 크롤링·키워드 검증·감성 분류·요약 → Oracle DB(TRAFFIC_NEWS) 저장. Spring Boot는 DB를 직접 조회.</td>
-    </tr>
-    <tr>
-      <td><strong>외부 공공 API</strong></td>
-      <td>V2X(공공데이터포털), TOPIS 실시간 도로 소통 정보(상행/하행 속도), 기상청, 도로위험도, UTIC CCTV, VWorld 3D WebGL, 네이버 뉴스 검색, Groq LLM API, Google Cloud TTS <span style="font-size:8pt;color:#2563eb;">[v1.1 수정 — T Data 삭제]</span></td>
-    </tr>
-  </tbody>
+  <tr><th style="width:40px">순서</th><th style="width:210px">단계</th><th>처리 내용</th></tr>
+  <tr><td>1</td><td>반경 내 교차로 조회</td><td>현재 중심 좌표·반경으로 DB Haversine 검색(CROSSROAD)</td></tr>
+  <tr><td>2</td><td>V2X 신호 수집</td><td>페이지네이션 순회, 대상 교차로 전부 확보 시 조기 종료</td></tr>
+  <tr><td>3</td><td>파싱</td><td>방향 8종 × 신호 6종 필드 조합 → 계층 구조. 잔여시간 36000 이상 폐기</td></tr>
+  <tr><td>4</td><td>보조 데이터 병합</td><td>날씨 스냅샷, 링크별 속도(방향별 최저값을 대표 속도로), 위험등급, 평균 대기시간, 혼잡도 계산</td></tr>
+  <tr><td>5</td><td>캐시 교체</td><td>새 Map 생성 후 volatile 참조 원자 교체(부분 읽기 방지)</td></tr>
+  <tr><td>6</td><td>전파</td><td>전 WebSocket 세션에 JSON 배열 푸시</td></tr>
 </table>
 
-<!-- ─── 2. DB / 캐시 구조 ──────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">2. DB 테이블 및 메모리 캐시 구조</div>
-
-<div class="sub-title">2.1 Oracle DB 주요 테이블</div>
-<table>
-  <thead>
-    <tr><th style="width:200px">테이블명</th><th>주요 컬럼</th><th style="width:120px">갱신 시점</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td class="mono">CROSSROADS</td>
-      <td>crsrd_id(PK), crsrd_nm, lat, lon, gu_name — 교차로 기본 정보</td>
-      <td class="center">초기 적재 1회</td>
-    </tr>
-    <tr>
-      <td class="mono">CROSSROAD_SUPPLEMENTAL_MAPPING</td>
-      <td>crsrd_id(PK), speed_link_id, risk_source_link_id, risk_line_string, risk_distance_meters, speed_distance_meters, gu_name, updated_at_ms — 교차로↔도로링크 매핑</td>
-      <td class="center">첫 계산 후 재사용 (24시간마다 갱신 검사)</td>
-    </tr>
-    <tr>
-      <td class="mono">USERS</td>
-      <td>email(PK), name, password_hash(BCrypt), role, created_at — 사용자 계정</td>
-      <td class="center">회원가입·수정 시</td>
-    </tr>
-    <tr>
-      <td class="mono">CCTV_CAMERAS</td>
-      <td>cctv_id(PK), cctv_nm, lat, lon, utic_url — CCTV 메타정보</td>
-      <td class="center">초기 적재 1회</td>
-    </tr>
-    <tr>
-      <td class="mono">SIGNAL_PHASES</td>
-      <td>phase_id, crsrd_id(FK), direction, signal_color, remain_time_cs — 신호 현시 이력</td>
-      <td class="center">V2X 폴링 시 기록</td>
-    </tr>
-    <tr>
-      <td class="mono">ROAD_LINKS</td>
-      <td>link_id(PK), line_string, length_m — TOPIS 도로링크 기하(LineString)</td>
-      <td class="center">xlsx 초기 적재 1회</td>
-    </tr>
-    <tr>
-      <td class="mono">TRAFFIC_NEWS</td>
-      <td>link(PK), category, title, summary, sentiment, pub_date, clickbait_prob, article_type, type_prob — 뉴스 기사 및 감성 분석 결과</td>
-      <td class="center">News Flask /news/fetch 실행 시</td>
-    </tr>
-    <tr>
-      <td class="mono">TRAFFIC_STATION</td>
-      <td>station_id(PK), station_name, latitude, longitude — XGBoost 교통량 예측용 측정 지점</td>
-      <td class="center">초기 적재 1회</td>
-    </tr>
-  </tbody>
-</table>
-
-<div class="sub-title">2.2 메모리 캐시 (Spring Boot 프로세스 내)</div>
-<table>
-  <thead>
-    <tr><th style="width:250px">캐시 변수</th><th>타입</th><th>내용</th><th style="width:90px">갱신 주기</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td class="mono">signalCache (TrafficCacheService)</td>
-      <td class="center mono">volatile Map&lt;String, TrafficStatus&gt;</td>
-      <td>교차로ID → 최신 TrafficStatus (V2X신호 + 속도 + 위험도 + 기상 합산)</td>
-      <td class="center">10초</td>
-    </tr>
-    <tr>
-      <td class="mono">mappingsByCrossroadId (SupplementalDataCacheService)</td>
-      <td class="center mono">ConcurrentHashMap</td>
-      <td>교차로ID → CrossroadRoadLinkMapping (speedLinkId, riskLineString, riskLinkId)</td>
-      <td class="center">구 선택 시 / 24시간</td>
-    </tr>
-    <tr>
-      <td class="mono">speedsByLinkId (SupplementalDataCacheService)</td>
-      <td class="center mono">ConcurrentHashMap</td>
-      <td>speedLinkId → RoadSpeedSnapshot (speedKph, travelTimeSec, stale)</td>
-      <td class="center">60초</td>
-    </tr>
-    <tr>
-      <td class="mono">risksByLinkId (SupplementalDataCacheService)</td>
-      <td class="center mono">ConcurrentHashMap</td>
-      <td>riskLineString or linkId → RoadRiskSnapshot (riskIndex, riskGrade, stale)</td>
-      <td class="center">300초</td>
-    </tr>
-    <tr>
-      <td class="mono">weather (SupplementalDataCacheService)</td>
-      <td class="center mono">volatile WeatherSnapshot</td>
-      <td>기온, 강수형태, 강수량, 풍속, 습도 (기상청 격자 기반)</td>
-      <td class="center">600초</td>
-    </tr>
-    <tr>
-      <td class="mono">wsSessions (TrafficWebSocketHandler)</td>
-      <td class="center mono">CopyOnWriteArrayList&lt;WebSocketSession&gt;</td>
-      <td>현재 연결 중인 브라우저 WebSocket 세션 목록</td>
-      <td class="center">연결/해제 즉시</td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- ─── 3. 핵심 매핑 구조 ─────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">3. 핵심 매핑 구조 — 교차로 ↔ 도로 링크</div>
-
-<p>TrafficSync의 핵심 과제 중 하나는 <strong>"교차로 ID"와 "도로 링크 ID"를 연결하는 것</strong>이다. V2X API는 교차로 단위로 신호를 주지만, TOPIS 속도 API와 도로위험도 API는 도로 링크(road link) 단위로 데이터를 제공한다. 이 두 세계를 잇는 매핑 테이블이 <code>CROSSROAD_SUPPLEMENTAL_MAPPING</code>이다.</p>
-
-<div class="info-box">
-  <strong>왜 두 가지 링크 ID가 필요한가?</strong><br/>
-  TOPIS 속도는 <code>speed_link_id</code>(링크 ID 문자열)로 조회하고, 도로위험도는 <code>risk_line_string</code>(LineString 좌표 쌍)으로 조회한다. 두 API의 조회 방식이 달라서 별도로 저장한다.
+<h1 class="sec">2. 보조 데이터 수집 — 독립 스케줄 4종</h1>
+<div class="diagram">
+  <div class="diagram-title">보조 캐시 구성 (enrichTrafficStatus()가 참조)</div>
+  <div class="flow">
+    <div class="fnode"><span class="t">TOPIS API</span><span class="s">서울시 · 60초</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">speedsByLinkId</span><span class="s">linkId → 속도(km/h)·통행시간(초)</span></div>
+  </div>
+  <div class="flow">
+    <div class="fnode"><span class="t">도로위험도 API</span><span class="s">행안부 · 5분</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">risksByLinkId</span><span class="s">링크 → 위험지수·등급</span></div>
+  </div>
+  <div class="flow">
+    <div class="fnode"><span class="t">기상청 API</span><span class="s">초단기실황 · 10분</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">weather</span><span class="s">전역 스냅샷(기온·강수·습도·풍속)</span></div>
+  </div>
+  <div class="flow">
+    <div class="fnode"><span class="t">매핑 생성</span><span class="s">24시간</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">mappings</span><span class="s">교차로 → 최근접/방향별 링크</span></div>
+  </div>
+  <div class="fline">호출량 관리: 속도 회당 80링크 라운드로빈·동시성 4, 위험도 회당 250건·동시성 2·재요청 간격 5분. 실패 시 값 유지 + stale 플래그.</div>
 </div>
 
-<div class="mapping-box">
-<span class="mb-comment">// CROSSROAD_SUPPLEMENTAL_MAPPING 한 행의 의미</span><br/>
-<span class="mb-table">교차로</span>  <span class="mb-arrow">──────────────────────────────────────────────────────────</span><br/>
- crsrd_id      = <span class="mb-value">"CR-001"</span>              <span class="mb-comment">// 교차로 고유 ID (CROSSROADS 테이블과 동일)</span><br/>
-<br/>
-<span class="mb-table">속도 매핑 (TOPIS API 호출용)</span><br/>
- speed_link_id = <span class="mb-value">"1620013200"</span>          <span class="mb-comment">// TOPIS linkId: 이 링크의 속도를 교차로 속도로 사용</span><br/>
- speed_distance_meters = <span class="mb-value">87.3</span>         <span class="mb-comment">// 교차로 중심 → 이 링크까지 거리(m)</span><br/>
-<br/>
-<span class="mb-table">위험도 매핑 (도로위험도 API 호출용)</span><br/>
- risk_source_link_id = <span class="mb-value">"1620013200"</span>    <span class="mb-comment">// 위험도 기준 링크 ID</span><br/>
- risk_line_string    = <span class="mb-value">"LINESTRING(127.092 37.511, 127.093 37.512)"</span>  <span class="mb-comment">// 도로구간 좌표 (WGS84)</span><br/>
- risk_distance_meters = <span class="mb-value">87.3</span>          <span class="mb-comment">// 교차로 중심 → 이 링크까지 거리(m)</span><br/>
+<h1 class="sec">3. 구역 선택 흐름 — POST /api/fetch-area</h1>
+<div class="flow">
+  <div class="fnode"><span class="t">구 클릭</span><span class="s">SVG 지도 / 음성</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">CAS 가드</span><span class="s">동시 요청 409</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">중심 좌표 변경</span><span class="s">반경 2.5km</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">보조 캐시 초기화</span><span class="s">이전 구 데이터 제거</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">V2X 수집</span><span class="s">최대 3회 재시도</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">캐시 전체 교체</span><span class="s">+ 브로드캐스트</span></div>
+</div>
+<ul>
+  <li>수집 실패 시 기존 캐시 유지 후 "일시 불안정" 메시지 반환 — 화면 데이터가 사라지지 않는다.</li>
+  <li>보조 데이터(매핑·속도)는 응답을 막지 않도록 비동기로 갱신한다.</li>
+  <li>구역 수집이 완료되어야 시뮬레이션 페이지 진입이 허용된다(프론트 진입 가드).</li>
+</ul>
+
+<h1 class="sec">4. AI 챗봇 흐름 — ReAct + MCP</h1>
+<div class="diagram">
+  <div class="diagram-title">지도 페이지 챗봇 (SSE 스트리밍)</div>
+  <div class="flow">
+    <div class="fnode"><span class="t">React 챗봇</span><span class="s">질문 + 교차로 컨텍스트</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">FastAPI :8001</span><span class="s">/api/agent/chat/stream</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">LangGraph ReAct</span><span class="s">qwen2.5:14b</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">MCP 도구</span><span class="s">stdio 서브프로세스</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">Spring REST</span><span class="s">캐시·신호계획 조회</span></div>
+  </div>
+  <div class="fline">도구 호출(action) · 결과(observation) · 사고(thought) · 최종 답변(answer)을 SSE 이벤트로 단계 전송. 연결 종료 감지 시 생성 즉시 중단.</div>
+</div>
+<pre>이벤트 순서 예 — "강남구 병목 분석해줘"
+action      get_district_traffic(district_name=강남구)
+observation { district, total_crossroads, bottleneck_under_15, weather }
+answer      ① 현재 상태 → ② 혼잡 원인 → ③ 조정 권고 (형식 강제)
+done</pre>
+
+<h1 class="sec">5. 멀티에이전트 흐름 — 주변 분석</h1>
+<div class="flow">
+  <div class="fnode"><span class="t">의도 분류</span><span class="s">"주변/근처" 키워드 시만 LLM 실행</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">인근 교차로</span><span class="s">반경 0.3km DB 조회</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">방향 선별</span><span class="s">방위각 → 8방향 최근접</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">워커 4기 병렬</span><span class="s">exaone3.5:2.4b</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">토론 3라운드</span><span class="s">순차 · 우선순위 합의</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">오케스트레이터</span><span class="s">qwen2.5:14b 종합</span></div>
+</div>
+<ul>
+  <li>워커는 중심 교차로로 향하는 방향의 진입 속도를 사용해 유입 압력을 평가한다.</li>
+  <li>신호 조정 수치(+18/+10/+4/−5초)는 코드의 고정 테이블이 산출하며, 워커는 수치 결정 발언이 금지된다.</li>
+  <li>데이터 없는 워커는 토론에서 제외된다. 전 단계가 asyncio 큐를 거쳐 SSE로 실시간 중계된다.</li>
+</ul>
+
+<h1 class="sec">6. 시뮬레이션 흐름 — 경로 분석과 Webster 최적화</h1>
+<div class="flow">
+  <div class="fnode"><span class="t">경로 지정</span><span class="s">출발·경유·도착</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">route-traffic</span><span class="s">구간별 링크 매칭·속도</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">병목 추출</span><span class="s">15km/h 미만</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">simulation-chat</span><span class="s">신호계획 동봉(Spring 경유)</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">Webster 계산</span><span class="s">Python 코드</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">조정안 반영</span><span class="s">슬라이더 → 관제사 승인</span></div>
+</div>
+<ul>
+  <li>병목 교차로의 신호계획(contexts)은 프론트가 미리 조회해 요청에 동봉한다 — 분석 시점과 화면 표시 시점의 불일치 방지.</li>
+  <li>Webster 산출물(조정 JSON·상세 보고서)은 코드가 직접 생성하고, LLM은 화면용 설명문만 작성한다.</li>
+  <li>메일 발송 시 요약(LLM) + 상세 계산(코드)을 Spring이 조립하여 발송한다.</li>
+</ul>
+
+<h1 class="sec">7. 부가 서비스 흐름</h1>
+<h2>7.1 교통량 예측</h2>
+<div class="flow">
+  <div class="fnode"><span class="t">React</span><span class="s">지점 선택</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">Spring</span><span class="s">/api/forecast/station/{id}</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">Flask :5002</span><span class="s">XGBoost 48회 추론</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">차트 표시</span><span class="s">상행/하행 24시간</span></div>
+</div>
+<h2>7.2 교통 뉴스</h2>
+<div class="flow">
+  <div class="fnode"><span class="t">네이버 뉴스 API</span><span class="s">4개 섹터</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">본문 수집</span><span class="s">비동기 동시 20</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">BERT · TF-IDF</span><span class="s">유형·낚시성 (스레드풀)</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">요약·감성</span><span class="s">키 3개 로테이션</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">Oracle 저장</span><span class="s">단일 writer 큐</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">Spring 조회</span><span class="s">/api/news/latest</span></div>
+</div>
+<h2>7.3 민원 접수·분류</h2>
+<div class="flow">
+  <div class="fnode"><span class="t">시민 화면</span><span class="s">사진+제목</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">Flask :8002</span><span class="s">Vision 분류 · HEIC 변환</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">접수 확정</span><span class="s">Spring /api/complaints</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">BLOB 저장</span><span class="s">사진 · 구 이름 추출</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">관제 알림</span><span class="s">배너 · 상태 변경 메일</span></div>
+</div>
+<h2>7.4 음성 어시스턴트</h2>
+<div class="flow">
+  <div class="fnode"><span class="t">더블 클랩</span><span class="s">RMS+급등량 감지</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">STT</span><span class="s">Web Speech API</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">의도 분류</span><span class="s">/api/nav/intent</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">분기</span><span class="s">페이지 이동 / 챗봇 폴백</span></div><span class="farr">→</span>
+  <div class="fnode"><span class="t">TTS</span><span class="s">Google Cloud Neural2</span></div>
 </div>
 
-<div class="sub-title">3.1 최초 매핑 계산 과정 (DB에 없을 때)</div>
-<p>매핑이 DB에 없는 교차로가 있으면 <code>CrossroadSupplementalMappingService.createNearestLinkMappings()</code>가 실행된다.</p>
-
-<div class="flow-wrap">
-  <div class="flow-title">최초 도로 링크 매핑 계산 절차</div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-box db">
-      <div class="label label-db">DB 조회</div>
-      <div class="name">CROSSROAD_SUPPLEMENTAL_MAPPING 기존 매핑 로드</div>
-      <div class="detail"><code>mappingRepository.findByCrsrdIdIn(crossroadIds)</code> 로 현재 구의 교차로 전체 조회.<br/>완전한 매핑(speed_link_id + risk_line_string 모두 있음)은 바로 캐시에 저장.</div>
-      <div class="data-row">결과: 예) 전체 188개 중 → 178개 DB 매핑 있음, 10개 신규 계산 필요</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-  <div class="step-connector-label">▼ 매핑 없는 교차로만 아래 절차 진행</div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-box db">
-      <div class="label label-db">xlsx 로드</div>
-      <div class="name">TOPIS 도로링크 기하 데이터 로드 (ROAD_LINKS 테이블 or xlsx)</div>
-      <div class="detail"><code>TopisApiService.fetchAllLinkGeometries()</code> — 서울 전체 도로링크의 LineString(시점좌표, 종점좌표) 로드.<br/>이미 DB에 있으면 재사용. 없으면 xlsx 파일 파싱.</div>
-      <div class="data-row">결과: Map&lt;linkId, TopisLinkGeometry&gt; — 수천 개의 링크 기하 데이터</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-box proc">
-      <div class="label label-proc">최근접 계산</div>
-      <div class="name">RoadLinkMappingService.mapCrossroadsToNearestLinks()</div>
-      <div class="detail">각 교차로 위경도(lat/lon)와 모든 링크의 시·종점 좌표 사이에서 <strong>Haversine 공식으로 최단거리</strong>를 계산. 가장 가까운 링크를 speed_link_id와 risk_source_link_id로 선택.<br/>risk_line_string은 해당 링크의 시점·종점 좌표 2개를 LINESTRING으로 조립.</div>
-      <div class="data-row">결과: Map&lt;crsrdId, CrossroadRoadLinkMapping&gt; — 10개 신규 매핑</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-box db">
-      <div class="label label-db">DB 저장</div>
-      <div class="name">CROSSROAD_SUPPLEMENTAL_MAPPING에 신규 행 INSERT</div>
-      <div class="detail"><code>mappingRepository.saveAll()</code> — 다음 구역 선택 시에는 DB에서 바로 재사용 가능. 계산 비용 절약.</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">5</div>
-    <div class="step-box cache">
-      <div class="label label-cache">메모리 캐시</div>
-      <div class="name">mappingsByCrossroadId 갱신</div>
-      <div class="detail"><code>SupplementalDataCacheService.updateMappings()</code> — DB 재사용 178개 + 신규 10개 = 188개 전체를 메모리에 적재.</div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 4. 시나리오 A ─────────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">4. 시나리오 A — 구(區) 선택 시 전체 데이터 수집 흐름</div>
-
-<p>사용자가 대시보드에서 특정 구(예: 강남구)를 클릭하면 <code>fetch-area</code> API가 호출된다. 이때 해당 구의 모든 교차로 데이터를 한 번에 수집하고 웹소켓으로 내보내는 전체 파이프라인이 실행된다.</p>
-
-<div class="flow-wrap">
-  <div class="flow-title">시나리오 A — 구 선택 시 전체 수집 파이프라인</div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-box front">
-      <div class="label label-front">사용자 액션</div>
-      <div class="name">프론트엔드: 구 선택 클릭</div>
-      <div class="detail">대시보드에서 구 이름 클릭 → <code>POST /api/map/fetch-area { guName: "강남구" }</code> 요청</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-box db">
-      <div class="label label-db">DB 조회</div>
-      <div class="name">CROSSROADS 테이블 — 해당 구 교차로 목록 조회</div>
-      <div class="detail"><code>crossroadRepository.findByGuName("강남구")</code> 실행</div>
-      <div class="data-row">결과: List&lt;CrossroadEntity&gt; 예) 188개<br/>필드: crsrd_id, crsrd_nm, lat, lon, gu_name</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-box proc">
-      <div class="label label-proc">병렬 처리</div>
-      <div class="name">V2X API 병렬 호출 (CompletableFuture)</div>
-      <div class="detail">188개 교차로를 동시에 V2X API에 요청. 각 교차로의 <code>crsrdId</code>를 URL 파라미터로 전달.</div>
-      <div class="data-row">API URL: GET /api/its/signal?crsrdId={id}&apiKey=...<br/>응답 필드: phase(현시번호), stage(위상), signalColor(Red/Green/Yellow/Left), remainTimeTenthSec(잔여시간 0.1초)</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-box cache">
-      <div class="label label-cache">캐시 갱신</div>
-      <div class="name">TrafficCacheService — signalCache에 V2X 신호 저장</div>
-      <div class="detail"><code>updateAllSignals(newMap)</code> — volatile 참조를 새 ConcurrentHashMap으로 원자적으로 교체. 이 시점에는 속도·위험도 없음.</div>
-      <div class="data-row">signalCache: { "CR-001" → TrafficStatus(crsrdId, lat, lon, phases[], …), … }</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">5</div>
-    <div class="step-box db">
-      <div class="label label-db">매핑 로드/계산</div>
-      <div class="name">도로 링크 매핑 — DB 재사용 or 새로 계산 (3장 참조)</div>
-      <div class="detail">188개 교차로에 대해 <code>CROSSROAD_SUPPLEMENTAL_MAPPING</code> 확인.<br/>· 매핑 있는 교차로(178개): DB에서 speed_link_id, risk_line_string 바로 로드<br/>· 매핑 없는 교차로(10개): TOPIS xlsx + Haversine 계산 → DB 저장 후 로드</div>
-      <div class="data-row">mappingsByCrossroadId: { "CR-001" → { speedLinkId:"1620013200", riskLineString:"LINESTRING(…)" }, … }</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">6</div>
-    <div class="step-box api">
-      <div class="label label-api">외부 API</div>
-      <div class="name">TOPIS 속도 API 병렬 호출 (최대 4개 동시)</div>
-      <div class="detail">mappingsByCrossroadId에서 <strong>중복 제거된</strong> speed_link_id 목록 추출 → 각 linkId별 TOPIS API 호출</div>
-      <div class="data-row">API URL: GET /api/topis/speed?linkId={id}&apiKey=...<br/>응답: { linkId, speedKph, travelTimeSec }<br/>저장: speedsByLinkId["1620013200"] = RoadSpeedSnapshot(speedKph=35.2, …)</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">7</div>
-    <div class="step-box api">
-      <div class="label label-api">외부 API</div>
-      <div class="name">도로위험도 API 병렬 호출 (최대 4개 동시)</div>
-      <div class="detail">mappingsByCrossroadId에서 risk_line_string 목록 추출 → 각 LineString별 도로위험도 API 호출</div>
-      <div class="data-row">API URL: GET /api/roadrisk?lineString={wkt}&apiKey=...<br/>응답: { riskIndex(0~100), riskGrade("높음") }<br/>저장: risksByLinkId["LINESTRING(…)"] = RoadRiskSnapshot(riskIndex=72, riskGrade="높음")</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">8</div>
-    <div class="step-box proc">
-      <div class="label label-proc">데이터 합산</div>
-      <div class="name">enrich() — V2X 신호에 속도·위험도·기상 합산</div>
-      <div class="detail">188개 TrafficStatus 각각에 대해 (9장 상세 설명):<br/>
-        · <code>speedsByLinkId[speedLinkId]</code> 에서 speedKph, travelTimeSec 읽어 set<br/>
-        · <code>risksByLinkId[riskLineString]</code> 에서 riskIndex, riskGrade 읽어 set<br/>
-        · <code>weather</code> 캐시에서 기온·강수·풍속 set<br/>
-        · speedKph 기준으로 congestion 재계산 (speed&lt;20→혼잡, &lt;40→서행, else→원활)</div>
-      <div class="data-row">결과: TrafficStatus { crsrdId, phases[], speedKph:35.2, riskGrade:"높음", congestion:"서행", weather:{temp:21}, … }</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">9</div>
-    <div class="step-box ws">
-      <div class="label label-ws">WebSocket</div>
-      <div class="name">TrafficWebSocketHandler.broadcast() — 전체 브라우저에 전송</div>
-      <div class="detail">wsSessions(CopyOnWriteArrayList)의 모든 세션에 JSON 직렬화된 TrafficStatus[] 전송.<br/>실패 세션(연결 끊김)은 리스트에서 자동 제거.</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">10</div>
-    <div class="step-box front">
-      <div class="label label-front">프론트엔드</div>
-      <div class="name">React — wsData 상태 갱신 → 화면 리렌더링</div>
-      <div class="detail"><code>ws://localhost:8080/ws/traffic</code>에서 JSON 수신 → <code>setWsData()</code> 호출<br/>지도 마커 색상(신호색), 사이드바 병목 목록, 위험 교차로 목록 자동 업데이트</div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 5. 시나리오 B ─────────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">5. 시나리오 B — 10초 정기 폴링 (상시 운영)</div>
-
-<p>앱이 동작하는 동안 <code>TrafficScheduler.pollTrafficData()</code>가 10초마다 실행된다. 구 선택 시(시나리오 A)와 달리 <strong>속도·위험도·매핑은 각자의 주기로 따로 갱신</strong>되므로, 폴링은 V2X 신호만 새로 가져와 기존 캐시와 합산한다.</p>
-
-<div class="flow-wrap">
-  <div class="flow-title">시나리오 B — 10초 정기 폴링</div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-box proc">
-      <div class="label label-proc">조건 확인</div>
-      <div class="name">areaRefreshInProgress 플래그 확인</div>
-      <div class="detail">구 선택(시나리오 A)이 진행 중이면 이번 폴링 건너뜀 → 중간 상태 덮어쓰기 방지</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-box db">
-      <div class="label label-db">DB 조회</div>
-      <div class="name">현재 중심 좌표(lat/lon/radius) 기준 반경 내 교차로 조회</div>
-      <div class="detail"><code>crossroadRepository.findWithinRadius(centerLat, centerLon, radiusKm)</code><br/>기본값: 잠실 좌표 반경 1km. 구 선택 시 좌표 업데이트됨.</div>
-      <div class="data-row">결과: List&lt;CrossroadEntity&gt; N개</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-box api">
-      <div class="label label-api">외부 API</div>
-      <div class="name">V2X API 병렬 호출 → 최신 신호 데이터 수신</div>
-      <div class="detail">빈 결과(타임아웃 등) 반환 시 <strong>기존 캐시 유지</strong>하고 폴링 건너뜀</div>
-      <div class="data-row">signalColor, remainTimeTenthSec, phase, stage 갱신</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-box proc">
-      <div class="label label-proc">채워넣기</div>
-      <div class="name">enrichTrafficStatuses() — 방금 받은 V2X 신호 객체에 속도·위험도·기상 set()</div>
-      <div class="detail">
-        V2X 폴링은 <strong>신호 데이터만</strong> 새로 받는다. 속도·위험도·기상은 각자의 스케줄러가 별도로 메모리 캐시를 갱신하고 있으며, enrich()는 그 캐시에서 <strong>값을 읽어 TrafficStatus에 set()만</strong> 한다. 새로 계산하거나 API를 추가로 호출하지 않는다.<br/><br/>
-        · <code>speedsByLinkId[speedLinkId]</code> 읽어서 → <code>status.setSpeedKph()</code><br/>
-        · <code>risksByLinkId[riskLineString]</code> 읽어서 → <code>status.setRiskGrade()</code><br/>
-        · <code>weather</code> 읽어서 → <code>status.setWeather()</code>
-      </div>
-      <div class="data-row">※ 속도는 최대 59초, 위험도는 최대 299초, 기상은 최대 599초 된 캐시값일 수 있음 (stale=true로 표시)</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">5</div>
-    <div class="step-box ws">
-      <div class="label label-ws">WebSocket</div>
-      <div class="name">broadcast() — 전체 브라우저에 갱신된 데이터 전송</div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 6. 시나리오 C ─────────────────────────────────────── -->
-<div class="section-title">6. 시나리오 C — 60초 TOPIS 속도 갱신</div>
-
-<div class="flow-wrap">
-  <div class="flow-title">시나리오 C — SupplementalDataScheduler.refreshRoadSpeeds() (60초)</div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-box cache">
-      <div class="label label-cache">캐시 참조</div>
-      <div class="name">mappingsByCrossroadId에서 speed_link_id 목록 추출</div>
-      <div class="detail">188개 교차로 매핑에서 <code>speedLinkId</code>만 모아 중복 제거 → 조회할 linkId Set</div>
-      <div class="data-row">예) { "1620013200", "1620014100", "1620015300", … } — 수백 개 고유 linkId</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-box api">
-      <div class="label label-api">외부 API</div>
-      <div class="name">TOPIS 속도 API 병렬 호출 (최대 4개 동시, 타임아웃 12초)</div>
-      <div class="detail">각 linkId별 TOPIS REST API 호출. 12초 타임아웃 초과 시 남은 요청 취소(cancelled).</div>
-      <div class="data-row">응답: { linkId, speedKph:45.0, travelTimeSec:12 }<br/>저장: speedsByLinkId["1620013200"] → RoadSpeedSnapshot 갱신</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-box cache">
-      <div class="label label-cache">캐시 갱신</div>
-      <div class="name">speedsByLinkId 업데이트 (다음 enrich()에서 자동 반영)</div>
-      <div class="detail">10초 폴링이 enrich() 호출 시 이 캐시를 읽으므로, 다음 폴링에서 자동으로 반영됨.</div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 7. 시나리오 D ─────────────────────────────────────── -->
-<div class="section-title">7. 시나리오 D — 300초 도로위험도 갱신</div>
-
-<div class="flow-wrap">
-  <div class="flow-title">시나리오 D — SupplementalDataScheduler.refreshRoadRisks() (300초)</div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-box cache">
-      <div class="label label-cache">캐시 참조</div>
-      <div class="name">mappingsByCrossroadId에서 risk_line_string 목록 추출 (중복 제거)</div>
-      <div class="detail">동일 LineString을 공유하는 교차로가 있어도 한 번만 API 호출.</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-box proc">
-      <div class="label label-proc">조건 확인</div>
-      <div class="name">마지막 갱신으로부터 300초 이상 경과한 링크만 조회</div>
-      <div class="detail"><code>shouldRefreshRoadRisk()</code> — lastFetchedAtMs 기준. 최신 값이 있으면 API 호출 건너뜀.</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-box api">
-      <div class="label label-api">외부 API</div>
-      <div class="name">도로위험도 API 호출 (최대 4개 동시, 최대 250개/회)</div>
-      <div class="detail">risk_line_string(LINESTRING 좌표)을 파라미터로 전달. 응답에 riskIndex(0~100), riskGrade 포함.</div>
-      <div class="data-row">저장: risksByLinkId["LINESTRING(127.092 37.511, 127.093 37.512)"] → RoadRiskSnapshot(riskIndex:72, riskGrade:"높음")</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-box ws">
-      <div class="label label-ws">즉시 브로드캐스트</div>
-      <div class="name">broadcastCurrentTrafficStatuses() — 위험도 갱신 즉시 프론트에 반영</div>
-      <div class="detail">위험도는 300초 주기라 10초 폴링을 기다리지 않고 갱신 직후 enrich() + broadcast() 실행.</div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 8. 시나리오 E ─────────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">8. 시나리오 E — AI 챗봇 질의응답 (SSE 스트리밍)</div>
-
-<div class="flow-wrap">
-  <div class="flow-title">시나리오 E — ReAct 에이전트 질의응답 흐름</div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-box front">
-      <div class="label label-front">사용자 입력</div>
-      <div class="name">AIChatBot.jsx — 질의 전송</div>
-      <div class="detail"><code>POST http://localhost:8001/api/agent/chat/stream</code><br/>Body: <code>{ question: "강남구 막히는 곳?", crsrdId: "CR-001", userEmail: "user@example.com" }</code><br/>SSE 스트림(fetch + ReadableStream)으로 응답 구독 시작</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-box proc">
-      <div class="label label-proc">에이전트 시작</div>
-      <div class="name">Python FastAPI (agent_server.py) — LangGraph ReAct 에이전트 실행</div>
-      <div class="detail">질문을 시스템 프롬프트 + 사용자 메시지로 구성. <code>agent.astream({"messages": …})</code> 비동기 실행.</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-box api">
-      <div class="label label-api">LLM 추론</div>
-      <div class="name">Ollama (qwen3:30b-a3b) — Thought 단계: 어떤 도구를 쓸지 결정</div>
-      <div class="detail"><code>POST http://localhost:11434/api/generate</code> — LLM이 질문을 분석하고 호출할 MCP 도구와 인수를 JSON으로 반환.<br/>SSE로 <code>{ type: "thought", content: "강남구 병목 목록을 조회해야겠다" }</code> 전송</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-box proc">
-      <div class="label label-proc">도구 실행</div>
-      <div class="name">MCP 도구 호출 (mcp_server.py) — Action 단계</div>
-      <div class="detail">예) <code>get_bottleneck_list(guName="강남구")</code> 선택 →<br/><code>httpx.get("http://localhost:8080/api/bottleneck?guName=강남구")</code> 실행 → Spring Boot에서 실시간 데이터 반환<br/>SSE로 <code>{ type: "action", tool: "get_bottleneck_list", args: '강남구' }</code> 전송</div>
-      <div class="data-row">도구 목록: get_traffic_data / get_bottleneck_list / search_crossroad_by_name /<br/>get_district_traffic / set_signal_timing / send_alert / send_email_report /<br/>get_simulation_context / search_project_docs</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">5</div>
-    <div class="step-box api">
-      <div class="label label-api">결과 확인</div>
-      <div class="name">Observation 단계 — 도구 응답 LLM에게 전달</div>
-      <div class="detail">Spring Boot 응답 JSON을 Observation으로 LLM에게 다시 전달. 필요시 추가 도구 호출(다시 단계 3~5 반복).<br/>SSE로 <code>{ type: "observation", content: "교차로 5개: 삼성역사거리 12km/h, …" }</code> 전송</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">6</div>
-    <div class="step-box ws">
-      <div class="label label-ws">최종 답변</div>
-      <div class="name">Answer — LLM 최종 응답 → SSE 전송 → UI 렌더링</div>
-      <div class="detail">SSE로 <code>{ type: "answer", content: "현재 강남구에서 가장 막히는 곳은 …" }</code> 전송<br/>브라우저: ThinkingBlock(추론 과정) 숨기고 AI 말풍선으로 최종 답변 표시</div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 9. 시나리오 F — 교통량 예측 ─────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">9. 시나리오 F — 교통량 예측 (XGBoost · Flask)</div>
-
-<p>사용자가 대시보드에서 교통량 측정 지점을 선택하면 사전 학습된 XGBoost 모델이 <strong>오늘 0시~23시 24시간의 상행/하행 교통량</strong>을 예측해 차트로 표시한다. 실시간 데이터가 아닌 <strong>학습된 패턴(시간대·요일·위치)</strong> 기반 예측이다.</p>
-
-<div class="info-box" style="background:#f0fdf4;border-color:#86efac;color:#14532d">
-  <strong>실시간 vs 예측 데이터 구분:</strong> WebSocket의 TrafficStatus는 지금 이 순간 교통 상황이고, 교통량 예측은 "오늘 이 시간대에 이 지점의 예상 차량 수"이다. 두 데이터는 독립적으로 동작한다.
-</div>
-
-<div class="flow-wrap">
-  <div class="flow-title">시나리오 F — 교통량 예측 흐름</div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-box front">
-      <div class="label label-front">페이지 진입</div>
-      <div class="name">MainDashboard — 교통량 측정 지점 목록 로드</div>
-      <div class="detail">페이지 마운트 시 <code>GET /api/stations</code> 요청<br/>Spring Boot → Oracle DB TRAFFIC_STATION 테이블 전체 조회</div>
-      <div class="data-row">TRAFFIC_STATION 테이블: { station_id, station_name, latitude, longitude }<br/>응답 예) [{ stationId:10, stationName:"잠실대교북단", latitude:37.51, longitude:127.09 }, …]</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-box front">
-      <div class="label label-front">사용자 선택</div>
-      <div class="name">StationPredictDropdown — 지점 선택</div>
-      <div class="detail">드롭다운에서 측정 지점 선택 (구 선택 시 해당 구 내 지점으로 자동 필터링)<br/>선택된 stationId로 예측 API 호출</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-box proc">
-      <div class="label label-proc">Spring Boot</div>
-      <div class="name">GET /api/forecast/station/{stationId} → ForecastService</div>
-      <div class="detail">프론트 요청 수신 → Flask 서버로 중계 요청</div>
-      <div class="data-row">POST http://127.0.0.1:5002/predict_traffic<br/>Body: { "Station_Number": stationId }</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-box db">
-      <div class="label label-db">Oracle DB 조회</div>
-      <div class="name">Flask 서버 — TRAFFIC_STATION에서 지점 위경도 조회</div>
-      <div class="detail"><code>SELECT STATION_NAME, LATITUDE, LONGITUDE FROM TRAFFIC_STATION WHERE STATION_ID = :1</code><br/>XGBoost 모델 입력에 위경도 값이 필요하기 때문에 Flask가 직접 DB에 연결해 조회한다.<br/>(Wallet 기반 Oracle Cloud TLS 연결)</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">5</div>
-    <div class="step-box proc">
-      <div class="label label-proc">XGBoost 추론</div>
-      <div class="name">Flask 서버 — XGBoost 모델로 24시간 예측 수행</div>
-      <div class="detail">오늘 00:00 ~ 23:00까지 1시간 단위로 반복 (24회). 상행(Direction=0)·하행(Direction=1) 각각 예측.</div>
-      <div class="data-row">모델 입력 피처 (FEATURE_COLUMNS):<br/>Station_Number, Direction, Latitude, Longitude,<br/>Hour(1~24), Weekday_Weekend(1=평일/0=주말),<br/>Year, Month, Day_of_Week_Num<br/><br/>출력: max(0, round(pred_value)) — 음수 방지 처리 후 정수 반올림</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">6</div>
-    <div class="step-box api">
-      <div class="label label-api">Flask 응답</div>
-      <div class="name">24시간 예측 결과 반환</div>
-      <div class="data-row">{ success:true, station_name:"잠실대교북단",<br/>  forecast: [<br/>    { time:"00:00", direction_0:1250, direction_1:980 },<br/>    { time:"01:00", direction_0:820,  direction_1:640 },<br/>    … (24개) <br/>  ] }</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">7</div>
-    <div class="step-box proc">
-      <div class="label label-proc">Spring Boot 가공</div>
-      <div class="name">ForecastService — 응답 파싱 후 ForecastResult 반환</div>
-      <div class="detail">Flask 응답의 forecast 배열을 상행 int[24] / 하행 int[24] 배열로 분리</div>
-      <div class="data-row">ForecastResult: { stationId, stationNm, up[24], down[24] }</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">8</div>
-    <div class="step-box front">
-      <div class="label label-front">차트 렌더링</div>
-      <div class="name">ForecastChart — 상행/하행 24시간 예측 차트 표시</div>
-      <div class="detail">up[24], down[24] 배열을 시간축(0~23시) x 교통량(대/시) 꺾은선 차트로 렌더링</div>
-    </div>
-  </div>
-</div>
-
-<div class="sub-title">9.1 교통량 예측 모델 개요</div>
-<table>
-  <thead><tr><th style="width:130px">항목</th><th>내용</th></tr></thead>
-  <tbody>
-    <tr><td>모델</td><td>XGBoost (xgboost_traffic_model.joblib) — 사전 학습된 회귀 모델</td></tr>
-    <tr><td>서버</td><td>Python Flask (port 5002) — <code>backend/flask_server/app.py</code></td></tr>
-    <tr><td>입력 피처</td><td>지점 ID, 방향(상행0/하행1), 위도, 경도, 시간(1~24), 평일여부(1=평일/0=주말), 연·월·요일번호</td></tr>
-    <tr><td>출력</td><td>시간당 예측 교통량 (대/시) — 음수 방지 후 정수 반올림</td></tr>
-    <tr><td>예측 범위</td><td>오늘 00:00~23:00 24시간 (요청 시점 기준 당일)</td></tr>
-    <tr><td>DB 테이블</td><td>TRAFFIC_STATION — station_id(PK), station_name, latitude, longitude</td></tr>
-    <tr><td>지점 필터</td><td>구 선택 시 해당 구 내 지점만 드롭다운에 표시 (guName 기반 클라이언트 필터링)</td></tr>
-    <tr><td>주의</td><td>Flask 서버가 Oracle DB에 직접 접속 (Wallet 경로 하드코딩 — 운영 시 환경변수 분리 필요)</td></tr>
-  </tbody>
-</table>
-
-<!-- ─── 10. 시나리오 G — 뉴스 수집 ──────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">10. 시나리오 G — 뉴스 수집 및 감성 분석 (News Flask :5001)</div>
-
-<p>교통 뉴스 수집은 Spring Boot와 독립된 <strong>News Flask 서버(:5001)</strong>가 담당한다. 수집 트리거 → RSS 크롤링 → BERT 키워드 검증 → Groq 요약·감성 분류 → Oracle DB 저장의 5단계 파이프라인이다. Spring Boot의 <code>GET /api/news/latest</code>는 Flask를 호출하지 않고 같은 Oracle DB 테이블을 직접 조회한다.</p>
-
-<div class="info-box">
-  <strong>두 흐름의 독립성:</strong> 뉴스 수집(Flask :5001)과 뉴스 조회(Spring Boot :8080)는 Oracle DB를 공유 저장소로 사용하되 서로 직접 통신하지 않는다. 수집 주기는 수동 트리거 또는 별도 스케줄러가 결정한다.
-</div>
-
-<div class="flow-wrap">
-  <div class="flow-title">시나리오 G-1 — 뉴스 수집 파이프라인 (POST /news/fetch → News Flask :5001)</div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-box front">
-      <div class="label label-front">수집 트리거</div>
-      <div class="name">POST /news/fetch (:5001) — 뉴스 수집 시작</div>
-      <div class="detail">외부에서 호출 시 백그라운드 스레드를 시작하고 즉시 <code>{ status: "started" }</code> 반환.<br/>이미 실행 중이면 <code>{ status: "already_running" }</code> (409) 반환 — 중복 실행 방지.</div>
-      <div class="data-row">_fetch_lock(threading.Lock) + _fetch_running(bool) 플래그로 동시성 제어</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-box api">
-      <div class="label label-api">외부 API</div>
-      <div class="name">네이버 뉴스 검색 RSS 크롤링 (4개 카테고리 비동기 병렬)</div>
-      <div class="detail">카테고리별로 RSS 피드를 비동기 수집. 각 카테고리마다 최대 100건 수집 상한.</div>
-      <div class="data-row">카테고리 4종:<br/>
-        서울교통 (search_query: "서울 교통 정체")<br/>
-        교통사고 (search_query: "서울 교통사고")<br/>
-        대중교통 (search_query: "서울 지하철 버스")<br/>
-        날씨교통 (search_query: "서울 기상")
-      </div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-box proc">
-      <div class="label label-proc">BERT 검증</div>
-      <div class="name">ModelManager(BERT) — 교통 관련성 키워드 검증</div>
-      <div class="detail"><code>verify_sector(title, text, keywords)</code> — 기사 제목·본문이 카테고리 키워드 목록 중 하나 이상 포함하는지 BERT 임베딩으로 검증. 관련성 낮은 기사 필터링.</div>
-      <div class="data-row">예) 날씨교통 카테고리 키워드: 폭우, 폭설, 결빙, 빙판, 안개, 강풍, 블랙아이스, 제설, … (30여 개)</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-box api">
-      <div class="label label-api">Groq API</div>
-      <div class="name">GroqAnalyzer — 1문장 요약 + 감성 분류</div>
-      <div class="detail">교통 뉴스 전문가 시스템 프롬프트로 Groq LLM 호출. JSON 형식으로 응답 강제.<br/>
-        다중 API 키 로테이션 사용 (GROQ_API_KEY_1/2/3 — 속도 제한 분산)</div>
-      <div class="data-row">응답 JSON: { "summary": "잠실대교 교통사고로 2차선 통제 중", "sentiment": "혼잡악화" }<br/>
-        sentiment 3종: 혼잡악화 / 교통개선 / 중립
-      </div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">5</div>
-    <div class="step-box db">
-      <div class="label label-db">DB 저장</div>
-      <div class="name">Oracle DB TRAFFIC_NEWS 테이블에 INSERT</div>
-      <div class="detail"><code>DatabaseManager.connect()</code> → Oracle Autonomous DB Wallet TLS 연결<br/>link(PK)를 기준으로 중복 기사 방지 (이미 있는 link는 스킵)</div>
-      <div class="data-row">저장 필드: link, category, title, summary, sentiment, pub_date, clickbait_prob, article_type, type_prob</div>
-    </div>
-  </div>
-</div>
-
-<div class="flow-wrap" style="margin-top:16px;">
-  <div class="flow-title">시나리오 G-2 — 뉴스 조회 흐름 (GET /api/news/latest → Spring Boot :8080)</div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-box front">
-      <div class="label label-front">페이지 진입</div>
-      <div class="name">Newsdashboard.jsx — GET /api/news/latest 호출</div>
-      <div class="detail">페이지 로드 시 Spring Boot에 최신 뉴스 요청<br/>쿼리 파라미터: <code>?limit=20&amp;category=서울교통</code> (카테고리 생략 시 전체 조회)</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-box db">
-      <div class="label label-db">DB 직접 조회</div>
-      <div class="name">NewsController.java → newsRepository — TRAFFIC_NEWS 테이블 조회</div>
-      <div class="detail">Spring Boot가 Flask :5001을 거치지 않고 Oracle DB를 직접 조회한다.<br/>
-        <code>findLatestByCategory(category, limit)</code> or <code>findLatest(limit)</code> — pub_date 내림차순 정렬</div>
-      <div class="data-row">SELECT link, category, title, summary, sentiment, pub_date, clickbait_prob, article_type, type_prob<br/>FROM traffic_news ORDER BY pub_date DESC FETCH FIRST :1 ROWS ONLY</div>
-    </div>
-  </div>
-  <div class="step-connector"></div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-box front">
-      <div class="label label-front">렌더링</div>
-      <div class="name">Newsdashboard — 뉴스 카드 렌더링</div>
-      <div class="detail">응답: <code>{ count: N, news: [{ link, category, title, summary, sentiment, pub_date, … }] }</code><br/>sentiment 값에 따라 카드 색상 구분: 혼잡악화=빨강 / 교통개선=초록 / 중립=회색</div>
-    </div>
-  </div>
-</div>
-
-<div class="sub-title">10.1 News Flask 서버 내부 구성</div>
-<table>
-  <thead><tr><th style="width:140px">항목</th><th>내용</th></tr></thead>
-  <tbody>
-    <tr><td>서버 파일</td><td><code>backend/News_flask_server/app.py</code> — Flask, 포트 5001</td></tr>
-    <tr><td>BERT 모델</td><td><code>ModelManager</code> — 서버 시작 시 1회 로드. 키워드 기반 교통 관련성 검증.</td></tr>
-    <tr><td>뉴스 소스</td><td>네이버 뉴스 검색 RSS (4개 카테고리 × 최대 100건)</td></tr>
-    <tr><td>Groq 키 관리</td><td>GROQ_API_KEY_1/2/3 환경변수 — Rate Limit 분산을 위해 3개 키 로테이션</td></tr>
-    <tr><td>감성 레이블</td><td>혼잡악화(사고·통제·정체 심화) / 교통개선(신호 최적화·혼잡 해소) / 중립(사실 전달)</td></tr>
-    <tr><td>DB 연결</td><td>Oracle Autonomous DB Wallet — News Flask도 독립적으로 Wallet 기반 TLS 연결</td></tr>
-    <tr><td>엔드포인트</td><td><code>POST /news/fetch</code> (수집 트리거) · <code>GET /news/latest</code> (DB 직접 조회) · <code>GET /health</code> (상태 확인)</td></tr>
-  </tbody>
-</table>
-
-<!-- ─── 11. enrich() 합산 로직 ──────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">11. enrich() 합산 로직 상세</div>
-
-<p><code>SupplementalDataCacheService.enrichTrafficStatus()</code>는 V2X 신호만 있는 TrafficStatus에 속도·위험도·기상을 채워넣는 핵심 메서드다.</p>
-
-<div class="enrich-grid">
-  <div class="enrich-card">
-    <div class="ec-src">소스: speedsByLinkId 캐시</div>
-    <div class="ec-field">속도 (speedKph)</div>
-    <div class="ec-rule">mapping = mappingsByCrossroadId[crsrdId]<br/>linkId = mapping.speedLinkId<br/>speed = speedsByLinkId[linkId]<br/>status.speedKph = speed.speedKph<br/>없으면 → speedStale = true</div>
-  </div>
-  <div class="enrich-card">
-    <div class="ec-src">소스: risksByLinkId 캐시</div>
-    <div class="ec-field">위험도 (riskGrade/Score)</div>
-    <div class="ec-rule">key = mapping.riskLineString<br/>     or mapping.linkId<br/>risk = risksByLinkId[key]<br/>status.riskIndex = risk.riskIndex<br/>status.riskGrade = risk.riskGrade<br/>없으면 → riskStale = true</div>
-  </div>
-  <div class="enrich-card">
-    <div class="ec-src">소스: weather 캐시</div>
-    <div class="ec-field">기상 (weather)</div>
-    <div class="ec-rule">weather = this.weather (공유)<br/>status.weather = weather<br/>baseDateTime 포함<br/>없으면 → null</div>
-  </div>
-</div>
-
-<div class="sub-title">congestion 계산 규칙</div>
-<table>
-  <thead><tr><th>조건</th><th>결과</th><th>비고</th></tr></thead>
-  <tbody>
-    <tr><td>speedKph &lt; 20</td><td class="center"><span class="chip chip-red">혼잡</span></td><td>TOPIS 속도 기반 (우선)</td></tr>
-    <tr><td>speedKph &lt; 40</td><td class="center"><span class="chip chip-amber">서행</span></td><td>TOPIS 속도 기반 (우선)</td></tr>
-    <tr><td>speedKph ≥ 40</td><td class="center"><span class="chip chip-green">원활</span></td><td>TOPIS 속도 기반 (우선)</td></tr>
-    <tr><td>speedKph 없음 + 평균 적신호 대기 &gt; 60초</td><td class="center"><span class="chip chip-red">혼잡</span></td><td>V2X 신호 잔여시간 기반 (fallback)</td></tr>
-    <tr><td>speedKph 없음 + 평균 적신호 대기 &gt; 30초</td><td class="center"><span class="chip chip-amber">서행</span></td><td>V2X 신호 잔여시간 기반 (fallback)</td></tr>
-    <tr><td>speedKph 없음 + 나머지</td><td class="center"><span class="chip chip-green">원활</span></td><td>V2X 신호 잔여시간 기반 (fallback)</td></tr>
-  </tbody>
-</table>
-
-<div class="warn-box">
-  <strong>stale 플래그:</strong> 속도·위험도 API 호출이 실패하거나 아직 수집 전이면 해당 필드는 <code>stale=true</code>로 표시된다. 프론트엔드에서 이를 읽어 "데이터 없음" 또는 회색 표시로 처리할 수 있다.
-</div>
-
-<!-- ─── 12. 타이밍 타임라인 ──────────────────────────────── -->
-<div class="section-title">12. 전체 타이밍 타임라인</div>
-
-<table>
-  <thead>
-    <tr><th style="width:60px">시작(초)</th><th style="width:220px">스케줄러 / 이벤트</th><th style="width:100px">주기</th><th>동작</th></tr>
-  </thead>
-  <tbody>
-    <tr><td class="center">앱 시작</td><td>PostConstruct (TrafficScheduler)</td><td class="center">1회</td><td>기본 중심 좌표 설정 (잠실 lat/lon/radius)</td></tr>
-    <tr><td class="center">앱 시작</td><td>ModelManager (News Flask :5001)</td><td class="center">1회</td><td>BERT 모델 로드 — 뉴스 키워드 검증용</td></tr>
-    <tr><td class="center">+3초</td><td>refreshWeather (기상청)</td><td class="center">600초</td><td>기상청 격자 기반 기온·강수·풍속 수집 → weather 캐시 갱신</td></tr>
-    <tr><td class="center">+10초</td><td>pollTrafficData (V2X)</td><td class="center">10초</td><td>교차로 DB 조회 → V2X API 병렬 호출 → enrich() → WebSocket 브로드캐스트</td></tr>
-    <tr><td class="center">+10초</td><td>refreshRoadLinkMappings</td><td class="center">86400초(24h)</td><td>교차로↔링크 매핑 DB 로드 or 새 계산 → mappingsByCrossroadId 갱신</td></tr>
-    <tr><td class="center">+15초</td><td>refreshRoadSpeeds (TOPIS)</td><td class="center">60초</td><td>speedLinkId 목록 → TOPIS API 병렬 호출 → speedsByLinkId 갱신</td></tr>
-    <tr><td class="center">+20초</td><td>refreshRoadRisks (위험도)</td><td class="center">300초</td><td>riskLineString 목록 → 도로위험도 API 호출 → risksByLinkId 갱신 → 즉시 브로드캐스트</td></tr>
-    <tr><td class="center">사용자</td><td>구(區) 선택 (fetch-area)</td><td class="center">이벤트</td><td>해당 구 교차로 전체 수집 → 매핑 로드 → 속도·위험도 수집 → WebSocket 브로드캐스트</td></tr>
-    <tr><td class="center">사용자</td><td>뉴스 수집 트리거 (POST /news/fetch)</td><td class="center">이벤트</td><td>News Flask: RSS 크롤링 → BERT 검증 → Groq 요약/감성 분류 → TRAFFIC_NEWS DB 저장</td></tr>
-    <tr><td class="center">사용자</td><td>교통량 예측 (GET /api/forecast/station)</td><td class="center">이벤트</td><td>Spring Boot → Flask :5002 → XGBoost 24시간 예측 → ForecastChart 렌더링</td></tr>
-    <tr><td class="center">사용자</td><td>AI 챗봇 질의</td><td class="center">이벤트</td><td>ReAct 에이전트 → MCP 도구 → Spring Boot 조회 → SSE 스트리밍 → 답변</td></tr>
-  </tbody>
-</table>
-
-<!-- ─── 13. 외부 API 목록 ──────────────────────────────────── -->
-<div class="section-title">13. 외부 API 목록 및 인증 방식</div>
-
-<table>
-  <thead>
-    <tr><th style="width:170px">API 명칭</th><th style="width:90px">제공처</th><th>데이터 내용</th><th style="width:90px">인증 방식</th><th style="width:80px">사용 시점</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>V2X 교차로 신호 API</td><td class="center">공공데이터포털</td><td>교차로별 신호 현시(phase), 위상(stage), 신호색, 잔여시간</td><td class="center">API Key (헤더)</td><td class="center">10초 폴링</td></tr>
-    <tr><td>TOPIS 구간 속도 API</td><td class="center">서울시</td><td>도로링크 평균속도(km/h), 통행시간(sec)</td><td class="center">API Key (헤더)</td><td class="center">60초 폴링</td></tr>
-    <tr><td>기상청 단기예보·실황</td><td class="center">기상청</td><td>격자(nx,ny) 기반 기온·강수·풍속·습도</td><td class="center">API Key (쿼리)</td><td class="center">600초 폴링</td></tr>
-    <tr><td>도로위험도 API</td><td class="center">공공데이터포털</td><td>LineString 구간별 위험등급(1~5), 위험지수(0~100)</td><td class="center">API Key (쿼리)</td><td class="center">300초 폴링</td></tr>
-    <tr><td>네이버 뉴스 검색 RSS</td><td class="center">Naver (민간)</td><td>교통 관련 키워드별 최신 뉴스 기사 (제목·링크·발행일)</td><td class="center">없음 (공개 RSS)</td><td class="center">뉴스 수집 트리거 시</td></tr>
-    <tr><td>Groq Cloud LLM API</td><td class="center">Groq (민간)</td><td>뉴스 기사 1문장 요약 + 감성(혼잡악화/교통개선/중립) 분류</td><td class="center">API Key (Bearer)</td><td class="center">뉴스 수집 트리거 시</td></tr>
-    <tr><td><strong>VWorld 3D WebGL</strong> <span style="font-size:8pt;color:#2563eb;">[v1.1 신규]</span></td><td class="center">국토지리정보원</td><td>시뮬레이션 3D 지도 렌더링, 교차로 마커, 경로·병목 시각화, GLB 차량 모델</td><td class="center">API Key (쿼리)</td><td class="center">시뮬레이션 페이지 로드 시</td></tr>
-    <tr><td><strong>Google Cloud TTS</strong> <span style="font-size:8pt;color:#2563eb;">[v1.1 신규]</span></td><td class="center">Google (민간)</td><td>AI 응답 음성 합성 (ko-KR-Neural2-C, MP3). 음성 어시스턴트·챗봇 TTS.</td><td class="center">API Key (쿼리)</td><td class="center">AI 응답 시</td></tr>
-    <tr><td><strong>civil_flask_server</strong> <span style="font-size:8pt;color:#2563eb;">[v1.1 신규]</span></td><td class="center">내부(:8002)</td><td>시민 민원 제출·사진 업로드·Google GenAI 민원 분류·자동 답변 이메일</td><td class="center">없음(내부)</td><td class="center">민원 포털 요청 시</td></tr>
-    <tr><td>UTIC CCTV API</td><td class="center">국토교통부</td><td>CCTV 영상 스트리밍 URL. 브라우저 IP 화이트리스트 인증.</td><td class="center">IP 화이트리스트 + API Key</td><td class="center">CCTV 선택 시</td></tr>
-    <tr><td>카카오맵 JavaScript SDK</td><td class="center">카카오</td><td>지도 타일, 로드뷰 파노라마. 브라우저에서 직접 로드.</td><td class="center">App Key (JS SDK)</td><td class="center">페이지 로드 시</td></tr>
-    <tr><td>Gmail SMTP 이메일</td><td class="center">Gmail</td><td>HTML 리포트 발송. 포트 587 STARTTLS.</td><td class="center">이메일+앱비밀번호</td><td class="center">AI 도구 호출 시</td></tr>
-    <tr><td>Ollama REST API</td><td class="center">로컬 (11434)</td><td>qwen3:30b-a3b 추론. Python AI 서버만 호출.</td><td class="center">없음 (로컬)</td><td class="center">AI 질의 시</td></tr>
-  </tbody>
-</table>
-
-<hr style="margin-top:40px"/>
-<div style="text-align:center;font-size:8.5pt;color:#9ca3af;padding-bottom:20px">
-  TrafficSync · 데이터 흐름도 · TS-AN-DFD-001 · v2.2 · 2026-06 [v1.1: T Data 삭제, VWorld/Google TTS/civil_flask_server 추가]<br/>
-  본 문서는 내부 분석·설계 용도로 작성되었습니다.
-</div>
+<h1 class="sec">8. 신호계획-실시간 데이터 결합 (좌표 조인)</h1>
+<p>
+경찰청 신호 교차로(INT_NO 체계)와 V2X 교차로(CRSRD_ID 체계)는 식별자 체계가 달라 직접 조인할 수 없다.
+시뮬레이션 컨텍스트 생성 시 신호 교차로 좌표에서 Haversine 거리로 350m 이내 최근접 V2X 캐시 교차로를 찾아
+실시간 속도·혼잡도를 결합하며, 350m를 초과하면 실시간 데이터 없음으로 명시한다.
+</p>
+<div class="note"><b>주.</b> 서로 다른 공공데이터의 키 불일치를 공간(좌표) 매칭으로 해소한 사례로, 매칭 거리도 응답에 포함하여 신뢰도를 표시한다.</div>
 
 </div>
+<div class="footer"><span>Syncro | 교통 관제 시스템 — 데이터흐름도</span><span>2026. 06. 13.</span></div>
 </body>
 </html>

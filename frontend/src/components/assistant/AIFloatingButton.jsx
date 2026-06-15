@@ -28,12 +28,12 @@ export default function AIFloatingButton({
         borderRadius: "50%",
 
         background: isOpen
-          ? "linear-gradient(135deg, rgba(96,165,250,0.95), rgba(168,85,247,0.95))"
+          ? "linear-gradient(135deg, rgba(30,41,59,0.98), rgba(59,130,246,0.94))"
           : "linear-gradient(135deg, rgba(30,41,59,0.96), rgba(59,130,246,0.9))",
 
         border: `2px solid ${
           isOpen
-            ? "rgba(255,255,255,0.38)"
+            ? "rgba(147,197,253,0.72)"
             : "rgba(147,197,253,0.55)"
         }`,
 
@@ -47,7 +47,9 @@ export default function AIFloatingButton({
         justifyContent: "center",
 
         boxShadow:
-          "0 4px 18px rgba(0,0,0,0.62), 0 0 16px rgba(96,165,250,0.28)",
+          isOpen
+            ? "0 8px 24px rgba(0,0,0,0.62), 0 0 20px rgba(96,165,250,0.34)"
+            : "0 4px 18px rgba(0,0,0,0.62), 0 0 16px rgba(96,165,250,0.28)",
 
         transition: "all .2s",
         padding: 0,
@@ -58,7 +60,7 @@ export default function AIFloatingButton({
         <span
           style={{
             fontSize: 16,
-            color: "rgba(255,255,255,0.55)",
+            color: "rgba(226,232,240,0.86)",
             lineHeight: 1,
           }}
         >

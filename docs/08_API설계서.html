@@ -1,1580 +1,233 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TrafficSync – API 설계서</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Syncro — API 설계서</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 10.5pt;
-    line-height: 1.75;
-    color: #1a1a2e;
-    background: #fff;
-  }
-
-  .cover {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
-    color: #fff;
-    page-break-after: always;
-    padding: 60px;
-  }
-  .cover-badge { font-size: 10pt; letter-spacing: 4px; color: #60a5fa; text-transform: uppercase; margin-bottom: 28px; font-weight: 500; }
-  .cover-title { font-size: 38pt; font-weight: 700; line-height: 1.2; margin-bottom: 12px; letter-spacing: -1px; }
-  .cover-title span { color: #60a5fa; }
-  .cover-subtitle { font-size: 15pt; font-weight: 300; color: #94a3b8; margin-bottom: 60px; }
-  .cover-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 60px; width: 100%; max-width: 640px; }
-  .cover-meta-item { text-align: center; }
-  .cover-meta-label { font-size: 8pt; color: #64748b; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
-  .cover-meta-value { font-size: 10pt; color: #cbd5e1; font-weight: 500; }
-  .cover-divider { width: 60px; height: 3px; background: #60a5fa; margin: 40px auto; border-radius: 2px; }
-
-  .page { max-width: 210mm; margin: 0 auto; padding: 20mm 22mm; }
-
-  h1 { font-size: 18pt; font-weight: 700; color: #0f172a; margin-bottom: 8px; padding-bottom: 10px; border-bottom: 3px solid #1e40af; margin-top: 36px; }
-  h1:first-child { margin-top: 0; }
-  h2 { font-size: 13pt; font-weight: 600; color: #1e3a5f; margin-top: 28px; margin-bottom: 10px; padding-left: 12px; border-left: 4px solid #3b82f6; }
-  h3 { font-size: 11pt; font-weight: 600; color: #334155; margin-top: 18px; margin-bottom: 8px; }
-
-  p { margin-bottom: 10px; color: #334155; }
-
-  table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 9.5pt; }
-  thead tr { background: #1e40af; color: #fff; }
-  thead th { padding: 9px 12px; text-align: left; font-weight: 600; letter-spacing: 0.3px; white-space: nowrap; }
-  tbody tr:nth-child(even) { background: #f1f5f9; }
-  tbody tr:hover { background: #dbeafe; }
-  tbody td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; line-height: 1.6; word-break: normal; }
-  td.id { font-family: monospace; font-size: 9pt; color: #2563eb; font-weight: 600; white-space: nowrap; }
-  td.mono { font-family: monospace; font-size: 9pt; color: #0f172a; white-space: nowrap; }
-  td.method-get,td.method-post { font-family: monospace; font-size: 9pt; font-weight: 700; color: #1e3a5f; white-space: nowrap; }
-  td.method-ws   { font-family: monospace; font-size: 9pt; font-weight: 700; color: #7c3aed; white-space: nowrap; }
-
-  td code { white-space: normal; overflow-wrap: break-word; word-break: break-all; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 8.5pt; font-weight: 600; }
-  .badge-blue,.badge-red,.badge-yellow,.badge-green,.badge-gray,.badge-purple,.badge-orange {
-    background: #dbeafe; color: #1d4ed8; }
-
-  .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin: 14px 0; font-size: 10pt; color: #1e40af; }
-  .warn-box { background: #f0f9ff; border: 1px solid #bae6fd; border-left: 4px solid #0284c7; border-radius: 6px; padding: 14px 16px; margin: 14px 0; font-size: 10pt; color: #1e3a5f; }
-  .code-box { background: #0f172a; border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 9pt; color: #e2e8f0; line-height: 1.7; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
-  .code-box .key { color: #93c5fd; }
-  .code-box .val { color: #86efac; }
-  .code-box .str { color: #fca5a5; }
-  .code-box .comment { color: #64748b; font-style: italic; }
-
-  .toc { margin: 20px 0 30px; }
-  .toc-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; border-bottom: 1px dotted #e2e8f0; font-size: 10.5pt; }
-  .toc-num   { color: #2563eb; font-weight: 700; min-width: 28px; }
-  .toc-title { flex: 1; color: #334155; }
-  .toc-page  { color: #94a3b8; font-size: 9.5pt; }
-  .toc-section { font-weight: 600; color: #0f172a; }
-
-  .rev-table { font-size: 9.5pt; }
-  .page-break { page-break-before: always; padding-top: 0; }
-
-  ol, ul { padding-left: 20px; margin-bottom: 10px; }
-  li { margin-bottom: 4px; color: #334155; }
-  ul li::marker { color: #3b82f6; }
-
-  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; margin-top: 36px; }
-  .section-num { background: #1e40af; color: #fff; font-size: 11pt; font-weight: 700; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .section-title { font-size: 17pt; font-weight: 700; color: #0f172a; border-bottom: 3px solid #1e40af; flex: 1; padding-bottom: 8px; }
-  .sub-num { background: #eff6ff; color: #1e40af; font-size: 9pt; font-weight: 700; padding: 3px 9px; border-radius: 4px; margin-right: 6px; }
-
-  .server-card { display: flex; align-items: flex-start; gap: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; margin: 10px 0; }
-  .server-port { background: #1e40af; color: #fff; font-family: monospace; font-size: 10pt; font-weight: 700; padding: 4px 12px; border-radius: 6px; white-space: nowrap; margin-top: 2px; }
-  .server-info { flex: 1; }
-  .server-name { font-size: 12pt; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-  .server-desc { font-size: 9.5pt; color: #475569; }
-
-  .endpoint-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; margin: 16px 0; }
-  .endpoint-title { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .ep-method { font-family: monospace; font-size: 10pt; font-weight: 700; padding: 3px 10px; border-radius: 4px; }
-  .ep-get,.ep-post,.ep-ws { background: #dbeafe; color: #1d4ed8; }
-  .ep-path   { font-family: monospace; font-size: 11pt; font-weight: 600; color: #0f172a; }
-  .ep-desc   { font-size: 9.5pt; color: #475569; margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; }
-
-  .param-grid { display: grid; grid-template-columns: 160px 80px 1fr; gap: 0; margin: 8px 0; }
-  .param-grid .ph { background: #1e40af; color: #fff; font-size: 8.5pt; font-weight: 600; padding: 6px 10px; }
-  .param-grid .pr { font-family: monospace; font-size: 9pt; color: #1d4ed8; font-weight: 600; padding: 5px 10px; border-bottom: 1px solid #e2e8f0; }
-  .param-grid .pt { font-size: 8.5pt; color: #7c3aed; padding: 5px 10px; border-bottom: 1px solid #e2e8f0; }
-  .param-grid .pd { font-size: 9pt; color: #334155; padding: 5px 10px; border-bottom: 1px solid #e2e8f0; }
-
-  .sse-event { display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; }
-  .sse-type { font-family: monospace; font-size: 9pt; font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
-  .sse-thought,.sse-action,.sse-observation,.sse-answer,.sse-done,.sse-error {
-    background: #dbeafe; color: #1d4ed8; }
-
-  footer { text-align: center; font-size: 8.5pt; color: #94a3b8; margin-top: 48px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
-
-  @media print {
-    body { font-size: 10pt; }
-    .cover { height: 100vh; }
-    .page-break { page-break-before: always; }
-    table { page-break-inside: avoid; }
-  }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:10pt;color:#1b1f24;background:#fff;line-height:1.7}
+.cover{max-width:210mm;margin:0 auto;min-height:97vh;padding:28mm 22mm 20mm;display:flex;flex-direction:column;justify-content:space-between}
+.cover-top{border-top:3px solid #16263e;padding-top:12px;display:flex;justify-content:space-between;font-size:9.5pt;color:#5a6472}
+.cover-docno{font-size:9.5pt;color:#5a6472;letter-spacing:3px;margin-bottom:16px}
+.cover-title{font-size:28pt;font-weight:700;color:#16263e;line-height:1.3}
+.cover-sub{font-size:12.5pt;color:#3a4656;margin-top:10px;font-weight:500}
+.cover-rule{width:100%;height:1px;background:#16263e;margin:26px 0}
+.cover-desc{font-size:10pt;color:#4a525c;max-width:560px}
+.cover-meta{width:100%;border-collapse:collapse;margin-top:34px;font-size:9.5pt}
+.cover-meta td{border:1px solid #c9ced6;padding:7px 12px}
+.cover-meta td.k{background:#f2f4f7;width:120px;font-weight:700;color:#16263e}
+.cover-bottom{border-bottom:3px solid #16263e;padding-bottom:12px;display:flex;justify-content:space-between;font-size:9pt;color:#5a6472}
+.page{max-width:210mm;margin:0 auto;padding:14mm 20mm}
+.doc-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #16263e;padding-bottom:6px;margin-bottom:24px;font-size:9pt;color:#5a6472}
+.doc-head b{font-size:10.5pt;color:#16263e}
+h1.sec{font-size:14.5pt;font-weight:700;color:#16263e;border-bottom:2px solid #16263e;padding-bottom:6px;margin:34px 0 14px}
+h2{font-size:11.5pt;font-weight:700;color:#16263e;margin:22px 0 8px}
+p{margin:0 0 8px;color:#2a3138}
+ul,ol{margin:0 0 10px 20px}
+li{margin-bottom:3px;color:#2a3138}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:8.7pt}
+th{background:#1f3147;color:#fff;font-weight:600;padding:7px 10px;border:1px solid #1f3147;text-align:left}
+td{padding:6px 10px;border:1px solid #c8ccd2;vertical-align:top;line-height:1.55;color:#262c33;background:#fff;word-break:keep-all}
+code{font-family:Consolas,'D2Coding',monospace;font-size:8.3pt;background:#f1f3f5;border:1px solid #e1e4e8;padding:0 4px;color:#1c3050}
+.note{border:1px solid #c8ccd2;border-left:3px solid #16263e;background:#fafbfc;padding:10px 14px;margin:12px 0;font-size:9.5pt;color:#333}
+.note b{color:#16263e}
+pre{font-family:Consolas,'D2Coding',monospace;font-size:8.3pt;background:#f7f8fa;border:1px solid #d8dce2;padding:12px 14px;margin:10px 0 16px;line-height:1.6;overflow-x:auto;color:#22303f}
+.footer{max-width:210mm;margin:24px auto 0;padding:10px 20mm 26px;border-top:1px solid #c9ced6;display:flex;justify-content:space-between;font-size:8.5pt;color:#7c848e}
+@media print{.page-break{page-break-before:always}}
 </style>
 </head>
 <body>
 
-<!-- 표지 -->
 <div class="cover">
-  <div class="cover-badge">API Specification Document</div>
-  <div class="cover-title">Traffic<span>Sync</span></div>
-  <div class="cover-subtitle">실시간 교통 AI 모니터링 시스템</div>
-  <div class="cover-divider"></div>
-  <div style="font-size:13pt; color:#cbd5e1; font-weight:500;">API 설계서</div>
-  <div style="font-size:9.5pt; color:#64748b; margin-top:8px;">Full API Specification — All Servers</div>
-  <div class="cover-meta">
-    <div class="cover-meta-item">
-      <div class="cover-meta-label">버전</div>
-      <div class="cover-meta-value">v1.1</div>
+  <div class="cover-top"><span>Syncro | 교통 관제 시스템</span><span></span></div>
+  <div>
+    <div class="cover-docno">SYNCRO PROJECT DOCUMENTATION</div>
+    <div class="cover-title">API 설계서</div>
+    <div class="cover-sub">실시간 V2X 기반 AI 교통 관제 시스템 Syncro</div>
+    <div class="cover-rule"></div>
+    <div class="cover-desc">
+      본 문서는 Syncro를 구성하는 4개 서버(Spring Boot · AI 에이전트 · Flask 3종)의
+      전체 API 엔드포인트와 WebSocket 채널, 대표 요청·응답 예시를 정의한다.
     </div>
-    <div class="cover-meta-item">
-      <div class="cover-meta-label">작성일</div>
-      <div class="cover-meta-value">2026. 06. 02</div>
-    </div>
-    <div class="cover-meta-item">
-      <div class="cover-meta-label">상태</div>
-      <div class="cover-meta-value">수정본 (v1.1)</div>
-    </div>
-  </div>
-</div>
-
-<!-- 개정 이력 + 목차 -->
-<div class="page">
-  <div class="section-header">
-    <div class="section-title" style="font-size:14pt;">개정 이력</div>
-  </div>
-  <table class="rev-table">
-    <thead>
-      <tr><th>버전</th><th>일자</th><th>작성자</th><th>변경 내용</th><th>상태</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="id">v1.0</td>
-        <td>2026-05-29</td>
-        <td>박희윤</td>
-        <td>최초 작성 — 4개 서버 전체 API 명세 (실제 코드 기반)</td>
-        <td><span class="badge badge-green">확정</span></td>
-      </tr>
-      <tr>
-        <td class="id">v1.1</td>
-        <td>2026-06-02</td>
-        <td>박희윤</td>
-        <td>civil_flask_server(:8002) 섹션 신규 추가 / Spring Boot 시민 인증·민원 CRUD API 추가 / AI Agent nav/intent·stop 엔드포인트 추가 / 전체 요약 표 업데이트</td>
-        <td><span class="badge badge-blue">수정</span></td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="section-header" style="margin-top:40px;">
-    <div class="section-title" style="font-size:14pt;">목차</div>
-  </div>
-  <div class="toc">
-    <div class="toc-item"><span class="toc-num">1</span><span class="toc-title toc-section">시스템 개요 — 서버 구성</span></div>
-    <div class="toc-item"><span class="toc-num">2</span><span class="toc-title toc-section">Spring Boot REST API (:8080)</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.1</span><span class="toc-title">인증 / 사용자 관리</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.2</span><span class="toc-title">교통 신호 · 구역 수집</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.3</span><span class="toc-title">CCTV</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.4</span><span class="toc-title">AI 챗봇 (Spring Proxy)</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.5</span><span class="toc-title">신호 계획 / 시뮬레이션</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.6</span><span class="toc-title">교통량 예측 (XGBoost Proxy)</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.7</span><span class="toc-title">뉴스 조회</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.8</span><span class="toc-title">이메일 발송</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.9</span><span class="toc-title">WebSocket 실시간 스트리밍</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.10</span><span class="toc-title">시민 인증 — /api/civil/auth <span class="badge badge-blue" style="font-size:7.5pt;">v1.1 신규</span></span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">2.11</span><span class="toc-title">민원 CRUD — /api/complaints <span class="badge badge-blue" style="font-size:7.5pt;">v1.1 신규</span></span></div>
-    <div class="toc-item"><span class="toc-num">3</span><span class="toc-title toc-section">AI Agent FastAPI (:8001)</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">3.1</span><span class="toc-title">헬스체크</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">3.2</span><span class="toc-title">자유 챗봇</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">3.3</span><span class="toc-title">시뮬레이션 챗봇</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">3.4</span><span class="toc-title">병목 이메일 리포트</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">3.5</span><span class="toc-title">구 단위 리포트</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">3.6</span><span class="toc-title">SSE 이벤트 포맷</span></div>
-    <div class="toc-item" style="padding-left:16px;"><span class="toc-num" style="font-size:9pt;">3.7</span><span class="toc-title">네비게이션 의도 분류 · 에이전트 중단 <span class="badge badge-blue" style="font-size:7.5pt;">v1.1 신규</span></span></div>
-    <div class="toc-item"><span class="toc-num">4</span><span class="toc-title toc-section">Flask XGBoost 예측 서버 (:5002)</span></div>
-    <div class="toc-item"><span class="toc-num">5</span><span class="toc-title toc-section">News Flask 뉴스 서버 (:5001)</span></div>
-    <div class="toc-item"><span class="toc-num">5.1</span><span class="toc-title toc-section">civil_flask_server 민원 분류 서버 (:8002) <span class="badge badge-blue" style="font-size:7.5pt;">v1.1 신규</span></span></div>
-    <div class="toc-item"><span class="toc-num">6</span><span class="toc-title toc-section">MCP 도구 목록 (내부 인터페이스)</span></div>
-    <div class="toc-item"><span class="toc-num">7</span><span class="toc-title toc-section">공통 모델 — TrafficStatus · ForecastResult</span></div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     1. 시스템 개요
-════════════════════════════════════════════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">1</div>
-    <div class="section-title">시스템 개요 — 서버 구성</div>
-  </div>
-
-  <p>TrafficSync는 4개의 독립 서버로 구성되며, 프론트엔드(React :5173)가 이를 소비한다. 서버 간 통신은 HTTP REST이며, AI 에이전트는 내부적으로 MCP(stdio) 프로토콜로 Spring Boot API를 도구로 호출한다.</p>
-
-  <div class="server-card">
-    <div class="server-port">:8080</div>
-    <div class="server-info">
-      <div class="server-name">Spring Boot 3 — 메인 백엔드</div>
-      <div class="server-desc">JWT 인증, Oracle DB, V2X/TOPIS/KMA 공공 API 수집, WebSocket 실시간 브로드캐스트. 모든 비즈니스 로직의 중심.</div>
-    </div>
-  </div>
-  <div class="server-card">
-    <div class="server-port" style="background:#1e3a5f;">:8001</div>
-    <div class="server-info">
-      <div class="server-name">Python FastAPI — AI Agent (LangGraph ReAct)</div>
-      <div class="server-desc">Ollama qwen3:30b-a3b + MCP 9개 도구. SSE 스트리밍으로 ReAct 루프 단계를 실시간 전달.</div>
-    </div>
-  </div>
-  <div class="server-card">
-    <div class="server-port" style="background:#1e3a5f;">:5002</div>
-    <div class="server-info">
-      <div class="server-name">Flask — XGBoost 교통량 예측 서버</div>
-      <div class="server-desc">xgboost_traffic_model.joblib 로드. 지점 ID → Oracle TRAFFIC_STATION 조회 → 오늘 00~23시 24개 시간대 상·하행 예측값 반환.</div>
-    </div>
-  </div>
-  <div class="server-card">
-    <div class="server-port" style="background:#1e3a5f;">:5001</div>
-    <div class="server-info">
-      <div class="server-name">Flask — News 뉴스 수집·감성 분석 서버</div>
-      <div class="server-desc">Naver RSS 4개 카테고리 크롤링 → BERT 키워드 검증 → Groq LLM(3-키 로테이션) 요약·감성 분석 → Oracle TRAFFIC_NEWS 저장.</div>
-    </div>
-  </div>
-
-  <div class="server-card">
-    <div class="server-port" style="background:#1e3a5f;">:8002</div>
-    <div class="server-info">
-      <div class="server-name">Flask — civil_flask_server 민원 분류·자동 답변 서버 <span class="badge badge-blue" style="font-size:7.5pt;">v1.1 신규</span></div>
-      <div class="server-desc">Gemini Vision API로 사진 기반 민원 카테고리 자동 분류 + 담당 부서 매핑 반환. HEIC/HEIF 자동 변환. Gemini 모델 폴백 체인(2.5-flash → 2.0-flash → lite).</div>
-    </div>
-  </div>
-
-  <h2><span class="sub-num">1.1</span>공통 규칙</h2>
-  <table>
-    <thead><tr><th>항목</th><th>규칙</th></tr></thead>
-    <tbody>
-      <tr><td>인코딩</td><td>UTF-8, Content-Type: application/json</td></tr>
-      <tr><td>인증</td><td>현재 미구현 — 로그인 시 <code>userId / role</code>만 반환, 프론트 로컬스토리지에서 role 관리. Spring Security / JWT 필터 없음.</td></tr>
-      <tr><td>CORS</td><td>Spring :8080 → <code>http://localhost:5173</code> / AI Agent :8001 → 5173, 8080</td></tr>
-      <tr><td>날짜 형식</td><td>pub_date: 문자열, serverTimeMs: epoch ms (long)</td></tr>
-      <tr><td>에러 응답</td><td><code>{ "error": "메시지" }</code> 또는 <code>{ "success": false, "error": "..." }</code></td></tr>
-      <tr><td>SSE</td><td>AI Agent 스트리밍 — <code>text/event-stream</code>, 각 줄: <code>data: {...}\n\n</code></td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     2. Spring Boot API
-════════════════════════════════════════════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">2</div>
-    <div class="section-title">Spring Boot REST API (:8080)</div>
-  </div>
-
-  <!-- 2.1 인증 -->
-  <h2><span class="sub-num">2.1</span>인증 / 사용자 관리 — <code>/api/auth</code></h2>
-
-  <!-- 로그인 -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/auth/login</span>
-      <span class="ep-desc">로그인 — 사용자 정보 반환 (토큰 없음)</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{ <span class="key">"userId"</span>: <span class="str">"hong123"</span>, <span class="key">"password"</span>: <span class="str">"1234"</span> }</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{
-  <span class="key">"success"</span>:  <span class="val">true</span>,
-  <span class="key">"userId"</span>:   <span class="str">"hong123"</span>,
-  <span class="key">"name"</span>:     <span class="str">"홍길동"</span>,
-  <span class="key">"role"</span>:     <span class="str">"ACTIVE"</span>,    <span class="comment">// PENDING | ACTIVE | ADMIN</span>
-  <span class="key">"isTempPw"</span>: <span class="val">false</span>,     <span class="comment">// 임시 비밀번호 여부</span>
-  <span class="key">"email"</span>:    <span class="str">"hong@example.com"</span>
-}</div>
-    <div class="warn-box"><strong>JWT 없음:</strong> 토큰을 발급하지 않는다. 프론트는 userId·role을 로컬스토리지에 저장하고 관리자 페이지 진입 시 role 값으로만 분기한다. role이 <strong>PENDING</strong>이면 승인 대기 안내 화면 표시.</div>
-  </div>
-
-  <!-- 회원가입 -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/auth/register</span>
-      <span class="ep-desc">회원가입 (PENDING 상태로 등록)</span>
-    </div>
-    <h3>Request Body — UserEntity 필드</h3>
-    <div class="code-box">{
-  <span class="key">"userId"</span>:   <span class="str">"hong123"</span>,
-  <span class="key">"password"</span>: <span class="str">"1234"</span>,      <span class="comment">// BCrypt 해싱 후 저장</span>
-  <span class="key">"name"</span>:     <span class="str">"홍길동"</span>,
-  <span class="key">"phone"</span>:    <span class="str">"010-1234-5678"</span>,
-  <span class="key">"email"</span>:    <span class="str">"hong@example.com"</span>
-}</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"success"</span>: <span class="val">true</span>, <span class="key">"message"</span>: <span class="str">"가입 완료"</span> }</div>
-  </div>
-
-  <!-- 아이디 찾기 -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/api/auth/find-id?name={name}&amp;phone={phone}</span>
-      <span class="ep-desc">아이디 찾기</span>
-    </div>
-    <h3>Query Parameters</h3>
-    <table>
-      <thead><tr><th style="width:120px;">파라미터</th><th style="width:80px;">타입</th><th style="width:50px;">필수</th><th>설명</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">name</td><td>String</td><td>Y</td><td>사용자 이름</td></tr>
-        <tr><td class="mono">phone</td><td>String</td><td>Y</td><td>휴대폰 번호</td></tr>
-      </tbody>
-    </table>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"userId"</span>: <span class="str">"ho****3"</span> }  <span class="comment">// 마스킹 처리됨</span></div>
-  </div>
-
-  <!-- 비밀번호 찾기 -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/auth/find-pw</span>
-      <span class="ep-desc">비밀번호 찾기 — 임시 비밀번호 Gmail 발송</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{ <span class="key">"userId"</span>: <span class="str">"hong123"</span>, <span class="key">"email"</span>: <span class="str">"hong@example.com"</span> }</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"success"</span>: <span class="val">true</span>, <span class="key">"message"</span>: <span class="str">"임시 비밀번호가 이메일로 발송되었습니다."</span> }</div>
-  </div>
-
-  <!-- 비밀번호 변경 -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/auth/change-pw</span>
-      <span class="ep-desc">비밀번호 변경 (마이페이지)</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{
-  <span class="key">"userId"</span>:          <span class="str">"hong123"</span>,
-  <span class="key">"currentPassword"</span>: <span class="str">"old1234"</span>,
-  <span class="key">"newPassword"</span>:     <span class="str">"new5678"</span>
-}</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"success"</span>: <span class="val">true</span>, <span class="key">"message"</span>: <span class="str">"비밀번호가 변경되었습니다."</span> }</div>
-  </div>
-
-  <!-- 알림 토글 -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/auth/alert</span>
-      <span class="ep-desc">이메일 알림 수신 토글 (마이페이지)</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{
-  <span class="key">"userId"</span>:     <span class="str">"hong123"</span>,
-  <span class="key">"alertEmail"</span>: <span class="val">1</span>  <span class="comment">// 1=수신, 0=거부</span>
-}</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"success"</span>: <span class="val">true</span> }</div>
-  </div>
-
-  <!-- 관리자 API -->
-  <h3>관리자 전용 API (role=ADMIN — 프론트 role 체크, 서버 측 강제 없음)</h3>
-  <table>
-    <thead><tr><th style="width:70px;">메서드</th><th style="width:260px;">경로</th><th>설명</th><th style="width:160px;">응답</th></tr></thead>
-    <tbody>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/auth/admin/users</td>
-        <td>전체 사용자 목록 조회</td>
-        <td class="mono">List&lt;UserEntity&gt;</td>
-      </tr>
-      <tr>
-        <td class="method-post">POST</td>
-        <td class="mono">/api/auth/admin/approve/{userId}</td>
-        <td>가입 승인 (PENDING → ACTIVE)</td>
-        <td class="mono">{ success, message }</td>
-      </tr>
-      <tr>
-        <td class="method-post">POST</td>
-        <td class="mono">/api/auth/admin/reject/{userId}</td>
-        <td>가입 거절 (PENDING → REJECTED)</td>
-        <td class="mono">{ success, message }</td>
-      </tr>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/auth/alert-emails</td>
-        <td>알림 수신 동의 이메일 목록 (병목 이메일 발송용)</td>
-        <td class="mono">List&lt;String&gt;</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- 2.2 교통 신호 -->
-<div class="page page-break">
-  <h2><span class="sub-num">2.2</span>교통 신호 · 구역 수집 — MapController</h2>
-
-  <!-- GET /api/signals -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/api/signals</span>
-      <span class="ep-desc">캐시된 전체 교차로 신호 데이터 반환 (디버깅·폴링용)</span>
-    </div>
-    <h3>Response 200</h3>
-    <div class="code-box">[
-  {
-    <span class="key">"crsrdId"</span>: <span class="str">"1007"</span>,
-    <span class="key">"crsrdNm"</span>: <span class="str">"잠실역사거리"</span>,
-    <span class="key">"lat"</span>: <span class="val">37.513</span>, <span class="key">"lon"</span>: <span class="val">127.100</span>,
-    <span class="key">"guName"</span>: <span class="str">"송파구"</span>,
-    <span class="key">"signals"</span>: { <span class="comment">/* 방향별 SignalDirection 맵 */</span> },
-    <span class="key">"speedKph"</span>: <span class="val">24.5</span>,
-    <span class="key">"congestion"</span>: <span class="str">"서행"</span>,
-    <span class="key">"avgWaitSec"</span>: <span class="val">42</span>,
-    <span class="key">"riskIndex"</span>: <span class="val">0.35</span>, <span class="key">"riskGrade"</span>: <span class="str">"02"</span>,
-    <span class="key">"weather"</span>: { <span class="key">"temperatureC"</span>: <span class="val">22.1</span>, <span class="key">"precipitationMm"</span>: <span class="val">0.0</span>, ... },
-    <span class="key">"serverTimeMs"</span>: <span class="val">1748530800000</span>
-  }, ...
-]</div>
-  </div>
-
-  <!-- POST /api/fetch-area -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/fetch-area</span>
-      <span class="ep-desc">구역 선택 — V2X API 호출 후 캐시 갱신</span>
-    </div>
-    <div class="warn-box">요청 파라미터는 <strong>Query String</strong> (Request Body 아님). 동시 호출 시 409 반환.</div>
-    <h3>Query Parameters</h3>
-    <table>
-      <thead><tr><th style="width:120px;">파라미터</th><th style="width:80px;">타입</th><th style="width:50px;">필수</th><th>설명</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">guName</td><td>String</td><td>N</td><td>선택 구 이름 (예: 송파구)</td></tr>
-        <tr><td class="mono">lat</td><td>double</td><td>Y</td><td>중심 위도</td></tr>
-        <tr><td class="mono">lon</td><td>double</td><td>Y</td><td>중심 경도</td></tr>
-        <tr><td class="mono">radius</td><td>double</td><td>N</td><td>반경 km (기본값 1.0)</td></tr>
-      </tbody>
-    </table>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"count"</span>: <span class="val">23</span>, <span class="key">"message"</span>: <span class="str">"ok"</span> }</div>
-    <h3>에러 응답</h3>
-    <table>
-      <thead><tr><th>HTTP 코드</th><th>원인</th></tr></thead>
-      <tbody>
-        <tr><td>409</td><td>다른 구역 수집이 진행 중</td></tr>
-        <tr><td>503</td><td>V2X API 호출 실패 (캐시 유지)</td></tr>
-      </tbody>
+    <table class="cover-meta">
+      <tr><td class="k">작성 팀</td><td>Syncro</td><td class="k">작성자</td><td>kimsua · heeyoun · jinminkyeong · seokhyun</td></tr>
+      <tr><td class="k">작성일</td><td>2026. 06. 13.</td><td class="k">문서 분류</td><td>API 설계서</td></tr>
+      <tr><td class="k">시스템명</td><td>Syncro (교통 관제 시스템)</td><td class="k">작성 기준</td><td>구현 코드 기준</td></tr>
     </table>
   </div>
-
-  <!-- POST /api/district/report -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/district/report</span>
-      <span class="ep-desc">구 단위 AI 리포트 생성 (메인 대시보드 구 클릭)</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{ <span class="key">"district"</span>: <span class="str">"송파구"</span> }</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"report"</span>: <span class="str">"## 송파구 교통 현황\n**수집 교차로**: 23개..."</span>, <span class="key">"district"</span>: <span class="str">"송파구"</span> }</div>
-  </div>
-
-  <!-- 2.3 CCTV -->
-  <h2><span class="sub-num">2.3</span>CCTV — <code>/api/cctv</code></h2>
-  <table>
-    <thead><tr><th style="width:70px;">메서드</th><th style="width:220px;">경로</th><th style="width:140px;">파라미터</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/cctv</td>
-        <td>없음</td>
-        <td>전체 CCTV 목록</td>
-      </tr>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/cctv/area</td>
-        <td class="mono">lat, lon, radius(기본 2.0km)</td>
-        <td>반경 내 CCTV 목록</td>
-      </tr>
-    </tbody>
-  </table>
-  <h3>CctvInfo 응답 객체</h3>
-  <div class="code-box">{
-  <span class="key">"cctvId"</span>:   <span class="str">"C001"</span>,
-  <span class="key">"cctvNm"</span>:   <span class="str">"잠실역CCTV"</span>,
-  <span class="key">"lat"</span>:      <span class="val">37.513</span>,
-  <span class="key">"lon"</span>:      <span class="val">127.100</span>,
-  <span class="key">"streamId"</span>: <span class="str">"stream01"</span>,  <span class="comment">// null 가능</span>
-  <span class="key">"cctvCh"</span>:   <span class="val">1</span>             <span class="comment">// null 가능</span>
-}</div>
+  <div class="cover-bottom"><span>Syncro Team</span><span></span></div>
 </div>
 
-<!-- 2.4 ~ 2.9 -->
 <div class="page page-break">
-  <h2><span class="sub-num">2.4</span>AI 챗봇 (Spring Proxy) — ChatController</h2>
-  <div class="info-box">Spring Boot가 받아서 AI Agent(:8001)로 프록시하는 엔드포인트. 실제 LLM 처리는 AI Agent에서 수행.</div>
+<div class="doc-head"><b>API 설계서</b><span>Syncro | 교통 관제 시스템</span></div>
 
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/chat</span>
-      <span class="ep-desc">지도 페이지 자유 챗봇</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{
-  <span class="key">"crsrdId"</span>:  <span class="str">"1007"</span>,              <span class="comment">// optional — 없으면 에이전트가 검색</span>
-  <span class="key">"question"</span>: <span class="str">"현재 혼잡 상황 알려줘"</span>,  <span class="comment">// required</span>
-  <span class="key">"userEmail"</span>:<span class="str">"hong@example.com"</span>  <span class="comment">// optional — 이메일 발송 시 사용</span>
-}</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"answer"</span>: <span class="str">"현재 잠실역사거리는 서행 상태입니다..."</span> }</div>
-  </div>
+<h1 class="sec">1. 공통 사항</h1>
+<table>
+  <tr><th style="width:160px">항목</th><th>내용</th></tr>
+  <tr><td>기본 URL</td><td>Spring <code>http://localhost:8080</code> · 에이전트 <code>http://localhost:8001</code> · 예측 <code>:5002</code> · 민원 분류 <code>:8002</code> · 뉴스 <code>:5001</code></td></tr>
+  <tr><td>데이터 형식</td><td>JSON(UTF-8). 민원 접수·사진 분류는 multipart/form-data</td></tr>
+  <tr><td>스트리밍</td><td>SSE(<code>text/event-stream</code>) — <code>data: {JSON}</code> 라인 형식, 종료 이벤트 <code>{"type":"done"}</code></td></tr>
+  <tr><td>CORS</td><td>개발 오리진(localhost:5173 계열) 허용</td></tr>
+  <tr><td>인증</td><td>세션·토큰 미사용(PoC). 사용자 식별은 요청 본문 userId/userEmail로 수행 — 한계로 명시</td></tr>
+</table>
 
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/bottleneck-email</span>
-      <span class="ep-desc">병목 경보 이메일 발송</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{
-  <span class="key">"district"</span>:  <span class="str">"송파구"</span>,            <span class="comment">// required</span>
-  <span class="key">"userEmail"</span>: <span class="str">"hong@example.com"</span>  <span class="comment">// required — 수신자</span>
-}</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"result"</span>: <span class="str">"교통관제 자동화 시스템입니다. 송파구 내 15km/h 이하..."</span> }</div>
-  </div>
+<h1 class="sec">2. Spring Boot API (:8080)</h1>
 
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/simulation-chat</span>
-      <span class="ep-desc">시뮬레이션 페이지 챗봇 (관제사 조정값 포함 분석)</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{
-  <span class="key">"intNo"</span>:      <span class="str">"2904"</span>,              <span class="comment">// optional</span>
-  <span class="key">"question"</span>:   <span class="str">"현시 2를 늘리면 어떨까?"</span>,
-  <span class="key">"userEmail"</span>:  <span class="str">"hong@example.com"</span>,  <span class="comment">// optional</span>
-  <span class="key">"simulation"</span>: [                         <span class="comment">// optional — 관제사 슬라이더 값</span>
-    { <span class="key">"no"</span>: <span class="val">1</span>, <span class="key">"sec"</span>: <span class="val">30</span>, <span class="key">"dirs"</span>: [<span class="str">"북직진"</span>] },
-    { <span class="key">"no"</span>: <span class="val">2</span>, <span class="key">"sec"</span>: <span class="val">45</span>, <span class="key">"dirs"</span>: [<span class="str">"남직진"</span>] }
-  ]
-}</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"answer"</span>: <span class="str">"현시 2 연장 시 남북 방향 대기시간 약 15초 단축 예상..."</span> }</div>
-  </div>
+<h2>2.1 실시간 교통·지도</h2>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:235px">경로</th><th>설명</th></tr>
+  <tr><td>GET</td><td><code>/api/signals</code></td><td>현재 캐시의 전체 교차로 통합 상태 목록(보조 데이터 병합 포함)</td></tr>
+  <tr><td>POST</td><td><code>/api/fetch-area</code></td><td>구역 수집 전환. 쿼리: guName, lat, lon, radius(기본 1.0, 프론트 2.5 사용). 동시 요청 시 409</td></tr>
+  <tr><td>GET</td><td><code>/api/crossroads/nearby</code></td><td>좌표 반경 내 교차로 목록(순수 DB 조회, 멀티에이전트용). 쿼리: lat, lon, radius</td></tr>
+  <tr><td>GET</td><td><code>/api/context/{crsrdId}</code></td><td>교차로 1건 통합 상태(AI 도구·디버깅용)</td></tr>
+  <tr><td>POST</td><td><code>/api/district/report</code></td><td>구 단위 AI 리포트(에이전트 프록시). 본문: {district}</td></tr>
+  <tr><td>POST</td><td><code>/api/admin/sync-topis</code></td><td>TOPIS 도로망 마스터 동기화(관리)</td></tr>
+</table>
 
-  <!-- 교차로 컨텍스트 -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/api/context/{crsrdId}</span>
-      <span class="ep-desc">교차로 실시간 통합 데이터 조회 (디버깅용)</span>
-    </div>
-    <h3>Response</h3>
-    <p>200: <code>TrafficStatus</code> 객체 (Section 7 참조) / 404: 해당 교차로 없음</p>
-  </div>
+<h2>2.2 신호계획·시뮬레이션</h2>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:235px">경로</th><th>설명</th></tr>
+  <tr><td>GET</td><td><code>/api/signal/crossroads</code></td><td>신호 교차로 전체 목록(시뮬레이션 지도 핀)</td></tr>
+  <tr><td>GET</td><td><code>/api/signal/crossroads/{intNo}</code></td><td>현시구성·운영계획 원본 조회</td></tr>
+  <tr><td>GET</td><td><code>/api/signal/simulation/context/{intNo}</code></td><td>시뮬레이션 컨텍스트 — 주기, 활성 현시, 현시별 초·방향, 인근 실시간 속도(350m 좌표 매칭)</td></tr>
+  <tr><td>POST</td><td><code>/api/signal/simulation/route-traffic</code></td><td>경로 노드 배열 → 구간별 링크 매칭·상하행 속도·병목 판정·차량 이동 데이터</td></tr>
+  <tr><td>GET</td><td><code>/api/signal/simulation/managed-traffic-links</code></td><td>관리 대상 도로 링크(형상 포함) — 중심·반경 선택</td></tr>
+  <tr><td>POST</td><td><code>/api/signal/simulation/managed-traffic-link-status</code></td><td>지정 링크들의 현재 속도 상태</td></tr>
+  <tr><td>POST</td><td><code>/api/signal/topis/master/sync</code> · GET <code>/status</code></td><td>도로망 마스터 동기화·상태 확인</td></tr>
+</table>
 
-  <h2><span class="sub-num">2.5</span>신호 계획 / 시뮬레이션 — <code>/api/signal</code></h2>
-  <table>
-    <thead><tr><th style="width:70px;">메서드</th><th style="width:260px;">경로</th><th>설명</th><th style="width:160px;">응답</th></tr></thead>
-    <tbody>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/signal/crossroads</td>
-        <td>전체 교차로 목록 (지도 핀용)</td>
-        <td class="mono">List&lt;Map&gt;</td>
-      </tr>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/signal/crossroads/{intNo}</td>
-        <td>교차로 클릭 → 현시구성·운영계획 상세</td>
-        <td class="mono">Map (phases 포함) / 404</td>
-      </tr>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/signal/simulation/context/{intNo}</td>
-        <td>시뮬레이션용 현재 활성 현시 + 방향 파싱</td>
-        <td class="mono">Map (cycleVal, currentPhaseNo, phases[]) / 404</td>
-      </tr>
-    </tbody>
-  </table>
+<h2>2.3 AI 챗 프록시</h2>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:235px">경로</th><th>설명</th></tr>
+  <tr><td>POST</td><td><code>/api/chat</code></td><td>지도 챗봇 단건. 본문: {crsrdId?, question, userEmail?} → {answer}</td></tr>
+  <tr><td>POST</td><td><code>/api/simulation-chat</code></td><td>시뮬레이션 분석. 본문: {intNo?, question, simulation?, routeTraffic?, bottleneckIntNos?, contexts?, userEmail?} → {answer, adjustments, report}. userEmail 존재 시 보고서 메일 자동 발송</td></tr>
+  <tr><td>POST</td><td><code>/api/simulation-chat/stream</code></td><td>위 기능의 SSE 버전(신호계획 조회 단계 이벤트 후 에이전트 스트림 프록시)</td></tr>
+  <tr><td>POST</td><td><code>/api/bottleneck-email</code></td><td>구 병목 리포트 생성(에이전트) 후 메일 발송. 본문: {district, userEmail}</td></tr>
+</table>
 
-  <h3>simulation/context 응답 구조</h3>
-  <div class="code-box">{
-  <span class="key">"cycleVal"</span>:        <span class="val">120</span>,  <span class="comment">// 전체 사이클(초)</span>
-  <span class="key">"currentPhaseNo"</span>:  <span class="val">2</span>,    <span class="comment">// 현재 활성 현시 번호</span>
-  <span class="key">"elapsed"</span>:          <span class="val">35</span>,   <span class="comment">// 현재 사이클 경과(초)</span>
-  <span class="key">"phases"</span>: [
-    {
-      <span class="key">"phaseNo"</span>:    <span class="val">1</span>,
-      <span class="key">"seconds"</span>:   <span class="val">30</span>,    <span class="comment">// 녹색 지속시간(초)</span>
-      <span class="key">"isActive"</span>:  <span class="val">false</span>,
-      <span class="key">"directions"</span>: [
-        { <span class="key">"ring"</span>: <span class="str">"A"</span>, <span class="key">"type"</span>: <span class="str">"직진"</span>, <span class="key">"from"</span>: <span class="str">"북"</span>, <span class="key">"to"</span>: <span class="str">"남"</span> }
-      ]
-    }
-  ]
-}</div>
+<h2>2.4 인증·계정</h2>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:235px">경로</th><th>설명</th></tr>
+  <tr><td>POST</td><td><code>/api/auth/login</code></td><td>로그인. CIVIL·PENDING·REJECTED 차단 분기 포함. 응답에 isTempPw 포함</td></tr>
+  <tr><td>POST</td><td><code>/api/auth/register</code></td><td>관제사 가입(PENDING 생성)</td></tr>
+  <tr><td>GET</td><td><code>/api/auth/find-id</code></td><td>이름·전화로 아이디 조회(뒤 3자리 마스킹)</td></tr>
+  <tr><td>POST</td><td><code>/api/auth/find-pw</code></td><td>임시 비밀번호 발급·메일 발송</td></tr>
+  <tr><td>GET</td><td><code>/api/auth/admin/users</code></td><td>관리자: 유저 목록</td></tr>
+  <tr><td>POST</td><td><code>/api/auth/admin/approve/{userId}</code> · <code>/reject/{userId}</code></td><td>관리자: 승인·거절</td></tr>
+  <tr><td>POST</td><td><code>/api/auth/alert</code></td><td>경보 메일 수신 토글 {userId, alertEmail}</td></tr>
+  <tr><td>POST</td><td><code>/api/auth/change-pw</code></td><td>비밀번호 변경(임시 플래그 해제)</td></tr>
+  <tr><td>GET</td><td><code>/api/auth/alert-emails</code></td><td>수신 동의+승인 유저 이메일 목록</td></tr>
+  <tr><td>POST</td><td><code>/api/civil/auth/login</code> · <code>/register</code></td><td>민원 시민 로그인·가입(즉시 승인, ROLE=CIVIL)</td></tr>
+  <tr><td>GET</td><td><code>/api/civil/auth/weather</code></td><td>좌표 기반 현재 날씨(민원·브리핑용). 쿼리: lat, lng</td></tr>
+</table>
 
-  <h2><span class="sub-num">2.6</span>교통량 예측 Proxy — <code>/api/forecast</code> / <code>/api/stations</code></h2>
-  <div class="info-box">Spring Boot가 Flask XGBoost(:5002)를 호출해 결과를 반환하는 프록시 레이어.</div>
-  <table>
-    <thead><tr><th style="width:70px;">메서드</th><th style="width:260px;">경로</th><th>설명</th><th style="width:160px;">응답</th></tr></thead>
-    <tbody>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/stations</td>
-        <td>교통량 조사 지점 전체 목록</td>
-        <td class="mono">List&lt;TrafficStationEntity&gt;</td>
-      </tr>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/forecast/station/{stationId}</td>
-        <td>특정 지점 오늘 24시간 교통량 예측</td>
-        <td class="mono">ForecastResult / 404</td>
-      </tr>
-    </tbody>
-  </table>
-  <h3>ForecastResult 응답</h3>
-  <div class="code-box">{
-  <span class="key">"stationId"</span>: <span class="str">"10"</span>,
-  <span class="key">"stationNm"</span>: <span class="str">"잠실IC"</span>,
-  <span class="key">"up"</span>:   [<span class="val">1200</span>, <span class="val">980</span>, <span class="val">750</span>, ...],  <span class="comment">// 상행 00~23시 24개 값 (대/시)</span>
-  <span class="key">"down"</span>: [<span class="val">1100</span>, <span class="val">920</span>, <span class="val">680</span>, ...]   <span class="comment">// 하행 00~23시 24개 값</span>
-}</div>
+<h2>2.5 민원</h2>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:235px">경로</th><th>설명</th></tr>
+  <tr><td>GET</td><td><code>/api/complaints</code></td><td>민원 목록(쿼리 guName 선택)</td></tr>
+  <tr><td>POST</td><td><code>/api/complaints</code></td><td>민원 접수(multipart: userId, userName, title, category, content, lat, lng, address, department?, aiReason?, photos[]?)</td></tr>
+  <tr><td>PATCH</td><td><code>/api/complaints/{id}/status</code></td><td>상태 변경(접수/처리중/완료) — 신고자 메일 자동 발송</td></tr>
+  <tr><td>DELETE</td><td><code>/api/complaints/{id}</code></td><td>민원·사진 일괄 삭제</td></tr>
+  <tr><td>GET</td><td><code>/api/complaints/photos/{photoId}</code></td><td>사진 BLOB 바이트 반환(Content-Type 보존)</td></tr>
+</table>
 
-  <h2><span class="sub-num">2.7</span>뉴스 조회 — <code>/api/news</code></h2>
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/api/news/latest?limit={limit}&amp;category={category}</span>
-      <span class="ep-desc">Oracle TRAFFIC_NEWS 테이블에서 최신 뉴스 조회</span>
-    </div>
-    <h3>Query Parameters</h3>
-    <table>
-      <thead><tr><th style="width:120px;">파라미터</th><th style="width:80px;">타입</th><th style="width:80px;">기본값</th><th>설명</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">limit</td><td>int</td><td>200</td><td>최대 반환 개수</td></tr>
-        <tr><td class="mono">category</td><td>String</td><td>없음 (전체)</td><td>서울교통 / 교통사고 / 대중교통 / 날씨교통</td></tr>
-      </tbody>
-    </table>
-    <h3>Response 200</h3>
-    <div class="code-box">{
-  <span class="key">"count"</span>: <span class="val">42</span>,
-  <span class="key">"news"</span>: [
-    {
-      <span class="key">"link"</span>:          <span class="str">"https://n.news.naver.com/..."</span>,  <span class="comment">// PK</span>
-      <span class="key">"category"</span>:     <span class="str">"서울교통"</span>,
-      <span class="key">"title"</span>:        <span class="str">"강남 교차로 정체 심화"</span>,
-      <span class="key">"summary"</span>:      <span class="str">"강남역 인근 퇴근길 정체가 극심하다."</span>,
-      <span class="key">"sentiment"</span>:    <span class="str">"혼잡악화"</span>,  <span class="comment">// 혼잡악화 | 교통개선 | 중립</span>
-      <span class="key">"pubDate"</span>:      <span class="str">"2026-05-29 18:30"</span>,
-      <span class="key">"clickbaitProb"</span>:<span class="str">"0.12"</span>,
-      <span class="key">"articleType"</span>:  <span class="str">"사실"</span>,
-      <span class="key">"typeProb"</span>:     <span class="str">"0.87"</span>
-    }
-  ]
-}</div>
-  </div>
+<h2>2.6 기타 (예측·뉴스·CCTV·메일)</h2>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:235px">경로</th><th>설명</th></tr>
+  <tr><td>GET</td><td><code>/api/stations</code></td><td>교통량 지점 목록</td></tr>
+  <tr><td>GET</td><td><code>/api/forecast/station/{stationId}</code></td><td>지점 24시간 예측(내부에서 예측 서버 호출) → {stationId, stationName, up[24], down[24]}</td></tr>
+  <tr><td>GET</td><td><code>/api/news/latest</code></td><td>뉴스 목록. 쿼리: limit(기본 200), category?</td></tr>
+  <tr><td>GET</td><td><code>/api/cctv</code> · <code>/api/cctv/area</code></td><td>CCTV 전체/반경 목록(streamId·채널 포함)</td></tr>
+  <tr><td>POST</td><td><code>/api/email/send</code></td><td>메일 발송 단일 창구. 본문: {to, subject, body}</td></tr>
+</table>
 
-  <h2><span class="sub-num">2.8</span>이메일 발송 — <code>/api/email</code></h2>
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/email/send</span>
-      <span class="ep-desc">Gmail SMTP 직접 발송 (AI 에이전트가 내부 호출)</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{
-  <span class="key">"to"</span>:      <span class="str">"hong@example.com"</span>,
-  <span class="key">"subject"</span>: <span class="str">"[병목 경보] 서울 송파구"</span>,
-  <span class="key">"body"</span>:    <span class="str">"교통관제 자동화 시스템입니다..."</span>
-}</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"success"</span>: <span class="val">true</span> }
-<span class="comment">// 실패 시:</span>
-{ <span class="key">"success"</span>: <span class="val">false</span>, <span class="key">"error"</span>: <span class="str">"SMTP 연결 실패"</span> }</div>
-  </div>
+<h2>2.7 WebSocket</h2>
+<table>
+  <tr><th style="width:235px">채널</th><th>설명</th></tr>
+  <tr><td><code>ws://localhost:8080/ws/traffic</code></td><td>30초 주기(및 구역 전환 시) 전체 교차로 통합 상태 배열 푸시. 클라이언트는 연결 직후 <code>/api/signals</code>로 초기 적재, 종료 시 3초 후 재연결</td></tr>
+</table>
 
-  <!-- 2.9 WebSocket 앞에 placeholder — WebSocket은 아래로 내려가지 않음 -->
-  <h2><span class="sub-num">2.9</span>WebSocket 실시간 스트리밍</h2>
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-ws">WS</span>
-      <span class="ep-path">ws://localhost:8080/ws/traffic</span>
-      <span class="ep-desc">교차로 신호 실시간 브로드캐스트 (10초 주기)</span>
-    </div>
-    <p>연결 후 서버가 10초마다 TrafficStatus 배열을 JSON으로 Push한다. 클라이언트는 메시지를 수신만 한다 (단방향).</p>
-    <h3>수신 메시지 형식</h3>
-    <div class="code-box">[ TrafficStatus, TrafficStatus, ... ]  <span class="comment">// Section 7 참조</span></div>
-  </div>
-</div>
+<h1 class="sec">3. AI 에이전트 API (:8001)</h1>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:265px">경로</th><th>설명</th></tr>
+  <tr><td>GET</td><td><code>/health</code></td><td>상태 확인(모델·MCP 연결)</td></tr>
+  <tr><td>POST</td><td><code>/api/agent/chat</code></td><td>지도 챗봇 단건(ReAct) → {answer}</td></tr>
+  <tr><td>POST</td><td><code>/api/agent/chat/stream</code></td><td>지도 챗봇 SSE. 이벤트: action/observation/thought/answer/route_multi/done. 주변 분석 의도 시 route_multi로 멀티에이전트 재라우팅 지시</td></tr>
+  <tr><td>POST</td><td><code>/api/agent/multi-analyze/stream</code></td><td>멀티에이전트 SSE. 이벤트: analyze_init → worker_start/done(4기) → discussion_start → round_start(1~3)/discuss_start/done → orchestrator_start/done</td></tr>
+  <tr><td>POST</td><td><code>/api/agent/simulation-chat</code></td><td>Webster 최적화. 입력: contexts(신호계획)·routeTraffic·simulation? → {answer(설명), adjustments(코드 계산), report(상세 보고서)}</td></tr>
+  <tr><td>POST</td><td><code>/api/agent/simulation-chat/stream</code></td><td>위 기능 토큰 스트리밍(token → done에 answer·adjustments 동봉)</td></tr>
+  <tr><td>POST</td><td><code>/api/agent/district-report</code> · <code>/stream</code></td><td>구 단위 리포트(단건/SSE)</td></tr>
+  <tr><td>POST</td><td><code>/api/agent/bottleneck-email</code> · <code>/stream</code></td><td>병목 경보 리포트 생성(스트림 버전은 완료 후 Spring 메일 창구로 발송)</td></tr>
+  <tr><td>POST</td><td><code>/api/nav/intent</code></td><td>음성 명령 의도 분류 → {action: navigate|select_gu|mypage|logout|unknown, page?/gu?}</td></tr>
+  <tr><td>POST</td><td><code>/api/agent/stop</code></td><td>진행 중 LLM 생성 강제 중단(연결 소켓 종료 후 재생성)</td></tr>
+</table>
 
-<!-- 2.10 ~ 2.11 시민 인증 + 민원 CRUD -->
-<div class="page page-break">
-  <h2><span class="sub-num">2.10</span>시민 인증 — CivilController <code>/api/civil/auth</code> <span class="badge badge-blue" style="font-size:7.5pt;">v1.1 신규</span></h2>
-  <div class="info-box">내부 관제 인증(/api/auth)과 완전 분리된 시민 전용 인증. 세션: <code>localStorage("ts_civil_user")</code></div>
+<h1 class="sec">4. Flask API</h1>
+<h2>4.1 교통량 예측 (:5002)</h2>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:235px">경로</th><th>설명</th></tr>
+  <tr><td>POST</td><td><code>/predict_traffic</code></td><td>본문: {Station_Number} → 당일 0~23시 상행(direction_0)/하행(direction_1) 예측 배열. 지점 미존재 시 404</td></tr>
+</table>
+<h2>4.2 민원 분류 (:8002)</h2>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:235px">경로</th><th>설명</th></tr>
+  <tr><td>POST</td><td><code>/api/civil/classify</code></td><td>multipart: title, image → {category(15종), department, reason, convertedImage?(HEIC→JPEG 변환본)}. 모델 과부하 시 4단 폴백</td></tr>
+  <tr><td>GET</td><td><code>/health</code> · <code>/models</code></td><td>상태·사용 가능 모델 확인</td></tr>
+</table>
+<h2>4.3 뉴스 분석 (:5001)</h2>
+<table>
+  <tr><th style="width:56px">방식</th><th style="width:235px">경로</th><th>설명</th></tr>
+  <tr><td>POST</td><td><code>/news/fetch</code></td><td>수집·분석 파이프라인 백그라운드 실행. 중복 실행 시 409 {status:"already_running"}</td></tr>
+  <tr><td>GET</td><td><code>/news/latest</code></td><td>DB 직접 조회(쿼리: limit, category?)</td></tr>
+  <tr><td>GET</td><td><code>/health</code></td><td>상태·모델 로드 여부</td></tr>
+</table>
 
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/civil/auth/login</span>
-      <span class="ep-desc">시민 로그인</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{ <span class="key">"userId"</span>: <span class="str">"civil01"</span>, <span class="key">"password"</span>: <span class="str">"pw1234"</span> }</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{
-  <span class="key">"success"</span>: <span class="val">true</span>,
-  <span class="key">"userId"</span>:  <span class="str">"civil01"</span>,
-  <span class="key">"name"</span>:    <span class="str">"홍길동"</span>,
-  <span class="key">"email"</span>:   <span class="str">"hong@example.com"</span>
+<h1 class="sec">5. 대표 요청·응답 예시</h1>
+<h2>5.1 교차로 통합 상태 (GET /api/context/{crsrdId})</h2>
+<pre>{
+  "crsrdId": "1007",
+  "crsrdNm": "잠실역사거리",
+  "lat": 37.51, "lon": 127.08,
+  "signals": {
+    "nt": { "stsg": { "status": "stop-And-Remain", "rmndCs": 354 } },
+    "et": { "stsg": { "status": "protected-Movement-Allowed", "rmndCs": 120 } }
+  },
+  "speedKph": 12.4,
+  "speedKphByDirection": { "nt": 12.4, "et": 28.1 },
+  "congestion": "정체",
+  "avgWaitSec": 31,
+  "riskGrade": "02", "riskIndex": 41.2,
+  "weather": { "temperatureC": 23.1, "precipitationMm": 0.0, "humidityPercent": 58, "windSpeedMs": 2.1 },
+  "speedStale": false, "riskStale": false
+}</pre>
+<h2>5.2 시뮬레이션 최적화 (POST /api/simulation-chat)</h2>
+<pre>요청
+{
+  "question": "각 병목 교차로의 신호계획을 분석해서 15km/h 이하 구간 전체의 신호를 최적화해줘. ...",
+  "bottleneckIntNos": ["2904"],
+  "contexts": [{ "intNo": "2904", "intNm": "교차로명", "cycleVal": 140,
+                 "phases": [{ "no": 1, "sec": 38, "dirs": ["남북 직진"] }, ...] }],
+  "routeTraffic": [{ "fromIntNo": "2901", "toIntNo": "2904", "speedKph": 11.2, "congestion": "정체" }],
+  "userEmail": "user@example.com"
 }
-<span class="comment">// 실패: { "success": false, "message": "아이디 또는 비밀번호가 올바르지 않습니다." }
-// role 불일치: { "success": false, "message": "민원 계정이 아닙니다. 일반 로그인을 이용하세요." }</span></div>
-  </div>
+응답
+{
+  "answer": "교차로별 변경 요지(LLM 설명문)",
+  "adjustments": [{ "intNo": "2904", "phases": [{ "no": 1, "sec": 41 }, ...] }],
+  "report": "[Webster 신호 최적화 리포트] ... (코드 생성 상세 계산 과정)"
+}</pre>
+<h2>5.3 챗봇 SSE 이벤트 (POST /api/agent/chat/stream)</h2>
+<pre>data: {"type":"action","tool":"get_district_traffic","label":"자치구 교통 현황 조회","args":"district_name=강남구"}
+data: {"type":"observation","content":"{ district, total_crossroads, bottleneck_under_15, weather }"}
+data: {"type":"answer","content":"강남구 수집 교차로 41개, 평균 21.3km/h ..."}
+data: {"type":"done"}</pre>
 
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/civil/auth/register</span>
-      <span class="ep-desc">시민 회원가입 — role=CIVIL 저장</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{
-  <span class="key">"userId"</span>:   <span class="str">"civil01"</span>,
-  <span class="key">"password"</span>: <span class="str">"pw1234"</span>,    <span class="comment">// BCrypt 해시 저장</span>
-  <span class="key">"name"</span>:     <span class="str">"홍길동"</span>,
-  <span class="key">"phone"</span>:    <span class="str">"010-1234-5678"</span>,
-  <span class="key">"email"</span>:    <span class="str">"hong@example.com"</span>
-}</div>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"success"</span>: <span class="val">true</span>, <span class="key">"message"</span>: <span class="str">"회원가입이 완료되었습니다."</span> }
-<span class="comment">// 중복 userId: { "success": false, "message": "이미 사용 중인 아이디입니다." }</span></div>
-  </div>
+<div class="note"><b>주.</b> 오류 응답은 각 서버에서 {message} 또는 {success:false, error}를 사용하며,
+에이전트 SSE는 {"type":"error","content":...} 이벤트 후 done으로 종료한다.</div>
 
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/api/civil/auth/weather?lat={lat}&amp;lng={lng}</span>
-      <span class="ep-desc">위치 기반 현재 날씨 조회 — 민원 제출 시 자동 기록용</span>
-    </div>
-    <h3>Query Parameters</h3>
-    <table>
-      <thead><tr><th style="width:120px;">파라미터</th><th style="width:80px;">타입</th><th style="width:50px;">필수</th><th>설명</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">lat</td><td>double</td><td>Y</td><td>위도</td></tr>
-        <tr><td class="mono">lng</td><td>double</td><td>Y</td><td>경도</td></tr>
-      </tbody>
-    </table>
-    <h3>Response 200</h3>
-    <div class="code-box">{
-  <span class="key">"temp"</span>:          <span class="val">22.1</span>,          <span class="comment">// 기온 (°C)</span>
-  <span class="key">"precipitation"</span>: <span class="val">0.0</span>,           <span class="comment">// 강수량 (mm)</span>
-  <span class="key">"humidity"</span>:      <span class="val">55</span>,            <span class="comment">// 습도 (%)</span>
-  <span class="key">"windSpeed"</span>:     <span class="val">2.3</span>,           <span class="comment">// 풍속 (m/s)</span>
-  <span class="key">"weatherDesc"</span>:   <span class="str">"맑음"</span>           <span class="comment">// "맑음" | "흐림" | "비"</span>
-}</div>
-  </div>
-
-  <h2><span class="sub-num">2.11</span>민원 CRUD — ComplaintController <span class="badge badge-blue" style="font-size:7.5pt;">v1.1 신규</span></h2>
-  <div class="info-box">민원 제출은 <strong>Multipart Form</strong>. 사진 파일을 photos[] 파라미터로 함께 전송. 관리자 관리 페이지(ComplaintManagePage)와 시민 포털(CivilDashboard) 모두 이 API를 사용.</div>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/api/complaints?guName={guName}</span>
-      <span class="ep-desc">민원 목록 조회 — guName 없으면 전체, 있으면 해당 구만</span>
-    </div>
-    <h3>Response 200</h3>
-    <div class="code-box">[
-  {
-    <span class="key">"id"</span>:         <span class="val">1</span>,
-    <span class="key">"userId"</span>:     <span class="str">"civil01"</span>,
-    <span class="key">"userName"</span>:   <span class="str">"홍길동"</span>,
-    <span class="key">"title"</span>:      <span class="str">"도로 파손 신고"</span>,
-    <span class="key">"category"</span>:   <span class="str">"도로 파손/균열"</span>,
-    <span class="key">"content"</span>:    <span class="str">"강남구 역삼동 구체적 내용..."</span>,
-    <span class="key">"lat"</span>:        <span class="val">37.501</span>, <span class="key">"lng"</span>: <span class="val">127.039</span>,
-    <span class="key">"address"</span>:    <span class="str">"서울 강남구 역삼동 123"</span>,
-    <span class="key">"department"</span>: <span class="str">"도로과"</span>,        <span class="comment">// AI 추천 담당과 (null 가능)</span>
-    <span class="key">"aiReason"</span>:   <span class="str">"도로 균열 패턴"</span>,  <span class="comment">// Gemini 분류 이유 (null 가능)</span>
-    <span class="key">"status"</span>:     <span class="str">"접수"</span>,            <span class="comment">// 접수 | 처리중 | 완료</span>
-    <span class="key">"guName"</span>:     <span class="str">"강남구"</span>,
-    <span class="key">"photoUrls"</span>:  [<span class="str">"/api/complaints/photos/1"</span>],  <span class="comment">// 사진 조회 URL 배열</span>
-    <span class="key">"createdAt"</span>:  <span class="str">"2026-06-02T10:30:00"</span>
-  }
-]</div>
-  </div>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/complaints</span>
-      <span class="ep-desc">민원 제출 — Multipart Form</span>
-    </div>
-    <h3>Form Parameters</h3>
-    <table>
-      <thead><tr><th style="width:120px;">파라미터</th><th style="width:80px;">타입</th><th style="width:50px;">필수</th><th>설명</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">userId</td><td>String</td><td>Y</td><td>시민 아이디</td></tr>
-        <tr><td class="mono">userName</td><td>String</td><td>Y</td><td>시민 이름</td></tr>
-        <tr><td class="mono">title</td><td>String</td><td>Y</td><td>민원 제목</td></tr>
-        <tr><td class="mono">category</td><td>String</td><td>Y</td><td>14개 카테고리 중 하나</td></tr>
-        <tr><td class="mono">content</td><td>String</td><td>Y</td><td>상세 내용</td></tr>
-        <tr><td class="mono">lat / lng</td><td>Double</td><td>Y</td><td>카카오맵 위치 핀 좌표</td></tr>
-        <tr><td class="mono">address</td><td>String</td><td>Y</td><td>주소 문자열</td></tr>
-        <tr><td class="mono">department</td><td>String</td><td>N</td><td>Gemini 추천 담당과</td></tr>
-        <tr><td class="mono">aiReason</td><td>String</td><td>N</td><td>Gemini 분류 이유</td></tr>
-        <tr><td class="mono">photos[]</td><td>MultipartFile[]</td><td>N</td><td>사진 파일 배열 (여러 장)</td></tr>
-      </tbody>
-    </table>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"success"</span>: <span class="val">true</span>, <span class="key">"id"</span>: <span class="val">1</span>, <span class="key">"message"</span>: <span class="str">"민원이 접수되었습니다."</span> }</div>
-  </div>
-
-  <table>
-    <thead><tr><th style="width:70px;">메서드</th><th style="width:260px;">경로</th><th>설명</th><th style="width:160px;">응답</th></tr></thead>
-    <tbody>
-      <tr>
-        <td class="method-post" style="font-family:monospace;font-size:9pt;font-weight:700;color:#b45309;">PATCH</td>
-        <td class="mono">/api/complaints/{id}/status</td>
-        <td>상태 변경 — Body: <code>{ "status": "처리중" }</code></td>
-        <td class="mono">{ success, message }</td>
-      </tr>
-      <tr>
-        <td class="method-post" style="font-family:monospace;font-size:9pt;font-weight:700;color:#1e3a5f;">DELETE</td>
-        <td class="mono">/api/complaints/{id}</td>
-        <td>민원 삭제</td>
-        <td class="mono">{ success, message }</td>
-      </tr>
-      <tr>
-        <td class="method-get">GET</td>
-        <td class="mono">/api/complaints/photos/{photoId}</td>
-        <td>사진 바이트 반환 (Content-Type: image/*)</td>
-        <td class="mono">byte[]</td>
-      </tr>
-    </tbody>
-  </table>
 </div>
-
-<!-- ═══════════════════════════════════════════
-     3. AI Agent FastAPI
-════════════════════════════════════════════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">3</div>
-    <div class="section-title">AI Agent FastAPI (:8001)</div>
-  </div>
-
-  <p>LangGraph ReAct + Ollama qwen3:30b-a3b 기반. 모든 엔드포인트는 내부적으로 MCP 도구(Section 6)를 통해 Spring Boot API를 호출한다.</p>
-
-  <div class="info-box">
-    <strong>포트 주의:</strong> agent_server.py 파일 상단 주석은 "8000"이지만 실제 <code>uvicorn.run(port=8001)</code>으로 실행됨. 실제 포트는 <strong>8001</strong>.
-  </div>
-
-  <h2><span class="sub-num">3.1</span>헬스체크</h2>
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/health</span>
-    </div>
-    <div class="code-box">{ <span class="key">"status"</span>: <span class="str">"ok"</span>, <span class="key">"model"</span>: <span class="str">"qwen3:30b-a3b"</span>, <span class="key">"mcp"</span>: <span class="str">"connected"</span> }</div>
-  </div>
-
-  <h2><span class="sub-num">3.2</span>자유 챗봇</h2>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/agent/chat</span>
-      <span class="ep-desc">동기 응답 — 지도 페이지 챗봇</span>
-    </div>
-    <h3>Request Body — ChatRequest</h3>
-    <div class="code-box">{
-  <span class="key">"question"</span>:  <span class="str">"현재 잠실역 교통 상황?"</span>,  <span class="comment">// required</span>
-  <span class="key">"crsrdId"</span>:   <span class="str">"1007"</span>,                   <span class="comment">// optional</span>
-  <span class="key">"userEmail"</span>: <span class="str">"hong@example.com"</span>         <span class="comment">// optional</span>
-}</div>
-    <h3>Response 200 — ChatResponse</h3>
-    <div class="code-box">{ <span class="key">"answer"</span>: <span class="str">"현재 잠실역사거리는 서행 중이며..."</span> }</div>
-  </div>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/agent/chat/stream</span>
-      <span class="ep-desc">SSE 스트리밍 — ReAct 루프 단계별 실시간 전달</span>
-    </div>
-    <p>동일한 <code>ChatRequest</code> 바디 사용. <code>Content-Type: text/event-stream</code> 응답. Section 3.6의 SSE 이벤트 포맷 참조.</p>
-  </div>
-
-  <h2><span class="sub-num">3.3</span>시뮬레이션 챗봇</h2>
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/agent/simulation-chat</span>
-      <span class="ep-desc">신호 시뮬레이션 페이지 챗봇 — 관제사 조정값 포함 분석</span>
-    </div>
-    <h3>Request Body — SimulationChatRequest</h3>
-    <div class="code-box">{
-  <span class="key">"question"</span>:   <span class="str">"현시 3을 10초 늘리면?"</span>,  <span class="comment">// required</span>
-  <span class="key">"context"</span>:    { <span class="comment">/* Spring이 조립한 신호계획 dict */</span> },  <span class="comment">// optional</span>
-  <span class="key">"simulation"</span>: [                                    <span class="comment">// optional</span>
-    { <span class="key">"no"</span>: <span class="val">1</span>, <span class="key">"sec"</span>: <span class="val">30</span>, <span class="key">"dirs"</span>: [<span class="str">"북직진"</span>] }
-  ],
-  <span class="key">"userEmail"</span>:  <span class="str">"hong@example.com"</span>             <span class="comment">// optional</span>
-}</div>
-    <h3>Response 200 — ChatResponse</h3>
-    <div class="code-box">{ <span class="key">"answer"</span>: <span class="str">"현시 3 연장 시 대기시간 약 12초 단축..."</span> }</div>
-  </div>
-
-  <h2><span class="sub-num">3.4</span>병목 이메일 리포트</h2>
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/agent/bottleneck-email</span>
-      <span class="ep-desc">동기 — 병목 리포트 텍스트 생성</span>
-    </div>
-    <h3>Request Body — DistrictRequest</h3>
-    <div class="code-box">{ <span class="key">"district"</span>: <span class="str">"송파구"</span>, <span class="key">"userEmail"</span>: <span class="str">"hong@example.com"</span> }</div>
-    <h3>Response 200 — ChatResponse</h3>
-    <div class="code-box">{ <span class="key">"answer"</span>: <span class="str">"교통관제 자동화 시스템입니다. 송파구 내 15km/h..."</span> }</div>
-  </div>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/agent/bottleneck-email/stream</span>
-      <span class="ep-desc">SSE 스트리밍 — 리포트 생성 후 Spring /api/email/send 자동 호출</span>
-    </div>
-    <p>동일한 <code>DistrictRequest</code>. userEmail이 있으면 리포트 완성 시 <strong>자동으로 이메일 발송</strong>하고 <code>observation</code> 이벤트로 결과 전달.</p>
-  </div>
-
-  <h2><span class="sub-num">3.5</span>구 단위 리포트</h2>
-  <table>
-    <thead><tr><th>메서드</th><th>경로</th><th>설명</th><th>응답 타입</th></tr></thead>
-    <tbody>
-      <tr>
-        <td class="method-post">POST</td>
-        <td class="mono">/api/agent/district-report</td>
-        <td>동기 — 구 교통 현황 리포트 텍스트</td>
-        <td class="mono">ReportResponse { report, district }</td>
-      </tr>
-      <tr>
-        <td class="method-post">POST</td>
-        <td class="mono">/api/agent/district-report/stream</td>
-        <td>SSE — 메인 대시보드 토스트 시각화용</td>
-        <td class="mono">text/event-stream</td>
-      </tr>
-    </tbody>
-  </table>
-  <h3>ReportResponse</h3>
-  <div class="code-box">{
-  <span class="key">"report"</span>:   <span class="str">"## 송파구 교통 현황\n**수집 교차로**: 23개\n..."</span>,
-  <span class="key">"district"</span>: <span class="str">"송파구"</span>
-}</div>
-
-  <h2><span class="sub-num">3.6</span>SSE 이벤트 포맷</h2>
-  <p>스트리밍 엔드포인트는 모두 동일한 이벤트 스키마를 사용한다.</p>
-  <div class="code-box">data: { <span class="key">"type"</span>: <span class="str">"&lt;이벤트타입&gt;"</span>, <span class="key">"content"</span>: <span class="str">"..."</span>, ... }\n\n</div>
-
-  <table>
-    <thead><tr><th>type</th><th>언제 발생</th><th>추가 필드</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><span class="badge badge-yellow">thought</span></td>
-        <td>LLM &lt;think&gt; 블록 파싱 (qwen3 내부 추론)</td>
-        <td><code>content</code>: 추론 텍스트 (최대 200자)</td>
-      </tr>
-      <tr>
-        <td><span class="badge badge-blue">action</span></td>
-        <td>MCP 도구 호출 직전</td>
-        <td><code>tool</code>: 도구 이름, <code>label</code>: 한글 레이블, <code>args</code>: "k=v, ..." 문자열</td>
-      </tr>
-      <tr>
-        <td><span class="badge badge-green">observation</span></td>
-        <td>도구 실행 결과 수신 후</td>
-        <td><code>content</code>: 결과 요약 (JSON 키 나열 또는 "[N개 항목]")</td>
-      </tr>
-      <tr>
-        <td><span class="badge badge-green">answer</span></td>
-        <td>LLM 최종 답변 (도구 호출 없는 마지막 응답)</td>
-        <td><code>content</code>: 최종 답변 텍스트</td>
-      </tr>
-      <tr>
-        <td><span class="badge badge-gray">done</span></td>
-        <td>스트림 종료</td>
-        <td>없음</td>
-      </tr>
-      <tr>
-        <td><span class="badge badge-red">error</span></td>
-        <td>예외 발생</td>
-        <td><code>content</code>: 에러 메시지</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3>SSE 스트림 예시</h3>
-  <div class="code-box">data: {"type":"action","tool":"get_traffic_data","label":"교차로 실시간 데이터 조회","args":"crossroad_id=1007"}
-
-data: {"type":"observation","content":"{ crsrdNm, speedKph, congestion, signals ... }"}
-
-data: {"type":"answer","content":"잠실역사거리는 현재 서행 상태입니다. 속도 24.5km/h..."}
-
-data: {"type":"done"}</div>
-</div>
-
-  <h2><span class="sub-num">3.7</span>네비게이션 의도 분류 · 에이전트 중단 <span class="badge badge-blue" style="font-size:7.5pt;">v1.1 신규</span></h2>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/nav/intent</span>
-      <span class="ep-desc">음성 어시스턴트 — 발화 텍스트를 네비게이션 의도로 분류</span>
-    </div>
-    <div class="info-box">음성 어시스턴트(useAssistant.js)가 STT 결과를 AI 에이전트 질의 전에 먼저 이 엔드포인트로 보내 페이지 이동·구 선택 등의 명령인지 판별한다. <code>action != unknown</code>이면 AI 질의 없이 즉시 실행.</div>
-    <h3>Request Body — NavIntentRequest</h3>
-    <div class="code-box">{ <span class="key">"text"</span>: <span class="str">"지도 보여줘"</span> }</div>
-    <h3>Response 200</h3>
-    <div class="code-box"><span class="comment">// 페이지 이동 명령</span>
-{ <span class="key">"action"</span>: <span class="str">"navigate"</span>, <span class="key">"page"</span>: <span class="str">"map"</span> }
-<span class="comment">// 가능한 page 값: map | simulation | cctv | news</span>
-
-<span class="comment">// 구 선택 명령</span>
-{ <span class="key">"action"</span>: <span class="str">"select_gu"</span>, <span class="key">"gu"</span>: <span class="str">"강남구"</span> }
-
-<span class="comment">// 마이페이지</span>
-{ <span class="key">"action"</span>: <span class="str">"mypage"</span> }
-
-<span class="comment">// 로그아웃</span>
-{ <span class="key">"action"</span>: <span class="str">"logout"</span> }
-
-<span class="comment">// 네비 명령 아님 — AI 에이전트로 전달</span>
-{ <span class="key">"action"</span>: <span class="str">"unknown"</span> }</div>
-  </div>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/agent/stop</span>
-      <span class="ep-desc">현재 진행 중인 에이전트 추론 강제 중단</span>
-    </div>
-    <p>Request Body 없음. 프론트엔드 AbortController와 함께 SSE 스트림을 즉시 종료한다.</p>
-    <h3>Response 200</h3>
-    <div class="code-box">{ <span class="key">"status"</span>: <span class="str">"stopped"</span> }</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     4. Flask XGBoost
-════════════════════════════════════════════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">4</div>
-    <div class="section-title">Flask XGBoost 예측 서버 (:5002)</div>
-  </div>
-
-  <p>도로교통공단 교통량 조사 이력 데이터로 학습한 XGBoost 모델(<code>xgboost_traffic_model.joblib</code>)을 서빙한다. 지점 ID를 받아 Oracle <code>TRAFFIC_STATION</code>에서 위경도를 조회하고 당일 00~23시 24시간 상·하행 교통량을 예측한다.</p>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/predict_traffic</span>
-      <span class="ep-desc">24시간 교통량 예측 — 상행·하행 각 24개 값</span>
-    </div>
-    <h3>Request Body</h3>
-    <div class="code-box">{ <span class="key">"Station_Number"</span>: <span class="val">10</span> }  <span class="comment">// Oracle TRAFFIC_STATION.STATION_ID</span></div>
-    <h3>Response 200</h3>
-    <div class="code-box">{
-  <span class="key">"success"</span>:       <span class="val">true</span>,
-  <span class="key">"station_number"</span>: <span class="val">10</span>,
-  <span class="key">"station_name"</span>:   <span class="str">"잠실IC"</span>,
-  <span class="key">"forecast"</span>: [
-    { <span class="key">"time"</span>: <span class="str">"00:00"</span>, <span class="key">"direction_0"</span>: <span class="val">1200</span>, <span class="key">"direction_1"</span>: <span class="val">980</span> },
-    { <span class="key">"time"</span>: <span class="str">"01:00"</span>, <span class="key">"direction_0"</span>: <span class="val">890</span>,  <span class="key">"direction_1"</span>: <span class="val">750</span> },
-    <span class="comment">// ... 총 24개 항목 (00:00 ~ 23:00)</span>
-  ]
-}</div>
-    <div class="info-box">
-      <strong>direction_0</strong> = 상행(Up), <strong>direction_1</strong> = 하행(Down). 단위: 대/시 (vehicles per hour).
-    </div>
-    <h3>에러 응답</h3>
-    <table>
-      <thead><tr><th>HTTP</th><th>조건</th><th>응답</th></tr></thead>
-      <tbody>
-        <tr><td>404</td><td>지점 ID가 DB에 없음</td><td class="mono">{ "success": false, "error": "ID 10 정보를 DB에서 찾을 수 없습니다." }</td></tr>
-        <tr><td>500</td><td>모델 예측 또는 DB 오류</td><td class="mono">{ "success": false, "error": "..." }</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h2>XGBoost 모델 입력 피처 (9개)</h2>
-  <table>
-    <thead><tr><th>#</th><th>피처명</th><th>설명</th><th>범위</th></tr></thead>
-    <tbody>
-      <tr><td>1</td><td class="mono">Station_Number</td><td>교통량 조사 지점 ID</td><td>정수</td></tr>
-      <tr><td>2</td><td class="mono">Direction</td><td>방향 (0=상행, 1=하행)</td><td>0 또는 1</td></tr>
-      <tr><td>3</td><td class="mono">Latitude</td><td>지점 위도 (Oracle DB 조회)</td><td>소수</td></tr>
-      <tr><td>4</td><td class="mono">Longitude</td><td>지점 경도 (Oracle DB 조회)</td><td>소수</td></tr>
-      <tr><td>5</td><td class="mono">Hour</td><td>예측 시각 (1~24, 0시→1로 보정)</td><td>1~24</td></tr>
-      <tr><td>6</td><td class="mono">Weekday_Weekend</td><td>평일=1, 주말=0</td><td>0 또는 1</td></tr>
-      <tr><td>7</td><td class="mono">Year</td><td>예측 연도</td><td>정수</td></tr>
-      <tr><td>8</td><td class="mono">Month</td><td>예측 월</td><td>1~12</td></tr>
-      <tr><td>9</td><td class="mono">Day_of_Week_Num</td><td>요일 번호 (Python weekday: 0=월 ~ 6=일)</td><td>0~6</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     5. News Flask
-════════════════════════════════════════════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">5</div>
-    <div class="section-title">News Flask 뉴스 서버 (:5001)</div>
-  </div>
-
-  <p>Naver RSS 4개 카테고리 크롤링 → BERT 키워드 검증 → Groq LLM(3-키 로테이션) 요약·감성 분석 → Oracle <code>TRAFFIC_NEWS</code> 저장. Spring Boot의 <code>/api/news/latest</code>는 이 서버를 거치지 않고 Oracle DB를 직접 조회한다.</p>
-
-  <h2>뉴스 수집 카테고리</h2>
-  <table>
-    <thead><tr><th>카테고리명</th><th>검색 쿼리</th><th>주요 키워드 예시</th></tr></thead>
-    <tbody>
-      <tr><td>서울교통</td><td>서울 교통 정체</td><td>정체, 혼잡, 교차로, 병목, 러시아워</td></tr>
-      <tr><td>교통사고</td><td>서울 교통사고</td><td>사고, 충돌, 통제, 역주행, 다중충돌</td></tr>
-      <tr><td>대중교통</td><td>서울 지하철 버스</td><td>지하철, 파업, 지연, 운행중단, 배차</td></tr>
-      <tr><td>날씨교통</td><td>서울 기상</td><td>폭우, 결빙, 블랙아이스, 제설, 호우특보</td></tr>
-    </tbody>
-  </table>
-
-  <!-- health -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/health</span>
-      <span class="ep-desc">서버 상태 및 BERT 모델 로드 여부 확인</span>
-    </div>
-    <div class="code-box">{ <span class="key">"status"</span>: <span class="str">"ok"</span>, <span class="key">"model_loaded"</span>: <span class="val">true</span> }</div>
-  </div>
-
-  <!-- news/fetch -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/news/fetch</span>
-      <span class="ep-desc">뉴스 수집 파이프라인 실행 (백그라운드 스레드)</span>
-    </div>
-    <p>Request Body 없음. 내부적으로 threading.Lock으로 중복 실행 방지.</p>
-    <h3>Response</h3>
-    <table>
-      <thead><tr><th>HTTP</th><th>조건</th><th>응답</th></tr></thead>
-      <tbody>
-        <tr><td>200</td><td>파이프라인 시작 성공</td><td class="mono">{ "status": "started" }</td></tr>
-        <tr><td>409</td><td>이미 수집 중</td><td class="mono">{ "status": "already_running" }</td></tr>
-      </tbody>
-    </table>
-    <div class="info-box">
-      수집 파이프라인 흐름: Naver RSS 크롤링 → BERT 키워드 검증(관련성 확인) → Groq API(GROQ_API_KEY_1/2/3 로테이션) 요약·감성 분석 → Oracle <code>TRAFFIC_NEWS</code> UPSERT (LINK PK 기준 중복 제거)
-    </div>
-    <h3>Groq 감성 분류 기준</h3>
-    <table>
-      <thead><tr><th>sentiment 값</th><th>분류 기준</th></tr></thead>
-      <tbody>
-        <tr><td><span class="badge badge-red">혼잡악화</span></td><td>사고, 통제, 정체 심화, 파업, 도로 차단 등</td></tr>
-        <tr><td><span class="badge badge-green">교통개선</span></td><td>신호 최적화, 도로 개통, 혼잡 해소, 교통 대책 등</td></tr>
-        <tr><td><span class="badge badge-gray">중립</span></td><td>단순 사실 전달, 영향 미미 등</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- news/latest -->
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/news/latest?limit={limit}&amp;category={category}</span>
-      <span class="ep-desc">Oracle DB에서 최신 교통 뉴스 직접 조회</span>
-    </div>
-    <h3>Query Parameters</h3>
-    <table>
-      <thead><tr><th style="width:120px;">파라미터</th><th style="width:80px;">타입</th><th style="width:80px;">기본값</th><th>설명</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">limit</td><td>int</td><td>20</td><td>최대 반환 개수</td></tr>
-        <tr><td class="mono">category</td><td>String</td><td>없음 (전체)</td><td>서울교통 / 교통사고 / 대중교통 / 날씨교통</td></tr>
-      </tbody>
-    </table>
-    <h3>Response 200</h3>
-    <div class="code-box">{
-  <span class="key">"status"</span>: <span class="str">"ok"</span>,
-  <span class="key">"count"</span>: <span class="val">20</span>,
-  <span class="key">"news"</span>: [
-    {
-      <span class="key">"link"</span>:          <span class="str">"https://n.news.naver.com/..."</span>,
-      <span class="key">"category"</span>:     <span class="str">"서울교통"</span>,
-      <span class="key">"title"</span>:        <span class="str">"강남 교차로 정체 심화"</span>,
-      <span class="key">"summary"</span>:      <span class="str">"강남역 인근 퇴근길 정체가 극심하다."</span>,
-      <span class="key">"sentiment"</span>:    <span class="str">"혼잡악화"</span>,
-      <span class="key">"pub_date"</span>:     <span class="str">"2026-05-29 18:30"</span>,
-      <span class="key">"clickbait_prob"</span>:<span class="str">"0.12"</span>,
-      <span class="key">"article_type"</span>: <span class="str">"사실"</span>,
-      <span class="key">"type_prob"</span>:    <span class="str">"0.87"</span>
-    }
-  ]
-}</div>
-    <div class="warn-box">
-      <strong>Spring Boot /api/news/latest</strong>와 이 엔드포인트는 같은 Oracle DB를 바라보지만 <strong>필드명이 다름</strong>에 주의.<br>
-      Spring: <code>pubDate</code>, <code>clickbaitProb</code>, <code>articleType</code>, <code>typeProb</code> (camelCase)<br>
-      News Flask: <code>pub_date</code>, <code>clickbait_prob</code>, <code>article_type</code>, <code>type_prob</code> (snake_case)
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     5.1 civil_flask_server
-════════════════════════════════════════════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num" style="background:#1e3a5f;">5.1</div>
-    <div class="section-title">civil_flask_server 민원 분류 서버 (:8002) <span class="badge badge-blue" style="font-size:8pt;">v1.1 신규</span></div>
-  </div>
-
-  <p>시민 민원 사진을 Google Gemini Vision API로 분석하여 카테고리와 담당 부서를 자동 분류한다. HEIC/HEIF 포맷을 JPEG로 자동 변환한다. 모델 폴백 체인: <code>gemini-2.5-flash → gemini-2.0-flash → gemini-2.5-flash-lite → gemini-2.0-flash-lite</code></p>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-post">POST</span>
-      <span class="ep-path">/api/civil/classify</span>
-      <span class="ep-desc">사진 + 제목으로 민원 카테고리 자동 분류</span>
-    </div>
-    <h3>Request — Multipart Form</h3>
-    <table>
-      <thead><tr><th style="width:120px;">파라미터</th><th style="width:80px;">타입</th><th style="width:50px;">필수</th><th>설명</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">image</td><td>File</td><td>Y</td><td>민원 사진 (JPG/PNG/WEBP/HEIC 지원)</td></tr>
-        <tr><td class="mono">title</td><td>String</td><td>N</td><td>민원 제목 힌트 (분류 정확도 향상)</td></tr>
-      </tbody>
-    </table>
-    <h3>Response 200 — 분류 성공</h3>
-    <div class="code-box">{
-  <span class="key">"success"</span>:        <span class="val">true</span>,
-  <span class="key">"category"</span>:       <span class="str">"도로 파손/균열"</span>,   <span class="comment">// 14개 카테고리 중 하나</span>
-  <span class="key">"department"</span>:     <span class="str">"도로과"</span>,           <span class="comment">// DEPT_MAP 매핑 결과</span>
-  <span class="key">"reason"</span>:         <span class="str">"도로 표면에 균열이 확인됨"</span>,
-  <span class="key">"convertedImage"</span>: <span class="str">"data:image/jpeg;base64,..."</span>  <span class="comment">// HEIC 변환 시에만 포함, 나머지는 null</span>
-}</div>
-    <h3>카테고리 → 담당 부서 매핑 (DEPT_MAP)</h3>
-    <table>
-      <thead><tr><th>카테고리</th><th>담당 부서</th><th>카테고리</th><th>담당 부서</th></tr></thead>
-      <tbody>
-        <tr><td>도로 파손/균열, 노면 침수/결빙, 횡단보도 파손</td><td><strong>도로과</strong></td><td>신호등 오작동, 교통표지판 훼손, 공사구간 미표시</td><td><strong>교통과</strong></td></tr>
-        <tr><td>불법 주정차</td><td><strong>주차과</strong></td><td>가로등 불량/소등, 보행자 위험구간</td><td><strong>시설과</strong></td></tr>
-        <tr><td>도로 청결 불량, 동물 사체</td><td><strong>환경미화과</strong></td><td>이륜차 불법 운행, 과속/난폭운전</td><td><strong>경찰서</strong></td></tr>
-        <tr><td>소음/진동</td><td><strong>환경과</strong></td><td>기타</td><td><strong>민원과</strong></td></tr>
-      </tbody>
-    </table>
-    <h3>에러 응답</h3>
-    <table>
-      <thead><tr><th>HTTP</th><th>조건</th><th>응답</th></tr></thead>
-      <tbody>
-        <tr><td>400</td><td>이미지 없음</td><td class="mono">{ "success": false, "message": "이미지가 없습니다." }</td></tr>
-        <tr><td>500</td><td>JSON 파싱 실패</td><td class="mono">{ "success": false, "message": "AI 응답 파싱 실패" }</td></tr>
-        <tr><td>500</td><td>Gemini API 오류</td><td class="mono">{ "success": false, "message": "오류 내용" }</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="endpoint-block">
-    <div class="endpoint-title">
-      <span class="ep-method ep-get">GET</span>
-      <span class="ep-path">/health</span>
-      <span class="ep-desc">서버 상태 확인</span>
-    </div>
-    <div class="code-box">{ <span class="key">"status"</span>: <span class="str">"ok"</span>, <span class="key">"service"</span>: <span class="str">"civil-classifier"</span> }</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     6. MCP 도구 목록
-════════════════════════════════════════════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">6</div>
-    <div class="section-title">MCP 도구 목록 (내부 인터페이스)</div>
-  </div>
-
-  <p>AI Agent 내부에서 LangGraph ReAct가 호출하는 MCP(Model Context Protocol) 도구 9개. 외부에서 직접 호출하지 않으며, 모두 Spring Boot API(:8080)를 내부적으로 호출한다.</p>
-
-  <table>
-    <thead><tr><th>#</th><th>도구명</th><th>한글 레이블</th><th>파라미터</th><th>내부 호출 API</th></tr></thead>
-    <tbody>
-      <tr>
-        <td>1</td>
-        <td class="mono">get_traffic_data</td>
-        <td>교차로 실시간 데이터 조회</td>
-        <td class="mono">crossroad_id (string, 필수)</td>
-        <td class="mono">GET /api/context/{crsrdId}</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td class="mono">get_bottleneck_list</td>
-        <td>전체 병목 목록 조회</td>
-        <td>없음</td>
-        <td class="mono">GET /api/signals</td>
-      </tr>
-      <tr>
-        <td>3</td>
-        <td class="mono">search_crossroad_by_name</td>
-        <td>교차로 이름 검색</td>
-        <td class="mono">name (string, 필수)</td>
-        <td class="mono">GET /api/signals (캐시 부분 일치)</td>
-      </tr>
-      <tr>
-        <td>4</td>
-        <td class="mono">get_district_traffic</td>
-        <td>자치구 교통 현황 조회</td>
-        <td class="mono">district_name (string, 필수)</td>
-        <td class="mono">GET /api/signals (구 필터)</td>
-      </tr>
-      <tr>
-        <td>5</td>
-        <td class="mono">set_signal_timing</td>
-        <td>신호 타이밍 조정</td>
-        <td class="mono">crossroad_id, delay (int, 초)</td>
-        <td class="mono">POST /api/signal/adjust (미구현 — 404)</td>
-      </tr>
-      <tr>
-        <td>6</td>
-        <td class="mono">send_alert</td>
-        <td>관제사 알림 전송</td>
-        <td class="mono">message (string, 필수)</td>
-        <td>콘솔 출력 (향후 Slack 연동 예정)</td>
-      </tr>
-      <tr>
-        <td>7</td>
-        <td class="mono">send_email_report</td>
-        <td>이메일 리포트 전송</td>
-        <td class="mono">subject, body, to (모두 필수)</td>
-        <td class="mono">POST /api/email/send</td>
-      </tr>
-      <tr>
-        <td>8</td>
-        <td class="mono">get_simulation_context</td>
-        <td>신호계획 조회</td>
-        <td class="mono">int_no (string, 필수)</td>
-        <td class="mono">GET /api/signal/simulation/context/{intNo}</td>
-      </tr>
-      <tr>
-        <td>9</td>
-        <td class="mono">search_project_docs</td>
-        <td>도메인 지식 검색</td>
-        <td class="mono">query (string, 필수)</td>
-        <td>AnythingLLM RAG API (localhost:3001)</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>도구 반환 구조 상세</h2>
-
-  <h3>get_bottleneck_list 반환</h3>
-  <div class="code-box">{
-  <span class="key">"top10_bottlenecks"</span>: [
-    { <span class="key">"name"</span>: <span class="str">"잠실역사거리"</span>, <span class="key">"speed_kmh"</span>: <span class="val">8.3</span>, <span class="key">"risk_grade"</span>: <span class="str">"위험"</span>, <span class="key">"congestion"</span>: <span class="str">"혼잡"</span> }
-  ],
-  <span class="key">"total_count"</span>: <span class="val">23</span>,
-  <span class="key">"risk_summary"</span>: { <span class="str">"안전"</span>: <span class="val">10</span>, <span class="str">"주의"</span>: <span class="val">8</span>, <span class="str">"위험"</span>: <span class="val">5</span> },
-  <span class="key">"weather"</span>: { <span class="key">"temperatureC"</span>: <span class="val">22.1</span>, ... }
-}</div>
-
-  <h3>get_district_traffic 반환</h3>
-  <div class="code-box">{
-  <span class="key">"district"</span>:           <span class="str">"송파구"</span>,
-  <span class="key">"total_crossroads"</span>:   <span class="val">23</span>,
-  <span class="key">"bottleneck_under_15"</span>: [
-    { <span class="key">"name"</span>: <span class="str">"잠실역사거리"</span>, <span class="key">"speed_kmh"</span>: <span class="val">8.3</span>, <span class="key">"risk_grade"</span>: <span class="str">"위험"</span> }
-  ],
-  <span class="key">"weather"</span>: { ... }
-}</div>
-
-  <h3>riskGrade 코드 매핑</h3>
-  <table>
-    <thead><tr><th>코드값</th><th>표시명</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">"01"</td><td><span class="badge badge-green">안전</span></td></tr>
-      <tr><td class="mono">"02"</td><td><span class="badge badge-yellow">주의</span></td></tr>
-      <tr><td class="mono">"03"</td><td><span class="badge badge-orange">위험</span></td></tr>
-      <tr><td class="mono">"04"</td><td><span class="badge badge-red">심각</span></td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     7. 공통 모델
-════════════════════════════════════════════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">7</div>
-    <div class="section-title">공통 모델 — TrafficStatus · SignalDirection</div>
-  </div>
-
-  <p>WebSocket과 REST API가 공통으로 사용하는 핵심 응답 객체.</p>
-
-  <h2>TrafficStatus 전체 필드</h2>
-  <table>
-    <thead><tr><th>필드</th><th>타입</th><th>출처</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">crsrdId</td><td>String</td><td>DB</td><td>교차로 ID</td></tr>
-      <tr><td class="mono">crsrdNm</td><td>String</td><td>DB</td><td>교차로 이름</td></tr>
-      <tr><td class="mono">lat / lon</td><td>double</td><td>DB</td><td>위도 / 경도</td></tr>
-      <tr><td class="mono">guName</td><td>String</td><td>프론트 선택</td><td>자치구 이름</td></tr>
-      <tr><td class="mono">signals</td><td>Map&lt;String, SignalDirection&gt;</td><td>V2X API</td><td>방향별 신호 상태</td></tr>
-      <tr><td class="mono">totDt</td><td>String</td><td>V2X API</td><td>수집 시각 ("20260529183000")</td></tr>
-      <tr><td class="mono">serverTimeMs</td><td>long</td><td>Spring</td><td>처리 시각 (epoch ms)</td></tr>
-      <tr><td class="mono">avgWaitSec</td><td>Integer</td><td>계산</td><td>전방향 평균 대기시간(초)</td></tr>
-      <tr><td class="mono">congestion</td><td>String</td><td>TOPIS 또는 계산</td><td>원활 / 서행 / 혼잡 / 알 수 없음</td></tr>
-      <tr><td class="mono">speedKph</td><td>Double</td><td>TOPIS API</td><td>실측 구간 속도 (null=미수집)</td></tr>
-      <tr><td class="mono">travelTimeSec</td><td>Integer</td><td>TOPIS API</td><td>구간 통행시간(초)</td></tr>
-      <tr><td class="mono">speedStale</td><td>boolean</td><td>Spring</td><td>속도 데이터 만료 여부</td></tr>
-      <tr><td class="mono">riskIndex</td><td>Double</td><td>도로위험도 API</td><td>위험 지수 (0~1)</td></tr>
-      <tr><td class="mono">riskGrade</td><td>String</td><td>도로위험도 API</td><td>"01"~"04" (안전~심각)</td></tr>
-      <tr><td class="mono">riskScore</td><td>Double</td><td>도로위험도 API</td><td>위험 점수</td></tr>
-      <tr><td class="mono">riskStale</td><td>boolean</td><td>Spring</td><td>위험도 데이터 만료 여부</td></tr>
-      <tr><td class="mono">weather</td><td>WeatherSnapshot</td><td>KMA API</td><td>날씨 스냅샷 (null 가능)</td></tr>
-    </tbody>
-  </table>
-
-  <h2>signals 키 체계</h2>
-  <p>signals 맵의 키는 방향을 나타내는 2~3자 코드다.</p>
-  <table>
-    <thead><tr><th>키</th><th>방향</th><th>키</th><th>방향</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">nt</td><td>북 직진 (North Through)</td><td class="mono">ne</td><td>북동 (Northeast)</td></tr>
-      <tr><td class="mono">et</td><td>동 직진 (East Through)</td><td class="mono">se</td><td>남동 (Southeast)</td></tr>
-      <tr><td class="mono">st</td><td>남 직진 (South Through)</td><td class="mono">sw</td><td>남서 (Southwest)</td></tr>
-      <tr><td class="mono">wt</td><td>서 직진 (West Through)</td><td class="mono">nw</td><td>북서 (Northwest)</td></tr>
-    </tbody>
-  </table>
-
-  <h2>SignalDirection 내부 구조</h2>
-  <p>각 방향 값은 신호 유형(stsg/ltsg/pdsg)을 키로 가진 맵이다.</p>
-  <div class="code-box">{
-  <span class="key">"stsg"</span>: {  <span class="comment">// 직진 신호</span>
-    <span class="key">"status"</span>:  <span class="str">"stop-And-Remain"</span>,              <span class="comment">// 적색</span>
-    <span class="key">"rmndCs"</span>: <span class="val">42</span>                           <span class="comment">// 잔여시간(MCP 도구에서는 초 변환됨)</span>
-  },
-  <span class="key">"ltsg"</span>: {  <span class="comment">// 좌회전 신호</span>
-    <span class="key">"status"</span>:  <span class="str">"protected-Movement-Allowed"</span>,  <span class="comment">// 녹색</span>
-    <span class="key">"rmndCs"</span>: <span class="val">18</span>
-  },
-  <span class="key">"pdsg"</span>: { ... }  <span class="comment">// 보행 신호</span>
-}</div>
-
-  <div class="info-box">
-    <strong>rmndCs 단위:</strong> V2X 원본은 1/10초 단위. Spring Boot가 프론트에 그대로 전달하지만, MCP 도구(get_traffic_data)는 LLM 가독성을 위해 <code>rmndCs / 10</code>으로 초 단위로 변환하여 반환한다.
-  </div>
-
-  <h2>WeatherSnapshot 필드</h2>
-  <table>
-    <thead><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">temperatureC</td><td>Double</td><td>기온 (°C)</td></tr>
-      <tr><td class="mono">precipitationMm</td><td>Double</td><td>강수량 (mm)</td></tr>
-      <tr><td class="mono">humidity</td><td>Integer</td><td>습도 (%)</td></tr>
-      <tr><td class="mono">windSpeedMs</td><td>Double</td><td>풍속 (m/s)</td></tr>
-    </tbody>
-  </table>
-
-  <h2>전체 엔드포인트 요약</h2>
-  <table>
-    <thead><tr><th>서버</th><th>메서드</th><th>경로</th><th>인증</th></tr></thead>
-    <tbody>
-      <tr><td rowspan="28" style="font-weight:600; color:#1e40af;">Spring Boot<br>:8080</td><td class="method-post">POST</td><td class="mono">/api/auth/login</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/auth/register</td><td>-</td></tr>
-      <tr><td class="method-get">GET</td><td class="mono">/api/auth/find-id</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/auth/find-pw</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/auth/change-pw</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/auth/alert</td><td>-</td></tr>
-      <tr><td class="method-get">GET</td><td class="mono">/api/auth/admin/users</td><td>프론트 role 체크</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/auth/admin/approve/{userId}</td><td>프론트 role 체크</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/auth/admin/reject/{userId}</td><td>프론트 role 체크</td></tr>
-      <tr><td class="method-get">GET</td><td class="mono">/api/auth/alert-emails</td><td>-</td></tr>
-      <tr><td class="method-get">GET</td><td class="mono">/api/signals</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/fetch-area (Query Params)</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/district/report</td><td>-</td></tr>
-      <tr><td class="method-get">GET</td><td class="mono">/api/cctv</td><td>-</td></tr>
-      <tr><td class="method-get">GET</td><td class="mono">/api/cctv/area</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/chat</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/bottleneck-email</td><td>-</td></tr>
-      <tr><td></td><td class="method-post">POST</td><td class="mono">/api/simulation-chat</td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/context/{crsrdId}</td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/signal/crossroads</td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/signal/crossroads/{intNo}</td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/signal/simulation/context/{intNo}</td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/stations</td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/forecast/station/{stationId}</td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/news/latest</td><td>-</td></tr>
-      <tr><td></td><td class="method-post">POST</td><td class="mono">/api/email/send</td><td>-</td></tr>
-      <tr><td></td><td class="method-ws">WS</td><td class="mono">ws://localhost:8080/ws/traffic</td><td>-</td></tr>
-      <tr><td></td><td class="method-post">POST</td><td class="mono">/api/civil/auth/login <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr><td></td><td class="method-post">POST</td><td class="mono">/api/civil/auth/register <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/civil/auth/weather <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/complaints <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr><td></td><td class="method-post">POST</td><td class="mono">/api/complaints <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr><td></td><td class="method-post" style="color:#b45309;">PATCH</td><td class="mono">/api/complaints/{id}/status <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr><td></td><td class="method-post" style="color:#b91c1c;">DELETE</td><td class="mono">/api/complaints/{id} <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr><td></td><td class="method-get">GET</td><td class="mono">/api/complaints/photos/{photoId} <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr>
-        <td rowspan="10" style="font-weight:600; color:#7c3aed;">AI Agent<br>:8001</td>
-        <td class="method-get">GET</td><td class="mono">/health</td><td>-</td>
-      </tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/agent/chat</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/agent/chat/stream</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/agent/simulation-chat</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/agent/bottleneck-email</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/agent/bottleneck-email/stream</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/agent/district-report</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/agent/district-report/stream</td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/nav/intent <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr><td class="method-post">POST</td><td class="mono">/api/agent/stop <span style="color:#2563eb;font-size:8pt;">[v1.1]</span></td><td>-</td></tr>
-      <tr>
-        <td style="font-weight:600; color:#0891b2;">XGBoost<br>:5002</td>
-        <td class="method-post">POST</td><td class="mono">/predict_traffic</td><td>-</td>
-      </tr>
-      <tr>
-        <td rowspan="3" style="font-weight:600; color:#059669;">News Flask<br>:5001</td>
-        <td class="method-get">GET</td><td class="mono">/health</td><td>-</td>
-      </tr>
-      <tr><td class="method-post">POST</td><td class="mono">/news/fetch</td><td>-</td></tr>
-      <tr><td class="method-get">GET</td><td class="mono">/news/latest</td><td>-</td></tr>
-      <tr>
-        <td rowspan="2" style="font-weight:600; color:#7c3aed;">civil_flask<br>:8002 <span style="font-size:8pt;">[v1.1]</span></td>
-        <td class="method-post">POST</td><td class="mono">/api/civil/classify</td><td>-</td>
-      </tr>
-      <tr><td class="method-get">GET</td><td class="mono">/health</td><td>-</td></tr>
-    </tbody>
-  </table>
-
-  <footer>
-    TrafficSync API 설계서 v1.1 &nbsp;|&nbsp; 작성: 박희윤 &nbsp;|&nbsp; 최초: 2026-05-29 &nbsp;|&nbsp; 수정: 2026-06-02 &nbsp;|&nbsp; 실제 코드 전체 기반 검증 완료
-  </footer>
-</div>
-
+<div class="footer"><span>Syncro | 교통 관제 시스템 — API 설계서</span><span>2026. 06. 13.</span></div>
 </body>
 </html>

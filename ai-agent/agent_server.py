@@ -522,10 +522,46 @@ def extract_adjustments(text: str):
     return None
 
 
-def compute_webster_adjustments(contexts: list, route_traffic: list) -> list:
-    """신호계획 + 속도 데이터로 Webster 공식 직접 계산 → adjustments 반환"""
-    # toIntNo 기준 속도 맵 구성
-    speed_map: dict[str, float] = {}
+# ── Webster B안 상수 ─────────────────────────────────────────────────────────────
+_WB_CYCLE_BAND = 0.15   # cycleVal ±15%
+_WB_DELTA_MAX  = 5      # 현시별 최대 변화량(초)
+_WB_MIN_GREEN  = 15     # 최소 녹색시간(초)
+
+
+def _wb_speed_to_Y(u: float | None) -> tuple[float, str]:
+    """
+    진입 링크 속도(km/h) → (ΣY 추정값, 혼잡등급 설명)
+    속도를 교차로 전체 포화도 지표로 사용.
+      u < 15  → 심각 → ΣY=0.85
+      15~25   → 혼잡 → ΣY=0.75
+      25~30   → 서행 → ΣY=0.65
+      > 30    → 원활 → ΣY=0.50
+    """
+    if u is None:
+        return 0.65, "미측정→서행 기본값"
+    if u < 15:
+        return 0.85, f"심각({u:.1f}km/h)"
+    if u < 25:
+        return 0.75, f"혼잡({u:.1f}km/h)"
+    if u <= 30:
+        return 0.65, f"서행({u:.1f}km/h)"
+    return 0.50, f"원활({u:.1f}km/h)"
+
+
+def _wb_is_pedestrian(dirs: list) -> bool:
+    return any("보행" in d for d in dirs)
+
+
+def compute_webster_adjustments(
+    contexts: list, route_traffic: list
+) -> tuple[list, list]:
+    """
+    신호계획 + 진입속도(1개) → Webster B안 계산.
+    입력: u(구간 평균속도) + cycleVal + 현시시간들
+    반환: (adjustments, calc_details)
+    """
+    # toIntNo 기준 평균 속도 맵
+    speed_map: dict[str, list] = {}
     for seg in (route_traffic or []):
         key = str(seg.get("toIntNo", ""))
         spd = seg.get("speedKph")
@@ -533,49 +569,175 @@ def compute_webster_adjustments(contexts: list, route_traffic: list) -> list:
             speed_map.setdefault(key, []).append(float(spd))
     avg_speed_map = {k: sum(v) / len(v) for k, v in speed_map.items()}
 
-    adjustments = []
+    adjustments: list = []
+    calc_details: list = []
+
     for ctx in (contexts or []):
-        int_no = str(ctx.get("intNo", ""))
-        phases = ctx.get("phases", [])
+        int_no    = str(ctx.get("intNo", ""))
+        int_nm    = ctx.get("intNm") or int_no
+        phases    = ctx.get("phases", [])
         cycle_val = int(ctx.get("cycleVal") or 140)
         if not phases or not int_no:
             continue
 
-        # 포화도 결정
-        spd = avg_speed_map.get(int_no, 25.0)
-        Y = 0.85 if spd < 40 else (0.65 if spd < 60 else 0.4)
+        u = avg_speed_map.get(int_no)
+        sum_Y, cong_grade = _wb_speed_to_Y(u)
 
-        # 최적 주기 계산 (cycleVal 상한)
-        L = len(phases) * 4
-        Co = min((1.5 * L + 5) / max(1 - Y, 0.01), cycle_val)
+        phase_count = len(phases)
+        L = phase_count * 4  # 손실시간: 현시 수 × 4s
 
-        # 원본 합계 대비 비율로 각 현시 조정
-        orig_total = sum(int(p.get("sec") or 0) for p in phases)
-        ratio = Co / orig_total if orig_total > 0 else 1.0
+        # ── Webster 최적 주기 → cycleVal ±15% 클램핑 ─────────────────────────
+        Co_raw   = (1.5 * L + 5) / max(1.0 - sum_Y, 0.01)
+        Co_final = int(round(max(
+            cycle_val * (1 - _WB_CYCLE_BAND),
+            min(cycle_val * (1 + _WB_CYCLE_BAND), Co_raw)
+        )))
+        # 심각 등급은 주기 하향 금지 — 막힌 교차로 처리 용량 보호
+        held_cycle = cong_grade.startswith("심각") and Co_final < cycle_val
+        if held_cycle:
+            Co_final = cycle_val
 
-        new_phases = []
-        assigned = 0
-        for i, p in enumerate(phases):
-            is_last = (i == len(phases) - 1)
-            dirs = p.get("dirs") or []
+        # ── 현시 배분: 보행 고정, 나머지 기존 비율로 재스케일 ────────────────
+        ped_fixed_sum    = sum(int(p.get("sec") or 0) for p in phases if _wb_is_pedestrian(p.get("dirs") or []))
+        non_ped_orig_sum = sum(int(p.get("sec") or 0) for p in phases if not _wb_is_pedestrian(p.get("dirs") or []))
+        budget           = Co_final - ped_fixed_sum  # 비보행 현시에 분배할 시간
+
+        phase_rows = []
+        assigned   = 0
+        for p in phases:
             orig_sec = int(p.get("sec") or 0)
+            dirs     = p.get("dirs") or []
+            is_ped   = _wb_is_pedestrian(dirs)
 
-            if is_last:
-                sec = max(5, cycle_val - assigned)
+            if is_ped:
+                new_sec = orig_sec
+                delta   = 0
+            elif non_ped_orig_sum > 0:
+                target_g = budget * orig_sec / non_ped_orig_sum
+                delta    = max(-_WB_DELTA_MAX,
+                               min(_WB_DELTA_MAX, round(target_g - orig_sec)))
+                new_sec  = max(_WB_MIN_GREEN, orig_sec + delta)
             else:
-                raw_sec = round(orig_sec * ratio)
-                # 보행 현시 최소 20s 보장
-                if any("보행" in d for d in dirs):
-                    sec = max(20, raw_sec)
-                else:
-                    sec = max(5, raw_sec)
+                new_sec = orig_sec
+                delta   = 0
 
-            new_phases.append({"no": int(p["no"]), "sec": sec})
-            assigned += sec
+            phase_rows.append({
+                "no":       int(p["no"]),
+                "dirs":     "/".join(dirs) if dirs else "미확인",
+                "orig_sec": orig_sec,
+                "is_ped":   is_ped,
+                "new_sec":  new_sec,
+                "delta":    delta,
+            })
+            assigned += new_sec
 
-        adjustments.append({"intNo": int_no, "phases": new_phases})
+        adjustments.append({
+            "intNo": int_no,
+            "phases": [{"no": r["no"], "sec": r["new_sec"]} for r in phase_rows],
+        })
+        applied_cycle = sum(r["new_sec"] for r in phase_rows)
+        calc_details.append({
+            "int_no":        int_no,
+            "int_nm":        int_nm,
+            "u":             round(u, 1) if u is not None else None,
+            "cong_grade":    cong_grade,
+            "sum_Y":         sum_Y,
+            "L":             L,
+            "phase_count":   phase_count,
+            "Co_raw":        round(Co_raw, 1),
+            "Co_final":      Co_final,
+            "held_cycle":    held_cycle,
+            "applied_cycle": applied_cycle,
+            "cycle_val":     cycle_val,
+            "phases":        phase_rows,
+        })
 
-    return adjustments
+    return adjustments, calc_details
+
+
+def _build_calc_block(calc_details: list) -> str:
+    """calc_details → LLM 프롬프트 주입용 텍스트 블록"""
+    lines = ["\n\n[Webster 계산 결과 — 아래 숫자를 그대로 사용해 설명할 것. 임의 재계산 금지]"]
+    for d in calc_details:
+        u_str = f"{d['u']}km/h" if d["u"] is not None else "미측정"
+        lines.append(f"\n교차로: {d['int_nm']} (intNo:{d['int_no']})")
+        lines.append(f"진입속도: {u_str} → 혼잡등급: {d['cong_grade']} → ΣY={d['sum_Y']}")
+        lines.append(f"L={d['L']}s ({d['phase_count']}현시×4s)")
+        lines.append(
+            f"Co=(1.5×{d['L']}+5)/(1-{d['sum_Y']})={d['Co_raw']}s"
+            f" → clamp(cycleVal={d['cycle_val']}s ±15%) → 최종주기: {d['Co_final']}s"
+        )
+        for row in d["phases"]:
+            ped_mark  = " [보행고정]" if row["is_ped"] else ""
+            delta_str = f"Δ{row['delta']:+d}s" if row["delta"] != 0 else "Δ0s(변경없음)"
+            lines.append(
+                f"  현시{row['no']} ({row['dirs']}){ped_mark}: "
+                f"{row['orig_sec']}s → {row['new_sec']}s ({delta_str})"
+            )
+        ac = d["applied_cycle"]
+        cf = d["Co_final"]
+        if d.get("held_cycle"):
+            lines.append(f"1회 적용주기: {ac}s [심각 등급 — 주기 하향 금지, 현행 유지]")
+        else:
+            gap_note = f" (목표 {cf}s까지 {cf - ac}s 미달 — 점진조정 특성)" if ac != cf else ""
+            lines.append(f"1회 적용주기: {ac}s{gap_note}")
+    lines.append("\n※ 방향별 교통량 미계측으로 현시 배분은 기존 운영 비율 유지, 주기만 조정.")
+    lines.append("※ 속도 기반 혼잡등급으로 포화도(ΣY) 추정. ±5s 점진조정, 반복 적용 시 수렴.")
+    lines.append("※ 경로 내 교차로별 독립 최적화 방식. 간선 연동(공통 주기)은 향후 과제.")
+    return "\n".join(lines)
+
+
+def _build_email_report(calc_details: list) -> str:
+    """교차로별 Webster 수식 포함 이메일 상세 보고서 — LLM 미사용, Python 직접 생성"""
+    from datetime import datetime
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    lines = [
+        f"[Webster 신호 최적화 리포트]  분석일시: {now}",
+        "=" * 52,
+    ]
+    for d in calc_details:
+        u_str = f"{d['u']}km/h" if d["u"] is not None else "미측정"
+        lines.append(f"\n■ 교차로: {d['int_nm']}  (intNo:{d['int_no']})")
+        lines.append("-" * 48)
+        lines.append(f"진입속도:  {u_str}")
+        lines.append(f"혼잡등급:  {d['cong_grade']}  →  ΣY = {d['sum_Y']}")
+        lines.append("")
+        lines.append("◎ Webster 최적 주기 계산")
+        lines.append(f"  L  = {d['phase_count']}현시 × 4s = {d['L']}s")
+        lines.append(f"  Co = (1.5×{d['L']} + 5) / (1 - {d['sum_Y']})")
+        lines.append(f"     = {1.5*d['L']+5:.1f} / {1-d['sum_Y']:.2f} = {d['Co_raw']}s")
+        cv = d["cycle_val"]
+        lines.append(f"  현행주기 = {cv}s,  조정범위 = {cv*0.85:.0f}~{cv*1.15:.0f}s")
+        if d.get("held_cycle"):
+            lines.append(f"  ※ 심각 등급 → 주기 하향 금지: Co_final = max({d['Co_raw']}s, {cv}s) = {d['Co_final']}s")
+        else:
+            lines.append(f"  clamp 적용 → Co_final = {d['Co_final']}s")
+        lines.append("")
+        lines.append("◎ 현시별 조정")
+        no_margin = all(r["delta"] == 0 for r in d["phases"] if not r["is_ped"])
+        for row in d["phases"]:
+            ped_mark  = " [보행고정]" if row["is_ped"] else ""
+            delta_str = f"Δ{row['delta']:+d}s" if row["delta"] != 0 else "Δ0s"
+            lines.append(f"  현시{row['no']} ({row['dirs']}){ped_mark}: {row['orig_sec']}s → {row['new_sec']}s  ({delta_str})")
+        if no_margin and d.get("held_cycle"):
+            lines.append("  → 보행시간 보장 제약으로 조정 여지 없음, 현행 유지")
+        ac, cf = d["applied_cycle"], d["Co_final"]
+        gap = cf - ac
+        if gap:
+            lines.append(f"\n  1회 적용주기: {ac}s  (목표 {cf}s, {gap}s 미달 — 점진조정 특성)")
+        else:
+            lines.append(f"\n  1회 적용주기: {ac}s")
+    lines += [
+        "",
+        "=" * 52,
+        "【한계 및 유의사항】",
+        "• 방향별 교통량 미계측 → 현시 배분은 기존 운영 비율 유지, 주기만 조정.",
+        "• 속도 기반 혼잡등급으로 포화도(ΣY) 추정 (실측 교통량과 차이 가능).",
+        "• cycleVal ±15% 점진 조정 방식 적용 (급격한 주기 변경 방지).",
+        "• 경로 내 교차로별 독립 최적화 방식. 간선 연동(공통 주기)은 향후 과제.",
+        "• 근거 없는 효과 추정(지체 감소율 등)은 포함하지 않음.",
+    ]
+    return "\n".join(lines)
 
 
 _CJK_RE = re.compile(
@@ -1034,40 +1196,25 @@ async def simulation_chat(req: SimulationChatRequest):
             "\n\n[경로 구간별 실시간 속도 — 15km/h 이하가 병목]\n" + "\n".join(lines)
         )
 
-    # Webster 공식 기반 JSON 출력 지시
-    json_instruction = (
-        "\n\n[신호 최적화 출력 형식]\n"
-        "Webster 공식으로 조정값을 계산한 뒤, 아래 순서로 출력:\n\n"
-        "0. 답변 맨 처음에 아래 형식으로 측정 속도 표를 반드시 출력할 것 (방향 데이터 없으면 평균만):\n"
-        "[측정 속도]\n"
-        "• 교차로명: 평균 Xkm/h | 북 Akm/h | 서 Bkm/h | 남 Ckm/h\n\n"
-        "1. 그 다음 JSON 블록 출력 (조정값)\n"
-        "```json\n"
-        "{\"adjustments\": [{\"intNo\": \"47\", \"phases\": [{\"no\": 1, \"sec\": 80}, {\"no\": 2, \"sec\": 30}, {\"no\": 3, \"sec\": 20}, {\"no\": 4, \"sec\": 10}]}]}\n"
-        "```\n"
-        "⚠️ JSON 블록 규칙 (반드시 지킬 것):\n"
-        "- JSON 안의 intNo는 반드시 신호계획 괄호 안 숫자 ID를 그대로 사용할 것 (필수 필드, 절대 생략 금지)\n"
-        "- phases에는 신호계획에 있는 현시 번호를 빠짐없이 모두 포함할 것\n"
-        "- 각 교차로의 phases 합계가 해당 교차로의 cycleVal과 정확히 일치해야 함\n\n"
-        "2. JSON 다음에는 교차로별 변경사항을 아래 형식으로 출력 (UI 표시용 요약):\n"
-        "- 마크다운 헤더(###, ####, ## 등) 절대 사용 금지\n"
-        "- 텍스트 설명에서는 intNo 숫자 대신 교차로 이름만 사용할 것\n"
-        "- 각 교차로는 반드시 빈 줄로 구분하고 아래 형식 그대로 출력:\n\n"
+    # ── Python 먼저 계산 (adjustments 확정) ─────────────────────────────────────
+    contexts_list = req.contexts if req.contexts else ([req.context] if req.context else [])
+    adjustments, calc_details = compute_webster_adjustments(contexts_list, req.routeTraffic or [])
+    print(f"[SIM-CHAT] Python Webster 계산 완료 — {len(adjustments)}개 교차로", flush=True)
+
+    calc_block = _build_calc_block(calc_details) if calc_details else ""
+
+    # ── 이메일 보고서: LLM 없이 Python 직접 생성 ────────────────────────────────
+    email_report = _build_email_report(calc_details) if calc_details else None
+
+    # ── LLM: 화면용 간단 설명만 생성 ─────────────────────────────────────────────
+    explain_instruction = (
+        "\n\n[출력 규칙 — 반드시 준수]\n"
+        "마크다운 헤더(#, ##, ###, ####) 절대 사용 금지.\n"
+        "교차로별 변경사항을 아래 형식으로 간단히 출력 (빈 줄로 구분):\n\n"
         "• 교차로명\n"
-        "  현시1 (방향): Xs → Ys\n"
-        "  현시2 (방향): As → Bs\n\n"
-        "- 수식·이유 설명 포함 금지. 변경 결과만 나열할 것\n\n"
-        "3. 마지막에 [REPORT] 태그로 시작하는 이메일용 상세 분석 보고서를 작성할 것:\n"
-        "- 형식: 분석관 보고서 (한국어, 전문적 어조)\n"
-        "- 각 교차로별로 아래 항목 포함:\n"
-        "  ① 현황: 방향별 실시간 속도 및 병목 판단 (15km/h 기준)\n"
-        "  ② Webster 최적 주기 계산: Co = (1.5L + 5) / (1 - ΣY)\n"
-        "     - L = 손실시간 (현시 수 × 4s 추정)\n"
-        "     - Y = 각 현시 포화도비 (현재 초 / cycleVal로 추정)\n"
-        "     - 계산식과 도출값 명시\n"
-        "  ③ 현시별 조정 근거 (직진 확보·좌회전 억제·보행자 최소화 등 이유)\n"
-        "  ④ 예상 효과 (통과 시간 단축 추정 %)\n"
-        "- [REPORT] 이후 내용만 보고서로 파싱하므로 태그 위치 정확히 지킬 것"
+        "  현시N (방향): Xs → Ys\n\n"
+        "변경 이유를 혼잡등급·주기 방향 중심으로 1~2문장 덧붙여줘. "
+        "'기대됩니다', '향상될 것' 등 근거 없는 효과 추정 금지."
     )
 
     prompt = (
@@ -1075,57 +1222,39 @@ async def simulation_chat(req: SimulationChatRequest):
         f"{ctx_block}"
         f"{sim_block}"
         f"{traffic_block}"
-        f"{json_instruction}\n\n"
+        f"{calc_block}"
+        f"{explain_instruction}\n\n"
         f"질문: {req.question}"
     )
 
-    # 시뮬레이션 챗은 도구 호출 불필요 → sim_llm 직접 호출 (think=False)
     print(f"\n[SIM-CHAT PROMPT — 총 {len(prompt)}자]\n{prompt}\n", flush=True)
     response = await sim_llm.ainvoke(prompt)
     raw = response.content if hasattr(response, "content") else str(response)
-    adjustments_preview = extract_adjustments(raw)
-    adj_count = len(adjustments_preview) if adjustments_preview else 0
-    print(f"\n[SIM-CHAT RAW — {len(raw)}자 / adjustments {adj_count}개]\n{raw[:1200]}\n", flush=True)
+    print(f"\n[SIM-CHAT RAW — {len(raw)}자]\n{raw[:1200]}\n", flush=True)
     if isinstance(raw, list):
         raw = " ".join(item.get("text", "") if isinstance(item, dict) else str(item) for item in raw).strip()
     if "<think>" in raw:
         after = raw.split("</think>")[-1].strip()
         raw = after if after else raw.split("<think>", 1)[-1].split("</think>")[0].strip()
 
-    adjustments = extract_adjustments(raw)
-
-    # 파싱 실패 시 신호계획 데이터로 직접 계산 (항상 유효한 값 보장)
-    if not adjustments and (req.contexts or req.context):
-        contexts = req.contexts if req.contexts else ([req.context] if req.context else [])
-        adjustments = compute_webster_adjustments(contexts, req.routeTraffic or [])
-        print(f"[SIM-CHAT] JSON 파싱 실패 → 직접 계산 폴백 ({len(adjustments)}개)", flush=True)
-
-    clean_answer = strip_json_block(raw).strip() if adjustments else raw.strip()
-
-    # [REPORT] 섹션 분리 (이메일용 상세 보고서)
-    report = None
+    clean_answer = raw.strip()
+    # LLM이 [REPORT] 태그를 남겼다면 화면 표시에서 제거
     if "[REPORT]" in clean_answer:
-        parts = clean_answer.split("[REPORT]", 1)
-        clean_answer = parts[0].strip()
-        report = parts[1].strip() if len(parts) > 1 else None
+        clean_answer = clean_answer.split("[REPORT]", 1)[0].strip()
 
-    # 설명이 없으면 기본 메시지 생성
     if not clean_answer and adjustments:
-        clean_answer = "경로 내 병목 구간의 실시간 속도와 신호계획을 분석하여 각 교차로의 직진 현시를 우선적으로 늘리고, 주기 내 비율을 재조정했습니다."
+        clean_answer = "경로 내 병목 구간의 실시간 속도와 신호계획을 분석하여 주기를 조정했습니다."
     elif not clean_answer:
         clean_answer = "신호계획을 분석했습니다. 현재 구간의 속도 데이터를 확인하세요."
 
     print(f"\n[SIM-CHAT ANSWER (UI용 요약)]\n{clean_answer}\n", flush=True)
-    if report:
-        print(f"[SIM-CHAT REPORT (이메일용 보고서 — {len(report)}자)]\n{report[:600]}\n", flush=True)
-    else:
-        print("[SIM-CHAT REPORT] 없음 (AI가 [REPORT] 섹션 미생성)\n", flush=True)
+    print(f"[SIM-CHAT REPORT (Python 생성 — {len(email_report) if email_report else 0}자)]\n", flush=True)
 
     return ChatResponse(
         answer=clean_answer,
         adjustment=adjustments[0] if adjustments and len(adjustments) == 1 else None,
         adjustments=adjustments,
-        report=report,
+        report=email_report,
     )
 
 
@@ -1174,25 +1303,31 @@ async def simulation_chat_stream(req: SimulationChatRequest, request: Request):
             lines.append(f"  {seg.get('fromIntNo')}→{seg.get('toIntNo')} | 평균 {spd}km/h{dir_str}{mark}")
         traffic_block = "\n\n[경로 속도 — 15km/h↓ 병목]\n" + "\n".join(lines)
 
-    json_instruction = (
-        "\n\n답변 순서:\n"
-        "0. 맨 처음에 측정 속도 표 출력 (반드시):\n"
-        "[측정 속도]\n"
-        "• 교차로명: 평균 Xkm/h | 북 Akm/h | 서 Bkm/h | 남 Ckm/h (없는 방향 생략)\n\n"
-        "1. 그 다음 JSON 조정값 출력:\n"
-        "```json\n{\"adjustments\":[{\"intNo\":\"신호계획의 intNo 숫자\",\"phases\":[{\"no\":현시번호,\"sec\":초}]}]}\n```\n"
-        "⚠️ intNo는 신호계획 괄호 안 숫자 ID 그대로 사용 — 필수 필드, 절대 생략 금지.\n"
-        "2. 그 다음 교차로명(이름만, intNo 숫자 제외)으로 현시별 변경 결과 나열."
+    # ── Python 먼저 계산 ──────────────────────────────────────────────────────────
+    _contexts_list = req.contexts if req.contexts else ([req.context] if req.context else [])
+    _adjustments, _calc_details = compute_webster_adjustments(_contexts_list, req.routeTraffic or [])
+    _calc_block = _build_calc_block(_calc_details) if _calc_details else ""
+
+    _explain_instruction = (
+        "\n\n[출력 규칙 — 반드시 준수]\n"
+        "마크다운 헤더(#, ##, ###, ####) 절대 사용 금지.\n"
+        "교차로별 변경사항을 아래 형식으로 간단히 출력 (빈 줄로 구분):\n\n"
+        "• 교차로명\n"
+        "  현시N (방향): Xs → Ys\n\n"
+        "변경 이유를 혼잡등급·주기 방향 중심으로 1~2문장 덧붙여줘. "
+        "'기대됩니다', '향상될 것' 등 근거 없는 효과 추정 금지."
     )
 
     prompt = (
         f"서울 신호 시뮬레이션이야. 한국어로 답해줘."
-        f"{ctx_block}{sim_block}{traffic_block}{json_instruction}\n\n질문: {req.question}"
+        f"{ctx_block}{sim_block}{traffic_block}{_calc_block}{_explain_instruction}\n\n질문: {req.question}"
     )
 
     async def generate():
         full_text = ""
         in_think = False
+        # adjustments는 Python 계산값 고정 사용
+        adjustments = _adjustments
         try:
             async for chunk in sim_llm.astream(prompt):
                 if await request.is_disconnected():
@@ -1214,19 +1349,13 @@ async def simulation_chat_stream(req: SimulationChatRequest, request: Request):
 
                 yield f"data: {_json.dumps({'type': 'token', 'content': token}, ensure_ascii=False)}\n\n"
 
-            # 완성 후 파싱
             if "<think>" in full_text:
                 full_text = full_text.split("</think>")[-1].strip() or full_text
-            adjustments = extract_adjustments(full_text)
-            # 파싱 실패 시 직접 계산 폴백
-            if not adjustments and (req.contexts or req.context):
-                contexts = req.contexts if req.contexts else ([req.context] if req.context else [])
-                adjustments = compute_webster_adjustments(contexts, req.routeTraffic or [])
-            clean = strip_json_block(full_text).strip() if adjustments else full_text.strip()
+            clean = full_text.strip()
             if not clean and adjustments:
-                clean = "경로 내 병목 구간의 실시간 속도와 신호계획을 분석하여 각 교차로의 직진 현시를 우선적으로 늘리고, 주기 내 비율을 재조정했습니다."
+                clean = "신호계획을 분석하여 직진 현시 우선으로 녹색시간을 재배분했습니다."
             elif not clean:
-                clean = "신호계획을 분석했습니다. 현재 구간의 속도 데이터를 확인하세요."
+                clean = "신호계획을 분석했습니다."
             yield f"data: {_json.dumps({'type': 'done', 'answer': clean, 'adjustments': adjustments}, ensure_ascii=False)}\n\n"
 
         except Exception as e:

@@ -120,15 +120,22 @@ public class MapController {
             //    CrossroadInfo { crsrdId: "1009", crsrdNm: "롯데타워교차로", lat: 37.51, lon: 127.10 }
             //] 이렇게 저장되서 v2xApiService.fetchSignalData(crossroads)로 전달됨
 
-            Map<String, TrafficStatus> signals = v2xApiService.fetchSignalData(crossroads);
+            // V2X API 불안정 대응: 최대 3회 재시도 (1초 간격)
+            Map<String, TrafficStatus> signals = Map.of();
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                signals = v2xApiService.fetchSignalData(crossroads);
+                if (!signals.isEmpty()) break;
+                log.warn("V2X API 빈 결과 — 재시도 {}/3", attempt);
+                if (attempt < 3) {
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                }
+            }
 
-            // V2X API가 타임아웃 등으로 실패하면 빈 맵이 올 수 있음
-            // 이 경우 캐시를 빈 맵으로 덮어쓰면 프론트가 "0개" 로 보이므로 방어
             if (signals.isEmpty()) {
-                log.warn("V2X API가 빈 결과 반환 (DB 교차로 {}개) — 캐시 유지, fetch-area 실패 응답", crossroads.size());
-                return ResponseEntity.status(503).body(Map.of(
-                    "count", 0,
-                    "message", "V2X API 수집 실패 — 잠시 후 다시 시도해주세요"
+                log.warn("V2X API 3회 재시도 후에도 빈 결과 (DB 교차로 {}개) — 캐시 유지", crossroads.size());
+                return ResponseEntity.ok(Map.of(
+                    "count", cacheService.getAllSignals().size(),
+                    "message", "V2X API 일시 불안정 — 기존 캐시 유지 중"
                 ));
             }
 

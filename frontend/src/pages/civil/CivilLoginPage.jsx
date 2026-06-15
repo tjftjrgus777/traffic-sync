@@ -158,7 +158,7 @@ export default function CivilLoginPage({ onLogin, onBack }) {
       {/* status bar */}
       <header style={{ height: 28, display: window.innerWidth <= 768 ? "none" : "flex", alignItems: "center", gap: 16, padding: "0 16px", background: "#0a0a0a", borderBottom: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 11, color: V.ink3, letterSpacing: ".3px", zIndex: 30, flexShrink: 0 }}>
         <span style={{ width: 8, height: 8, background: V.pri, display: "inline-block" }} />
-        <span>TRAFFICSYNC · 민원 시스템</span>
+        <span>Syncro · 민원 시스템</span>
         <span style={{ color: V.ink4 }}>│</span>
         <span>시민 민원 접수 포털</span>
         <span style={{ marginLeft: "auto", color: V.ink2 }}>{timeStr}</span>
@@ -173,7 +173,7 @@ export default function CivilLoginPage({ onLogin, onBack }) {
         <div style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", opacity: .15, background: "linear-gradient(rgba(255,170,51,.18) 1px,transparent 1px) 0 0/48px 48px, linear-gradient(90deg,rgba(255,170,51,.18) 1px,transparent 1px) 0 0/48px 48px" }} />
 
         <div style={{ position: "absolute", top: 24, left: 42, zIndex: 3, fontFamily: V.mono, fontSize: 10.5, color: "rgba(255,255,255,.55)", letterSpacing: ".5px" }}>
-          <b style={{ color: "#fff", fontWeight: 600, marginRight: 6 }}>민원 포털</b>TrafficSync CITIZEN SERVICE
+          <b style={{ color: "#fff", fontWeight: 600, marginRight: 6 }}>민원 포털</b>Syncro CITIZEN SERVICE
         </div>
 
         {/* 카드 */}
@@ -182,7 +182,7 @@ export default function CivilLoginPage({ onLogin, onBack }) {
             <div style={{ width: screen === "signup" ? 500 : 480, maxWidth: "100%", background: V.card, backdropFilter: "blur(20px) saturate(1.05)", WebkitBackdropFilter: "blur(20px) saturate(1.05)", border: "1px solid rgba(255,170,51,.22)", borderRadius: 2, padding: "clamp(20px, 5vw, 44px) clamp(16px, 6vw, 50px)" }}>
 
               {/* 헤더 */}
-              <div style={{ fontSize: 30, fontWeight: 800, color: V.pri, letterSpacing: "-.3px", lineHeight: 1 }}>TrafficSync</div>
+              <div style={{ fontSize: 30, fontWeight: 800, color: V.pri, letterSpacing: "-.3px", lineHeight: 1 }}>Syncro</div>
               <div style={{ marginTop: 8, fontFamily: V.mono, fontSize: 12, color: V.ink2, letterSpacing: "1.4px", textTransform: "uppercase" }}>서울시 교통 민원 포털</div>
               <div style={{ height: 1, background: "rgba(255,255,255,.10)", margin: "24px -40px 22px" }} />
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 18 }}>
@@ -203,7 +203,7 @@ export default function CivilLoginPage({ onLogin, onBack }) {
       </div>
 
       <footer style={{ height: 24, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", background: "#0a0a0a", borderTop: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 11, color: V.ink4, letterSpacing: ".3px", flexShrink: 0 }}>
-        <span>TRAFFICSYNC CITIZEN · © 2026 서울특별시 교통정보센터</span>
+        <span>Syncro CITIZEN · © 2026 서울특별시 교통정보센터</span>
         <span>민원 접수 내용은 처리 현황 관리에 기록됩니다</span>
       </footer>
     </div>

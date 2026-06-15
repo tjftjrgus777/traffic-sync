@@ -1,6 +1,6 @@
-# Traffic-Sync 프로젝트 문서 인덱스
+# Syncro 프로젝트 문서 인덱스
 
-> 실시간 V2X 기반 AI 교통 관제 시스템 (Traffic-Sync) Obsidian용 문서.
+> 실시간 V2X 기반 AI 교통 관제 시스템 (Syncro) Obsidian용 문서.
 > 각 파일은 챗봇이 읽고 프로젝트 전문가처럼 답할 수 있도록 구성됨.
 
 ## 📚 문서 목록

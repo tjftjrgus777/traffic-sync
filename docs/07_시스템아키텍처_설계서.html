@@ -3,1213 +3,225 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>TrafficSync — 시스템 아키텍처 설계서</title>
+<title>Syncro — 시스템 아키텍처 설계서</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:10pt;color:#1a202c;background:#fff;line-height:1.75;}
-.cover{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:linear-gradient(155deg,#0a1628 0%,#0d3b6e 55%,#0a1628 100%);color:#fff;text-align:center;padding:60px;position:relative;}
-.cover::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(59,130,246,0.15) 0%,transparent 60%);}
-.cover-badge{font-size:9.5pt;letter-spacing:5px;color:#60a5fa;text-transform:uppercase;margin-bottom:24px;font-weight:500;position:relative;}
-.cover-title{font-size:32pt;font-weight:700;line-height:1.2;margin-bottom:10px;position:relative;}
-.cover-title span{color:#60a5fa;}
-.cover-doc-type{font-size:15pt;font-weight:600;color:#e2e8f0;margin-top:18px;position:relative;}
-.cover-doc-sub{font-size:10pt;color:#64748b;margin-top:6px;position:relative;}
-.cover-divider{width:56px;height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa);margin:36px auto;border-radius:2px;position:relative;}
-.cover-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:680px;width:100%;position:relative;}
-.cover-meta-item{text-align:center;}
-.cover-meta-label{font-size:8pt;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
-.cover-meta-value{font-size:10pt;color:#cbd5e1;font-weight:500;}
-.page{max-width:210mm;margin:0 auto;padding:18mm 22mm;}
-.page-break{page-break-before:always;}
-.section-header{display:flex;align-items:center;gap:12px;margin-bottom:6px;margin-top:34px;}
-.section-header:first-child{margin-top:0;}
-.section-num{background:#1e40af;color:#fff;font-size:11pt;font-weight:700;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.section-title{font-size:16pt;font-weight:700;color:#0f172a;border-bottom:3px solid #1e40af;flex:1;padding-bottom:7px;}
-h2{font-size:12.5pt;font-weight:700;color:#1e3a5f;margin-top:26px;margin-bottom:10px;padding-left:11px;border-left:4px solid #3b82f6;}
-h3{font-size:11pt;font-weight:600;color:#334155;margin-top:16px;margin-bottom:7px;}
-p{margin-bottom:9px;color:#334155;}
-table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:9.5pt;}
-thead tr{background:#1e40af;color:#fff;}
-thead th{padding:8px 12px;text-align:left;font-weight:600;letter-spacing:.3px;white-space:nowrap;}
-tbody tr:nth-child(even){background:#f1f5f9;}
-tbody td{padding:8px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top;line-height:1.6;word-break:normal;}
-td.num{text-align:center;color:#64748b;font-size:9pt;width:28px;}
-code{font-family:'Consolas',monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:8.5pt;color:#1d4ed8;}
-td code{white-space:normal;overflow-wrap:break-word;word-break:break-all;}
-.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:8.5pt;font-weight:600;}
-.badge-blue,.badge-green,.badge-yellow,.badge-gray,.badge-purple,.badge-red,.badge-orange,.badge-teal,.badge-pink{
-  background:#dbeafe;color:#1d4ed8;}
-.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #3b82f6;border-radius:6px;padding:13px 16px;margin:13px 0;font-size:10pt;color:#1e40af;}
-.warn-box{background:#f0f9ff;border:1px solid #bae6fd;border-left:4px solid #0284c7;border-radius:6px;padding:13px 16px;margin:13px 0;font-size:10pt;color:#1e3a5f;}
-.success-box{background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #3b82f6;border-radius:6px;padding:13px 16px;margin:13px 0;font-size:10pt;color:#1e40af;}
-.gray-box{background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #94a3b8;border-radius:6px;padding:13px 16px;margin:13px 0;font-size:10pt;color:#334155;}
-.purple-box{background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #3b82f6;border-radius:6px;padding:13px 16px;margin:13px 0;font-size:10pt;color:#1e40af;}
-.flow-box{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:14px 0;}
-.flow-node{background:#fff;color:#1a1a2e;border:1.5px solid #1a1a2e;padding:7px 14px;border-radius:6px;font-size:9.5pt;font-weight:600;text-align:center;min-width:100px;}
-.flow-node.gray,.flow-node.green,.flow-node.orange,.flow-node.purple,.flow-node.teal,.flow-node.red,.flow-node.pink{
-  background:#fff;color:#1a1a2e;border:1.5px solid #1a1a2e;}
-.flow-arrow{font-size:14pt;color:#94a3b8;flex-shrink:0;}
-.step-list{display:flex;flex-direction:column;gap:8px;margin:14px 0;}
-.step-item{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-radius:7px;background:#f8fafc;border:1px solid #e2e8f0;}
-.step-num{background:#1e40af;color:#fff;font-size:9pt;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
-.step-content{flex:1;}
-.step-title{font-size:10.5pt;font-weight:600;color:#1e3a5f;margin-bottom:2px;}
-.step-desc{font-size:9.5pt;color:#475569;line-height:1.5;}
-.toc-item{display:flex;align-items:baseline;gap:6px;padding:5px 0;border-bottom:1px dotted #e2e8f0;font-size:10.5pt;}
-.toc-num{color:#2563eb;font-weight:700;min-width:28px;}
-.toc-title{flex:1;color:#334155;}
-.toc-bold{font-weight:600;color:#0f172a;}
-.toc-sub{padding-left:20px;font-size:9.5pt;}
-.rev-label{font-size:13pt;font-weight:700;color:#0f172a;border-bottom:2px solid #1e40af;padding-bottom:6px;margin-bottom:12px;}
-.arch-box{background:#0f172a;border-radius:10px;padding:22px 24px;margin:16px 0;font-family:'Consolas',monospace;font-size:8.5pt;color:#e2e8f0;line-height:1.9;overflow-x:auto;white-space:pre;}
-
-/* ── 시각 아키텍처 다이어그램 ── */
-.arch-diagram{display:flex;flex-direction:column;gap:0;margin:16px 0;}
-.arch-box-v{border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;overflow:hidden;margin-bottom:0;}
-.arch-box-header{background:#1e3a5f;color:#fff;padding:8px 14px;font-size:9.5pt;font-weight:700;display:flex;align-items:center;gap:10px;}
-.arch-box-header.light{background:#334155;}
-.arch-box-num{background:rgba(255,255,255,.2);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:8.5pt;font-weight:700;flex-shrink:0;}
-.arch-box-port{margin-left:auto;font-size:8.5pt;font-family:'Consolas',monospace;background:rgba(255,255,255,.18);padding:2px 8px;border-radius:4px;}
-.arch-box-body{padding:12px 14px;}
-.arch-chip-row{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;}
-.arch-chip{font-size:8pt;padding:3px 9px;border-radius:14px;border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a5f;font-weight:500;white-space:nowrap;}
-.arch-chip.alt{background:#f0f9ff;border-color:#bae6fd;}
-.arch-label{font-size:7.5pt;font-weight:700;color:#64748b;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;margin-top:6px;}
-.arch-label:first-child{margin-top:0;}
-.arch-arrow{text-align:center;font-size:12pt;color:#94a3b8;padding:4px 0;line-height:1;font-family:'Consolas',monospace;letter-spacing:-1px;}
-.arch-inner-cell{border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;background:#f8fafc;}
-.arch-inner-title{font-size:8.5pt;font-weight:700;color:#1e3a5f;margin-bottom:4px;}
-.arch-inner-desc{font-size:8pt;color:#475569;line-height:1.6;}
-.arch-tag{font-size:7.5pt;font-family:'Consolas',monospace;background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:3px;white-space:nowrap;}
-.arch-flask-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;}
-.arch-db-box{border:1.5px solid #1e3a5f;border-radius:8px;background:#f8fafc;overflow:hidden;margin-top:10px;}
-.arch-split{display:grid;grid-template-columns:210px 1fr;gap:10px;margin-top:10px;}
-.layer-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
-.layer-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:14px 0;}
-.layer-card{border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;}
-.layer-card-header{padding:10px 14px;font-size:10.5pt;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;background:#1e3a5f;}
-.layer-card-header.blue,.layer-card-header.green,.layer-card-header.purple,
-.layer-card-header.orange,.layer-card-header.teal,.layer-card-header.gray,
-.layer-card-header.pink,.layer-card-header.rose{background:#1e3a5f;}
-.layer-card-body{padding:12px 14px;}
-.layer-card-body li{font-size:9.5pt;color:#334155;line-height:1.6;margin-bottom:3px;}
-.port-row{display:flex;align-items:flex-start;gap:12px;margin:7px 0;}
-.port-badge{background:#1e3a5f;color:#fff;font-family:'Consolas',monospace;font-size:9pt;font-weight:700;padding:4px 10px;border-radius:5px;min-width:58px;text-align:center;flex-shrink:0;margin-top:2px;}
-.port-badge.green,.port-badge.purple,.port-badge.orange,.port-badge.teal,
-.port-badge.gray,.port-badge.pink,.port-badge.rose{background:#1e3a5f;}
-.port-desc{font-size:9.5pt;color:#334155;line-height:1.6;}
-.comp-box{border:1px solid #c7d2fe;border-radius:8px;padding:14px 16px;margin:12px 0;background:#eef2ff;}
-.comp-title{font-size:10.5pt;font-weight:700;color:#3730a3;margin-bottom:8px;}
-.data-card{border:1px solid #e2e8f0;border-radius:10px;margin:16px 0;overflow:hidden;}
-.data-card-header{display:flex;align-items:center;gap:12px;padding:11px 15px;background:#1e3a5f;color:#fff;}
-.data-card-icon{font-size:15pt;flex-shrink:0;}
-.data-card-title{font-size:11pt;font-weight:700;}
-.data-card-sub{margin-left:auto;font-size:8.5pt;background:rgba(255,255,255,0.12);padding:2px 10px;border-radius:12px;white-space:nowrap;}
-.data-card-body{padding:13px 15px;}
-.sec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;}
-.sec-card{border:1px solid #e2e8f0;border-radius:8px;padding:14px;text-align:center;}
-.sec-icon{font-size:20pt;margin-bottom:6px;}
-.sec-title{font-size:10pt;font-weight:700;color:#0f172a;margin-bottom:4px;}
-.sec-desc{font-size:9pt;color:#64748b;line-height:1.5;}
-.sched-card{border:1px solid #e2e8f0;border-radius:8px;margin:10px 0;overflow:hidden;}
-.sched-header{padding:9px 14px;font-size:10pt;font-weight:700;color:#fff;background:#1e3a5f;}
-.sched-header.blue,.sched-header.teal{background:#1e3a5f;}
-.sched-body{padding:12px 14px;}
-/* 뉴스 파이프라인 */
-.pipeline-step{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #e2e8f0;}
-.pipeline-step:last-child{border-bottom:none;}
-.pipeline-icon{font-size:18pt;flex-shrink:0;width:32px;text-align:center;margin-top:2px;}
-.pipeline-content{flex:1;}
-.pipeline-title{font-size:10.5pt;font-weight:700;color:#1e3a5f;margin-bottom:3px;}
-.pipeline-desc{font-size:9.5pt;color:#475569;line-height:1.55;}
-ol,ul{padding-left:20px;margin-bottom:10px;}
-li{margin-bottom:4px;color:#334155;line-height:1.65;}
-footer{text-align:center;font-size:8.5pt;color:#94a3b8;margin-top:44px;padding-top:13px;border-top:1px solid #e2e8f0;}
-@media print{.cover{height:100vh;}.page-break{page-break-before:always;}}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:10pt;color:#1b1f24;background:#fff;line-height:1.7}
+.cover{max-width:210mm;margin:0 auto;min-height:97vh;padding:28mm 22mm 20mm;display:flex;flex-direction:column;justify-content:space-between}
+.cover-top{border-top:3px solid #16263e;padding-top:12px;display:flex;justify-content:space-between;font-size:9.5pt;color:#5a6472}
+.cover-docno{font-size:9.5pt;color:#5a6472;letter-spacing:3px;margin-bottom:16px}
+.cover-title{font-size:26pt;font-weight:700;color:#16263e;line-height:1.3}
+.cover-sub{font-size:12.5pt;color:#3a4656;margin-top:10px;font-weight:500}
+.cover-rule{width:100%;height:1px;background:#16263e;margin:26px 0}
+.cover-desc{font-size:10pt;color:#4a525c;max-width:560px}
+.cover-meta{width:100%;border-collapse:collapse;margin-top:34px;font-size:9.5pt}
+.cover-meta td{border:1px solid #c9ced6;padding:7px 12px}
+.cover-meta td.k{background:#f2f4f7;width:120px;font-weight:700;color:#16263e}
+.cover-bottom{border-bottom:3px solid #16263e;padding-bottom:12px;display:flex;justify-content:space-between;font-size:9pt;color:#5a6472}
+.page{max-width:210mm;margin:0 auto;padding:14mm 20mm}
+.doc-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #16263e;padding-bottom:6px;margin-bottom:24px;font-size:9pt;color:#5a6472}
+.doc-head b{font-size:10.5pt;color:#16263e}
+h1.sec{font-size:14.5pt;font-weight:700;color:#16263e;border-bottom:2px solid #16263e;padding-bottom:6px;margin:34px 0 14px}
+h2{font-size:11.5pt;font-weight:700;color:#16263e;margin:22px 0 8px}
+p{margin:0 0 8px;color:#2a3138}
+ul,ol{margin:0 0 10px 20px}
+li{margin-bottom:3px;color:#2a3138}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:9pt}
+th{background:#1f3147;color:#fff;font-weight:600;padding:7px 10px;border:1px solid #1f3147;text-align:left}
+td{padding:6px 10px;border:1px solid #c8ccd2;vertical-align:top;line-height:1.55;color:#262c33;background:#fff;word-break:keep-all}
+code{font-family:Consolas,'D2Coding',monospace;font-size:8.5pt;background:#f1f3f5;border:1px solid #e1e4e8;padding:0 4px;color:#1c3050}
+.note{border:1px solid #c8ccd2;border-left:3px solid #16263e;background:#fafbfc;padding:10px 14px;margin:12px 0;font-size:9.5pt;color:#333}
+.note b{color:#16263e}
+.diagram{border:1px solid #2a3a52;padding:14px 16px;margin:14px 0}
+.diagram-title{font-size:9.5pt;font-weight:700;color:#16263e;border-left:3px solid #16263e;padding-left:8px;margin-bottom:12px}
+.flow{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin:6px 0}
+.fnode{border:1px solid #2a3a52;background:#fff;padding:8px 12px;text-align:center;min-width:104px;display:flex;flex-direction:column;justify-content:center}
+.fnode .t{font-size:9.5pt;font-weight:700;color:#16263e}
+.fnode .s{font-size:8pt;color:#6a7380;margin-top:2px}
+.farr{color:#8a93a0;font-size:12pt;align-self:center}
+pre{font-family:Consolas,'D2Coding',monospace;font-size:8.5pt;background:#f7f8fa;border:1px solid #d8dce2;padding:12px 14px;margin:10px 0 16px;line-height:1.6;overflow-x:auto;color:#22303f}
+.footer{max-width:210mm;margin:24px auto 0;padding:10px 20mm 26px;border-top:1px solid #c9ced6;display:flex;justify-content:space-between;font-size:8.5pt;color:#7c848e}
+@media print{.page-break{page-break-before:always}}
 </style>
 </head>
 <body>
 
-<!-- 표지 -->
 <div class="cover">
-  <div class="cover-badge">Traffic Sync · Architecture Document</div>
-  <div class="cover-title">Traffic<span>Sync</span></div>
-  <div class="cover-doc-type">시스템 아키텍처 설계서</div>
-  <div class="cover-doc-sub">System Architecture Design Document — TS-DOC-07 (소스코드 전체 검증본 v4.0)</div>
-  <div class="cover-divider"></div>
-  <div class="cover-meta">
-    <div class="cover-meta-item"><div class="cover-meta-label">문서번호</div><div class="cover-meta-value">TS-DOC-07</div></div>
-    <div class="cover-meta-item"><div class="cover-meta-label">버전</div><div class="cover-meta-value">v4.0</div></div>
-    <div class="cover-meta-item"><div class="cover-meta-label">작성일</div><div class="cover-meta-value">2026-05-28</div></div>
-    <div class="cover-meta-item"><div class="cover-meta-label">작성자</div><div class="cover-meta-value">박희윤</div></div>
+  <div class="cover-top"><span>Syncro | 교통 관제 시스템</span><span></span></div>
+  <div>
+    <div class="cover-docno">SYNCRO PROJECT DOCUMENTATION</div>
+    <div class="cover-title">시스템 아키텍처<br/>설계서</div>
+    <div class="cover-sub">실시간 V2X 기반 AI 교통 관제 시스템 Syncro</div>
+    <div class="cover-rule"></div>
+    <div class="cover-desc">
+      본 문서는 Syncro의 전체 시스템 구성, 기술 스택, 통신 방식, 동시성 설계, AI 아키텍처,
+      배포·실행 구조와 보안 아키텍처를 정의한다.
+    </div>
+    <table class="cover-meta">
+      <tr><td class="k">작성 팀</td><td>Syncro</td><td class="k">작성자</td><td>kimsua · heeyoun · jinminkyeong · seokhyun</td></tr>
+      <tr><td class="k">작성일</td><td>2026. 06. 13.</td><td class="k">문서 분류</td><td>시스템 아키텍처 설계서</td></tr>
+      <tr><td class="k">시스템명</td><td>Syncro (교통 관제 시스템)</td><td class="k">작성 기준</td><td>구현 코드 기준</td></tr>
+    </table>
   </div>
+  <div class="cover-bottom"><span>Syncro Team</span><span></span></div>
 </div>
 
-<!-- 개정이력 + 목차 -->
 <div class="page page-break">
-  <div class="rev-label">개정 이력</div>
-  <table>
-    <thead><tr><th>버전</th><th>일자</th><th>변경 내용</th></tr></thead>
-    <tbody>
-      <tr><td>v1.0</td><td>2026-05-28</td><td>최초 작성</td></tr>
-      <tr><td>v2.0</td><td>2026-05-28</td><td>소스코드 재검증: 엔티티 9개·레포지토리 9개·스케줄러 2개·컨트롤러 8개·Flask:5002 반영</td></tr>
-      <tr><td>v4.0</td><td>2026-05-28</td><td>뉴스 감성 분석 파이프라인(News Flask :5001) 추가 — BERT 기사 유형 분류·TF-IDF 과장성 탐지·Groq LLM 요약·KoNLPy 형태소 분석 전 과정 문서화. Naver News API·Groq API 외부 서비스 추가.</td></tr>
-      <tr><td>v4.0</td><td>2026-06-02</td><td>v1.1 변경 반영 — civil_flask_server(:8002) 신규 추가 (Google GenAI 민원 분류·자동 답변), VWorld 3D WebGL 시뮬레이션 지도, Google Cloud TTS(ko-KR-Neural2-C) 음성 어시스턴트, 음성 어시스턴트(박수 감지·STT) 추가. T Data 미사용 확정.</td></tr>
-    </tbody>
-  </table>
-  <br/>
-  <div class="rev-label" style="margin-top:20px;">목 차</div>
-  <div class="toc-item"><span class="toc-num">1</span><span class="toc-bold toc-title">시스템 개요 — 서비스 전체 구성</span></div>
-  <div class="toc-item"><span class="toc-num">2</span><span class="toc-bold toc-title">전체 아키텍처 다이어그램</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">2.1</span><span class="toc-title">서비스 계층 구성도</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">2.2</span><span class="toc-title">포트별 통신 매트릭스</span></div>
-  <div class="toc-item"><span class="toc-num">3</span><span class="toc-bold toc-title">백엔드 상세 설계 (Spring Boot :8080)</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">3.1</span><span class="toc-title">컨트롤러 레이어 (8개)</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">3.2</span><span class="toc-title">스케줄러 2개</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">3.3</span><span class="toc-title">서비스 레이어</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">3.4</span><span class="toc-title">인메모리 캐시 구조</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">3.5</span><span class="toc-title">WebSocket 브로드캐스트</span></div>
-  <div class="toc-item"><span class="toc-num">4</span><span class="toc-bold toc-title">AI 에이전트 (Python FastAPI :8001)</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">4.1</span><span class="toc-title">엔드포인트 8개 · MCP 9-tool</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">4.2</span><span class="toc-title">LangGraph ReAct + SSE 스트리밍</span></div>
-  <div class="toc-item"><span class="toc-num">5</span><span class="toc-bold toc-title">뉴스 감성 분석 파이프라인 (Flask :5001)</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">5.1</span><span class="toc-title">News Flask 서버 엔드포인트</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">5.2</span><span class="toc-title">뉴스 수집 파이프라인 단계별 상세</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">5.3</span><span class="toc-title">ML 모델 상세 (BERT · TF-IDF · Groq)</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">5.4</span><span class="toc-title">뉴스 카테고리 및 감성 분류 기준</span></div>
-  <div class="toc-item"><span class="toc-num">6</span><span class="toc-bold toc-title">교통량 예측 서버 (Flask :5002)</span></div>
-  <div class="toc-item"><span class="toc-num">6.1</span><span class="toc-bold toc-title">시민 민원 서버 (Flask :8002) <span style="font-size:7.5pt;color:#2563eb;">[v4.0 신규]</span></span></div>
-  <div class="toc-item"><span class="toc-num">7</span><span class="toc-bold toc-title">데이터 흐름 설계</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">7.6</span><span class="toc-title">음성 어시스턴트 데이터 흐름 <span style="font-size:7.5pt;color:#2563eb;">[v4.0 신규]</span></span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">7.7</span><span class="toc-title">시민 민원 포털 데이터 흐름 <span style="font-size:7.5pt;color:#2563eb;">[v4.0 신규]</span></span></div>
-  <div class="toc-item toc-sub"><span class="toc-num">7.8</span><span class="toc-title">관리자 사용자 승인 관리 데이터 흐름 <span style="font-size:7.5pt;color:#2563eb;">[v4.0 신규]</span></span></div>
-  <div class="toc-item"><span class="toc-num">8</span><span class="toc-bold toc-title">데이터베이스 설계 (엔티티 9개 · 레포지토리 9개)</span></div>
-  <div class="toc-item"><span class="toc-num">9</span><span class="toc-bold toc-title">보안 아키텍처</span></div>
-  <div class="toc-item"><span class="toc-num">10</span><span class="toc-bold toc-title">기술 스택 전체 명세</span></div>
-  <div class="toc-item"><span class="toc-num">11</span><span class="toc-bold toc-title">포트 구성 및 전체 API 목록</span></div>
-</div>
+<div class="doc-head"><b>시스템 아키텍처 설계서</b><span>Syncro | 교통 관제 시스템</span></div>
 
-<!-- §1 시스템 개요 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">1</div>
-    <div class="section-title">시스템 개요 — 서비스 전체 구성</div>
+<h1 class="sec">1. 설계 원칙</h1>
+<table>
+  <tr><th style="width:170px">원칙</th><th>내용</th></tr>
+  <tr><td>완전 로컬 AI</td><td>관제 분석용 LLM 추론은 전량 로컬(Ollama)에서 수행한다. 폐쇄망·망분리 환경을 전제로 외부 API 의존을 제거한다</td></tr>
+  <tr><td>수치는 코드, 설명은 LLM</td><td>신호 조정 수치·Webster 계산·상세 보고서는 코드가 산출하고 LLM은 설명만 생성한다(환각 차단)</td></tr>
+  <tr><td>장애 시 보수적 동작</td><td>외부 API 실패 시 캐시 유지·stale 표기·재시도. 더미 데이터를 생성하지 않는다</td></tr>
+  <tr><td>단일 진실 원천</td><td>화면과 AI가 동일한 통합 캐시(TrafficStatus)를 본다. 메일 발송은 Spring 단일 창구</td></tr>
+  <tr><td>승인 기반 개입</td><td>AI 권고는 관제사 승인 후 적용한다. 실신호 제어 API는 의도적 미구현(Human-in-the-loop)</td></tr>
+</table>
+
+<h1 class="sec">2. 전체 구성</h1>
+<div class="diagram">
+  <div class="diagram-title">계층 구성 — 표현 / 응용 / AI / 데이터</div>
+  <div class="flow">
+    <div class="fnode"><span class="t">React</span><span class="s">5173 · 대시보드</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">Spring Boot</span><span class="s">8080 · 수집/캐시/WS/인증</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">Oracle ADB</span><span class="s">클라우드 · Wallet</span></div>
   </div>
-  <p><strong>TrafficSync</strong>는 서울시 실시간 교통·기상·돌발상황 데이터를 수집·통합·분석하고, AI 에이전트가 자연어 질의응답·신호 최적화 제안·뉴스 감성 분석·교통량 예측을 수행하는 <strong>지능형 교통 모니터링 플랫폼</strong>이다.</p>
-
-  <div class="success-box">
-    <strong>검증 방법:</strong> 본 v4.0 문서는 Java·Python 소스코드 전체를 직접 읽어 작성하였다. MD 설계 문서와 코드가 다를 경우 코드 기준을 따른다.
+  <div class="flow">
+    <div class="fnode"><span class="t">FastAPI 에이전트</span><span class="s">8001 · ReAct/멀티에이전트</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">MCP 도구 프로세스</span><span class="s">에이전트가 기동 · stdio</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">Ollama</span><span class="s">11434 메인 + 11435~11438 워커</span></div>
   </div>
-
-  <h2>서비스 전체 구성 (9개 컴포넌트)</h2>
-  <table>
-    <thead><tr><th>서비스</th><th>포트</th><th>기술</th><th>역할</th></tr></thead>
-    <tbody>
-      <tr><td><strong>React 프론트엔드</strong></td><td>:5173</td><td>React 19 + Vite 8</td><td>대시보드·지도·챗봇·뉴스·CCTV·예측 UI</td></tr>
-      <tr><td><strong>Spring Boot 백엔드</strong></td><td>:8080</td><td>Java 17 + Spring Boot 3.5</td><td>REST API 8컨트롤러·WebSocket·스케줄러 2개·DB</td></tr>
-      <tr><td><strong>Python AI 에이전트</strong></td><td>:8001</td><td>FastAPI + LangGraph</td><td>ReAct 루프·MCP 9-tool·SSE 스트리밍</td></tr>
-      <tr><td><strong>뉴스 감성 분석 Flask</strong></td><td>:5001</td><td>Flask + BERT + Groq</td><td>뉴스 수집→BERT 유형 분류→TF-IDF 과장성→Groq 요약/감성→DB 저장</td></tr>
-      <tr><td><strong>교통량 예측 Flask</strong></td><td>:5002</td><td>Flask + XGBoost</td><td>TRAFFIC_STATION 기반 시간대별 상하행 교통량 예측</td></tr>
-      <tr><td><strong>민원 Flask <span style="font-size:8pt;color:#2563eb;">[v4.0 신규]</span></strong></td><td>:8002</td><td>Flask + Google GenAI (civil_flask_server)</td><td>시민 민원 제출·사진 업로드·AI 민원 분류·자동 답변 이메일 발송</td></tr>
-      <tr><td><strong>Ollama LLM</strong></td><td>:11434</td><td>qwen3:30b-a3b (MoE)</td><td>AI 에이전트 로컬 LLM 추론</td></tr>
-      <tr><td><strong>AnythingLLM RAG</strong></td><td>:3001</td><td>AnythingLLM</td><td>프로젝트 문서 RAG 검색</td></tr>
-      <tr><td><strong>Oracle Autonomous DB</strong></td><td>Cloud</td><td>Oracle + Wallet mTLS</td><td>교통·뉴스·사용자 데이터 영구 저장</td></tr>
-      <tr><td><strong>civil_flask_server</strong></td><td>:8002</td><td>Python Flask + Google Gemini Vision</td><td>시민 민원 사진 분류(카테고리·담당과), HEIC→JPEG 변환, 자동 답변 이메일</td></tr>
-      <tr><td><strong>외부 API</strong></td><td>—</td><td>V2X·TOPIS·KMA·위험도·UTIC·Naver·Groq·VWorld·Google TTS·Gemini</td><td>신호·속도·날씨·위험도·CCTV(공공) / 뉴스·TTS·민원분류(민간) / 3D지도(VWorld)</td></tr>
-    </tbody>
-  </table>
-
-  <h2>아키텍처 원칙</h2>
-  <div class="layer-grid">
-    <div class="layer-card"><div class="layer-card-header blue">이중 ML 파이프라인</div><div class="layer-card-body"><ul>
-      <li>BERT(kykim/bert-kor-base): 기사 유형 4분류</li>
-      <li>TF-IDF + 로지스틱 회귀: 과장성 점수</li>
-      <li>XGBoost: 시간대별 교통량 예측</li>
-      <li>Groq API(llama-3.1-8b-instant): 뉴스 요약·감성</li>
-    </ul></div></div>
-    <div class="layer-card"><div class="layer-card-header green">이중 스케줄러</div><div class="layer-card-body"><ul>
-      <li>TrafficScheduler: V2X 신호 전담 폴링</li>
-      <li>SupplementalDataScheduler: 날씨·속도·위험도·링크매핑</li>
-      <li>뉴스 파이프라인: Flask POST /news/fetch 트리거</li>
-    </ul></div></div>
-    <div class="layer-card"><div class="layer-card-header purple">로컬+외부 AI 혼용</div><div class="layer-card-body"><ul>
-      <li>교통 AI: Ollama 완전 로컬 (데이터 보호)</li>
-      <li>뉴스 요약: Groq API (외부 — 뉴스 본문만 전송)</li>
-      <li>민원 분류: Gemini Vision API (사진만 전송)</li>
-      <li>음성 TTS: Google Cloud TTS (ko-KR-Neural2-C)</li>
-      <li>3개 Groq API 키 라운드로빈 + 429 자동 전환</li>
-    </ul></div></div>
-    <div class="layer-card"><div class="layer-card-header orange">비동기 처리 최적화</div><div class="layer-card-body"><ul>
-      <li>aiohttp: 뉴스 본문 비동기 병렬 수집(Semaphore 20)</li>
-      <li>ThreadPoolExecutor: BERT/KoNLPy 블로킹 오프로드</li>
-      <li>asyncio.Queue: DB writer 단건 즉시 삽입</li>
-    </ul></div></div>
+  <div class="flow">
+    <div class="fnode"><span class="t">Flask 예측</span><span class="s">5002 · XGBoost</span></div>
+    <div class="fnode"><span class="t">Flask 민원</span><span class="s">8002 · Vision 분류</span></div>
+    <div class="fnode"><span class="t">Flask 뉴스</span><span class="s">5001 · BERT/감성</span></div>
+    <div class="fnode"><span class="t">AnythingLLM</span><span class="s">3001 · RAG</span></div>
   </div>
 </div>
+<table>
+  <tr><th style="width:160px">구성 요소</th><th style="width:64px">포트</th><th>책임</th><th style="width:150px">통신</th></tr>
+  <tr><td>React 프론트엔드</td><td>5173</td><td>화면, 상태 기반 페이지 전환, 실시간 표시</td><td>REST · WS · SSE</td></tr>
+  <tr><td>Spring Boot</td><td>8080</td><td>V2X 폴링, 보조 데이터 스케줄, 통합 캐시, WebSocket, 인증·민원·메일, AI 프록시</td><td>REST · WS · SMTP</td></tr>
+  <tr><td>FastAPI 에이전트</td><td>8001</td><td>ReAct·멀티에이전트·Webster 계산·의도 분류·SSE</td><td>REST · SSE · MCP(stdio)</td></tr>
+  <tr><td>Ollama 메인/워커</td><td>11434/11435~38</td><td>LLM 추론(qwen2.5:14b / exaone3.5:2.4b 4기)</td><td>HTTP</td></tr>
+  <tr><td>Flask 3종</td><td>5002/8002/5001</td><td>예측·민원 분류·뉴스 분석</td><td>REST</td></tr>
+  <tr><td>AnythingLLM</td><td>3001</td><td>문서 벡터화·RAG 질의</td><td>REST</td></tr>
+  <tr><td>Oracle Autonomous DB</td><td>—</td><td>공유 데이터 저장(Spring JPA, Flask oracledb)</td><td>SQL·Net(mTLS)</td></tr>
+</table>
 
-<!-- §2 전체 아키텍처 다이어그램 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">2</div>
-    <div class="section-title">전체 아키텍처 다이어그램</div>
-  </div>
+<h1 class="sec">3. 기술 스택</h1>
+<table>
+  <tr><th style="width:120px">영역</th><th>기술</th></tr>
+  <tr><td>프론트엔드</td><td>React 19, Vite, Kakao Maps SDK(클러스터러), VWorld/Cesium 3D, Web Speech API(STT), Google Cloud TTS, Web Audio(박수 감지)</td></tr>
+  <tr><td>백엔드</td><td>Java 17, Spring Boot 3.5(Web·WebSocket·WebFlux·Data JPA·Mail), HikariCP, Apache POI, Jackson</td></tr>
+  <tr><td>AI 서버</td><td>Python, FastAPI, LangGraph(create_react_agent), langchain-mcp-adapters, MCP SDK, httpx, Ollama</td></tr>
+  <tr><td>LLM</td><td>qwen2.5:14b(메인), exaone3.5:2.4b(워커 4기, 포트 분리 병렬)</td></tr>
+  <tr><td>ML</td><td>XGBoost(교통량 회귀), BERT(kykim/bert-kor-base 분류), TF-IDF+로지스틱(낚시성), Gemini Vision(민원 사진), Groq(뉴스 요약·감성)</td></tr>
+  <tr><td>데이터</td><td>Oracle Autonomous DB(Wallet/mTLS), AnythingLLM 내장 벡터DB</td></tr>
+</table>
 
-  <h2>2.1 서비스 계층 구성도</h2>
-  <div class="arch-diagram">
+<h1 class="sec">4. 통신 방식 설계</h1>
+<table>
+  <tr><th style="width:130px">방식</th><th style="width:240px">사용처</th><th>선택 사유</th></tr>
+  <tr><td>REST</td><td>일반 조회·명령 전반</td><td>요청-응답형 작업의 표준</td></tr>
+  <tr><td>WebSocket</td><td>신호 데이터 브로드캐스트(/ws/traffic)</td><td>서버 주도 상시 스트림. 30초 주기 전 클라이언트 동시 전파</td></tr>
+  <tr><td>SSE</td><td>AI 응답 스트리밍(챗봇·리포트·멀티에이전트)</td><td>요청당 단방향 스트림. HTTP 그대로 사용, 단계 이벤트 타입화 용이</td></tr>
+  <tr><td>MCP stdio</td><td>에이전트 ↔ MCP 도구 프로세스(mcp_server.py)</td><td>표준 도구 프로토콜. 도구는 별도 포트 없이 에이전트가 서브프로세스로 기동하며 stdin/stdout(JSON-RPC)으로 통신 — 도구 로직을 에이전트 코드와 분리해 결합도 제거</td></tr>
+  <tr><td>SMTP</td><td>메일 발송(Gmail SSL 465)</td><td>모든 발송을 Spring 단일 창구로 일원화</td></tr>
+</table>
+<div class="note"><b>주.</b> 프론트의 SSE 수신은 EventSource가 아닌 fetch 스트림 수동 파싱이다 — EventSource가 GET 전용이라
+질문·좌표 등 본문 전송이 불가하기 때문이며, AbortController로 타임아웃(120초)·중단을 통합 처리한다.</div>
 
-    <!-- ① 외부 API -->
-    <div class="arch-box-v">
-      <div class="arch-box-header">
-        <span class="arch-box-num">①</span> 외부 공공·민간 API
-      </div>
-      <div class="arch-box-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          <div>
-            <div class="arch-label">공공 API</div>
-            <div class="arch-chip-row">
-              <span class="arch-chip">V2X 신호 (국토부, 30s)</span>
-              <span class="arch-chip">TOPIS 실시간 도로소통 (서울, 60s)</span>
-              <span class="arch-chip">KMA 초단기실황 (기상, 10m)</span>
-              <span class="arch-chip">도로위험도 (5m)</span>
-              <span class="arch-chip">UTIC CCTV</span>
-              <span class="arch-chip">VWorld 3D WebGL (시뮬레이션 지도)</span>
-            </div>
-          </div>
-          <div>
-            <div class="arch-label">민간 API</div>
-            <div class="arch-chip-row">
-              <span class="arch-chip alt">Naver News API (뉴스 수집)</span>
-              <span class="arch-chip alt">Groq llama-3.1-8b (뉴스 요약·감성)</span>
-              <span class="arch-chip alt">Google Cloud TTS (음성 어시스턴트)</span>
-              <span class="arch-chip alt">Google Gemini Vision (민원 분류)</span>
-              <span class="arch-chip alt">Gmail SMTP (이메일 알림)</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+<h1 class="sec">5. 동시성 설계</h1>
+<table>
+  <tr><th style="width:230px">지점</th><th>기법 및 사유</th></tr>
+  <tr><td>신호 캐시 전체 갱신</td><td>새 ConcurrentHashMap 생성 후 volatile 참조 원자 교체 — 갱신 중간 상태(부분 읽기) 노출 차단</td></tr>
+  <tr><td>구역 전환 ↔ 정기 폴링 경합</td><td>AtomicBoolean compareAndSet 가드(중복 요청 409) + 폴링 측 진행 여부 확인</td></tr>
+  <tr><td>WebSocket 세션 목록</td><td>CopyOnWriteArrayList — 읽기(브로드캐스트) 다수·쓰기(접속/해제) 소수 환경에 적합</td></tr>
+  <tr><td>TOPIS 속도 갱신</td><td>중복 실행 차단 + 회당 80링크 라운드로빈 로테이션 + 동시성 4 + 시간 예산 초과분 취소</td></tr>
+  <tr><td>위험도 갱신</td><td>동시성 2의 CompletionService, 실행 중 구역 변경 시 보류 후 즉시 재실행(pending 플래그)</td></tr>
+  <tr><td>멀티에이전트 워커</td><td>asyncio 병렬 태스크 + 큐 기반 SSE 중계. 연결 종료 시 태스크 일괄 취소</td></tr>
+  <tr><td>뉴스 파이프라인</td><td>I/O는 코루틴 세마포어(수집 20·요약 5), CPU(BERT)는 스레드풀(4), DB는 단일 writer 큐 직렬화</td></tr>
+</table>
 
-    <div class="arch-arrow">↓ HTTP</div>
+<h1 class="sec">6. AI 아키텍처</h1>
+<h2>6.1 LLM 배치</h2>
+<table>
+  <tr><th style="width:104px">용도</th><th style="width:116px">모델</th><th style="width:178px">파라미터</th><th>비고</th></tr>
+  <tr><td>ReAct 메인</td><td>qwen2.5:14b</td><td>temp 0.3 · 출력 4096 · 컨텍스트 8192</td><td>도구 호출 안정성 기준 선정</td></tr>
+  <tr><td>시뮬레이션 설명</td><td>qwen2.5:14b</td><td>temp 0.3 · 출력 무제한 · 컨텍스트 16384</td><td>다중 신호계획+계산 블록 수용</td></tr>
+  <tr><td>방향별 워커 4기</td><td>exaone3.5:2.4b</td><td>temp 0.1 · 출력 6000 · 컨텍스트 8192</td><td>한국어 경량 모델, 포트별 독립 인스턴스로 실제 병렬</td></tr>
+</table>
+<ul>
+  <li>Ollama 단일 인스턴스는 요청을 큐잉하므로 워커는 포트(11435~11438)별 독립 프로세스로 기동하고, 기동 스크립트에서 빈 프롬프트로 프리로드한다.</li>
+  <li>추론 모드: 빠른 응답 경로는 사고 생략(no_think), 정확도 우선 경로는 사고 허용(think). 사고 블록은 사용자 표시에서 분리한다.</li>
+  <li>생성 중단: 연결 종료 감지(0.3초 폴링) 시 제너레이터 명시 종료로 추론 소켓까지 차단. 별도 정지 API는 공유 클라이언트를 강제 재생성한다.</li>
+</ul>
+<h2>6.2 MCP 도구 계층</h2>
+<p>
+MCP 도구(mcp_server.py)는 에이전트 서버가 기동 시 서브프로세스로 실행하는 별도 프로세스다. 독립 포트 없이 stdin/stdout(JSON-RPC)으로 통신한다.
+도구 9종은 Spring REST의 래퍼로, Spring 미가동 시 오류 객체만 반환하여 에이전트 생존을 보장한다.
+표준 프로토콜 채택으로 동일 도구 프로세스를 타 MCP 클라이언트에서 재사용할 수 있다.
+</p>
+<h2>6.3 RAG (AnythingLLM)</h2>
+<table>
+  <tr><th style="width:150px">항목</th><th>설정 · 근거</th></tr>
+  <tr><td>청크 크기</td><td>1,000자 — 임베딩 모델 최대 입력 길이(1,000자)에 맞춘 상한이며, 프로젝트 문서의 주제 단위(공식·기준표·절차)가 1,000자 내에 들어와 "한 주제=한 청크"가 성립</td></tr>
+  <tr><td>청크 겹침</td><td>20자 — 제목·표 중심의 구조화 문서라 경계가 단락에 떨어지므로 최소 보호값만 적용. 겹침 과다 시 동일 내용이 검색 상위를 중복 점유하고 로컬 LLM의 한정 컨텍스트를 낭비</td></tr>
+  <tr><td>질의 방식</td><td>워크스페이스 query 모드(문서 기반 답변 한정), 인증 키 사용, 타임아웃 30초</td></tr>
+  <tr><td>장애 처리</td><td>미가동 시 오류 메시지 반환 후 대화 지속(폴백)</td></tr>
+</table>
 
-    <!-- ② Spring Boot -->
-    <div class="arch-box-v">
-      <div class="arch-box-header">
-        <span class="arch-box-num">②</span> Spring Boot 3 — 메인 백엔드
-        <span class="arch-box-port">:8080</span>
-      </div>
-      <div class="arch-box-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-          <div class="arch-inner-cell">
-            <div class="arch-inner-title">스케줄러 2개</div>
-            <div class="arch-inner-desc">TrafficScheduler — V2X 30s 폴링 → enrich → WS broadcast<br>SupplementalDataScheduler — 날씨(10m)·링크매핑(24h)·속도(60s)·위험도(5m)</div>
-          </div>
-          <div class="arch-inner-cell">
-            <div class="arch-inner-title">컨트롤러 10개</div>
-            <div class="arch-inner-desc" style="font-size:7.5pt;">ChatController · MapController · SignalController · CctvController · NewsController · ForecastController · UserController · EmailController · CivilController · ComplaintController</div>
-          </div>
-          <div class="arch-inner-cell">
-            <div class="arch-inner-title">캐시 · WebSocket · DB</div>
-            <div class="arch-inner-desc">TrafficCacheService (ConcurrentHashMap)<br>SupplementalDataCacheService<br>ws://localhost:8080/ws/traffic<br>Oracle Autonomous DB (Wallet TLS)</div>
-          </div>
-        </div>
-      </div>
-    </div>
+<h1 class="sec">7. 배포·실행 구조</h1>
+<pre>start-all.sh 기동 순서
+ 1) 기존 Ollama 프로세스 정리(포트 충돌 방지)
+ 2) Ollama 메인(11434, qwen2.5:14b)
+ 3) Ollama 워커 4기(11435~11438, exaone3.5:2.4b) + 모델 프리로드
+ 4) Spring Boot(8080)
+ 5) AI 에이전트(8001, uvicorn)
+ 6) 교통량 예측(5002) / 민원 분류(8002) / 뉴스(5001)
+ 7) AnythingLLM(3001)
+ 8) React 개발 서버(5173)
+ ※ 각 서버 로그는 /tmp/*.log 로 일원화</pre>
+<table>
+  <tr><th style="width:170px">초기 적재(@PostConstruct)</th><th>내용</th></tr>
+  <tr><td>교차로 마스터</td><td>V2X 위치 API 전수 적재(기존재 시 스킵, 500건 배치 저장)</td></tr>
+  <tr><td>신호계획 3종</td><td>경찰청 교차로·현시구성·운영계획 적재</td></tr>
+  <tr><td>CCTV 메타</td><td>엑셀 파싱 + UTIC 스트림 ID 매핑</td></tr>
+  <tr><td>관리자 계정</td><td>미존재 시 기본 관리자 생성(운영 시 변경 필수)</td></tr>
+</table>
 
-    <!-- AI + React 분기 -->
-    <div class="arch-split">
+<h1 class="sec">8. 보안 아키텍처</h1>
+<h2>8.1 적용 사항</h2>
+<table>
+  <tr><th style="width:200px">항목</th><th>내용</th></tr>
+  <tr><td>로컬 LLM</td><td>관제 데이터의 외부 전송 없음. 비용·호출 제한 없음. 폐쇄망 운용 가능</td></tr>
+  <tr><td>DB 인증</td><td>Oracle Wallet 기반 mTLS</td></tr>
+  <tr><td>키 분리</td><td>공공 API 서비스키는 버전관리 제외 설정 파일로 분리</td></tr>
+  <tr><td>CORS</td><td>API는 개발 오리진(5173 계열)만 허용</td></tr>
+  <tr><td>역할 분리</td><td>USER(승인제)/ADMIN/CIVIL 역할, 승인 전 로그인 차단, 임시 비밀번호 강제 변경 흐름</td></tr>
+  <tr><td>메일 발송 통제</td><td>발송 주체 Spring 일원화, AI의 발송은 사용자 명시 요청 시에만 허용(이중 게이트)</td></tr>
+</table>
+<h2>8.2 알려진 한계와 개선 계획</h2>
+<table>
+  <tr><th style="width:240px">한계</th><th>개선 방향</th></tr>
+  <tr><td>비밀번호 평문 저장</td><td>BCrypt 해시(1순위)</td></tr>
+  <tr><td>일부 자격증명 하드코딩(메일·RAG 키, 예측 서버 DB 정보)</td><td>환경변수·시크릿 매니저 이관</td></tr>
+  <tr><td>API 토큰 인증 부재 / WS Origin 전체 허용</td><td>JWT 도입, Origin 제한·핸드셰이크 검증</td></tr>
+  <tr><td>CCTV 메타 수집 시 TLS 검증 우회(PoC)</td><td>기관 인증서 truststore 등록</td></tr>
+  <tr><td>관리자 기본 계정 고정 크리덴셜</td><td>최초 로그인 강제 변경</td></tr>
+</table>
 
-      <!-- 왼쪽: AI Agent -->
-      <div>
-        <div class="arch-arrow" style="text-align:left;padding-left:70px;">↓ HTTP / SSE</div>
-        <div class="arch-box-v">
-          <div class="arch-box-header">
-            <span class="arch-box-num">③</span> Python AI Agent
-            <span class="arch-box-port">:8001</span>
-          </div>
-          <div class="arch-box-body" style="font-size:8.5pt;color:#334155;line-height:1.8;">
-            FastAPI · LangGraph ReAct<br>
-            MCP Client (9 tools)<br>
-            SSE 스트리밍 응답<br>
-            <div style="margin-top:8px;border-top:1px solid #e2e8f0;padding-top:8px;display:flex;flex-direction:column;gap:5px;">
-              <div><span class="arch-tag">stdio</span>&nbsp; MCP Server (mcp_server.py)</div>
-              <div><span class="arch-tag">HTTP</span>&nbsp; ④ Ollama :11434<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#64748b;font-size:7.5pt;">qwen3:30b-a3b (로컬 LLM)</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
+<h1 class="sec">9. 확장 시 고려사항</h1>
+<ul>
+  <li>다중 인스턴스 확장 시 인메모리 캐시·WebSocket 브로드캐스트를 Redis(+pub/sub)로 대체한다(캐시 서비스 인터페이스 분리 완료).</li>
+  <li>LLM 처리량 확장은 GPU 서버·vLLM 등 서빙 계층 교체로 대응한다.</li>
+  <li>수집 확장은 구 단위 샤딩(폴링 분할)으로 대응한다.</li>
+</ul>
 
-      <!-- 오른쪽: React -->
-      <div>
-        <div class="arch-arrow">↓ WebSocket · REST · SSE</div>
-        <div class="arch-box-v">
-          <div class="arch-box-header">
-            <span class="arch-box-num">⑧</span> React 프론트엔드
-            <span class="arch-box-port">:5173</span>
-          </div>
-          <div class="arch-box-body">
-            <div style="font-size:8pt;color:#475569;margin-bottom:8px;">Vite + React 19 + Leaflet (교차로 지도) + Zustand (상태관리)</div>
-            <div class="arch-chip-row">
-              <span class="arch-chip">MainDashboard</span>
-              <span class="arch-chip">MapDashboard</span>
-              <span class="arch-chip">CctvDashboard</span>
-              <span class="arch-chip">SimulationDashboard (VWorld 3D)</span>
-              <span class="arch-chip">NewsDashboard</span>
-              <span class="arch-chip">ComplaintManagePage</span>
-              <span class="arch-chip">CivilApp (민원 포털)</span>
-            </div>
-            <div style="margin-top:8px;border-top:1px solid #e2e8f0;padding-top:8px;">
-              <div class="arch-label">음성 어시스턴트</div>
-              <div class="arch-chip-row">
-                <span class="arch-chip alt">useClapDetection (AudioContext RMS)</span>
-                <span class="arch-chip alt">Web Speech API STT</span>
-                <span class="arch-chip alt">Google Cloud TTS</span>
-                <span class="arch-chip alt">useAssistant Hook</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Flask 3개 -->
-    <div class="arch-flask-grid">
-      <div class="arch-box-v">
-        <div class="arch-box-header light" style="font-size:9pt;">
-          <span class="arch-box-num">⑤</span> News Flask
-          <span class="arch-box-port">:5001</span>
-        </div>
-        <div class="arch-box-body">
-          <div class="arch-chip-row" style="margin-bottom:6px;">
-            <span class="arch-tag">POST /news/fetch</span>
-            <span class="arch-tag">GET /news/latest</span>
-          </div>
-          <div class="arch-inner-desc">Naver RSS → aiohttp 병렬 수집 → KoNLPy 형태소 → TF-IDF 과장성 → BERT 기사유형 4분류 → Groq 요약+감성 → Oracle TRAFFIC_NEWS</div>
-        </div>
-      </div>
-      <div class="arch-box-v">
-        <div class="arch-box-header light" style="font-size:9pt;">
-          <span class="arch-box-num">⑥</span> Forecast Flask
-          <span class="arch-box-port">:5002</span>
-        </div>
-        <div class="arch-box-body">
-          <div class="arch-chip-row" style="margin-bottom:6px;">
-            <span class="arch-tag">POST /predict_traffic</span>
-          </div>
-          <div class="arch-inner-desc">Spring RestTemplate 호출 → XGBoost 모델 추론 → Oracle TRAFFIC_STATION 조회 → 0~23시 상행/하행 교통량 예측 반환</div>
-        </div>
-      </div>
-      <div class="arch-box-v">
-        <div class="arch-box-header light" style="font-size:9pt;">
-          <span class="arch-box-num">⑦</span> civil_flask
-          <span class="arch-box-port">:8002</span>
-        </div>
-        <div class="arch-box-body">
-          <div class="arch-chip-row" style="margin-bottom:6px;">
-            <span class="arch-tag">POST /api/civil/classify</span>
-          </div>
-          <div class="arch-inner-desc">HEIC→JPEG 변환 (pillow_heif) → Gemini Vision API (폴백 체인) → 카테고리 분류 + 담당과 매핑 반환</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Oracle DB -->
-    <div class="arch-db-box">
-      <div class="arch-box-header">
-        Oracle Autonomous DB (Cloud · Wallet mTLS · HikariCP max=10 · oracledb Python 직접 연결)
-      </div>
-      <div class="arch-box-body">
-        <div class="arch-chip-row">
-          <span class="arch-chip">USERS</span>
-          <span class="arch-chip">CROSSROAD</span>
-          <span class="arch-chip">CROSSROAD_SUPPLEMENTAL_MAPPING</span>
-          <span class="arch-chip">CCTV3</span>
-          <span class="arch-chip">SIGNAL_CROSSROAD</span>
-          <span class="arch-chip">SIGNAL_PHASE</span>
-          <span class="arch-chip">SIGNAL_PLAN</span>
-          <span class="arch-chip">TRAFFIC_NEWS</span>
-          <span class="arch-chip">TRAFFIC_STATION</span>
-          <span class="arch-chip">COMPLAINTS</span>
-          <span class="arch-chip">COMPLAINT_PHOTOS</span>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <h2>2.2 포트별 통신 매트릭스</h2>
-  <table>
-    <thead><tr><th>호출 주체</th><th>목적지</th><th>프로토콜</th><th>용도</th></tr></thead>
-    <tbody>
-      <tr><td>브라우저</td><td>Spring :8080</td><td>HTTP REST + WS + SSE</td><td>전체 API, 실시간 신호, ReAct 스트리밍</td></tr>
-      <tr><td>Spring :8080</td><td>Python :8001</td><td>HTTP</td><td>ChatService → AI 에이전트 프록시</td></tr>
-      <tr><td>Spring :8080</td><td>Forecast Flask :5002</td><td>HTTP (RestTemplate)</td><td>ForecastService → XGBoost 예측 요청</td></tr>
-      <tr><td>Python :8001</td><td>Ollama :11434</td><td>HTTP</td><td>ChatOllama LLM 추론</td></tr>
-      <tr><td>Python :8001</td><td>AnythingLLM :3001</td><td>HTTP</td><td>search_project_docs RAG</td></tr>
-      <tr><td>MCP Server</td><td>Spring :8080</td><td>HTTP</td><td>신호조정·이메일 발송 역호출</td></tr>
-      <tr><td>MCP Server</td><td>Oracle Cloud</td><td>JDBC</td><td>교통 데이터 직접 쿼리</td></tr>
-      <tr><td>News Flask :5001</td><td>Naver News API</td><td>HTTPS</td><td>뉴스 기사 목록 수집</td></tr>
-      <tr><td>News Flask :5001</td><td>각 뉴스 URL</td><td>HTTPS (aiohttp)</td><td>뉴스 본문 비동기 수집</td></tr>
-      <tr><td>News Flask :5001</td><td>Groq API (외부)</td><td>HTTPS</td><td>llama-3.1-8b 뉴스 요약·감성 분석</td></tr>
-      <tr><td>News Flask :5001</td><td>Oracle Cloud</td><td>oracledb Wallet</td><td>TRAFFIC_NEWS 테이블 직접 삽입</td></tr>
-      <tr><td>Forecast Flask :5002</td><td>Oracle Cloud</td><td>oracledb Wallet</td><td>TRAFFIC_STATION 지점 정보 조회</td></tr>
-      <tr><td>Spring :8080</td><td>Oracle Cloud</td><td>JDBC/TLS</td><td>전체 테이블 조회/저장</td></tr>
-    </tbody>
-  </table>
 </div>
-
-<!-- §3 백엔드 상세 설계 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">3</div>
-    <div class="section-title">백엔드 상세 설계 (Spring Boot :8080)</div>
-  </div>
-
-  <h2>3.1 컨트롤러 레이어 (8개)</h2>
-  <table>
-    <thead><tr><th>컨트롤러</th><th>기본 경로</th><th>주요 엔드포인트</th><th>역할</th></tr></thead>
-    <tbody>
-      <tr><td><strong>ChatController</strong></td><td><code>/api</code></td><td>GET /context/{crsrdId}<br/>POST /chat, /bottleneck-email, /simulation-chat</td><td>AI 챗봇 프록시 (Python :8001 위임)</td></tr>
-      <tr><td><strong>MapController</strong></td><td>(없음)</td><td>GET /api/signals<br/>POST /api/fetch-area<br/>POST /api/district/report</td><td>구역 전환·신호 캐시 조회·구 리포트</td></tr>
-      <tr><td><strong>SignalController</strong></td><td><code>/api/signal</code></td><td>GET /crossroads, /crossroads/{intNo}<br/>GET /simulation/context/{intNo}</td><td>신호 현시·운영계획 조회</td></tr>
-      <tr><td><strong>CctvController</strong></td><td><code>/api/cctv</code></td><td>GET /, GET /area</td><td>CCTV 목록·반경 내 CCTV</td></tr>
-      <tr><td><strong>NewsController</strong></td><td><code>/api</code></td><td>GET /news/latest?limit=&amp;category=</td><td>TRAFFIC_NEWS 테이블 조회 (DB → JSON)</td></tr>
-      <tr><td><strong>ForecastController</strong></td><td><code>/api</code></td><td>GET /forecast/station/{stationId}<br/>GET /stations</td><td>Forecast Flask :5002 프록시·지점 목록</td></tr>
-      <tr><td><strong>UserController</strong></td><td><code>/api/auth</code></td><td>POST /login, /register, /find-pw<br/>GET /find-id, /admin/users<br/>POST /admin/approve, /reject, /alert, /change-pw</td><td>회원가입·로그인·관리자 승인·알림</td></tr>
-      <tr><td><strong>EmailController</strong></td><td><code>/api/email</code></td><td>POST /send</td><td>MCP send_email_report + 임시비번 공통 SMTP</td></tr>
-    </tbody>
-  </table>
-
-  <h2>3.2 스케줄러 2개</h2>
-  <div class="sched-card">
-    <div class="sched-header blue">① TrafficScheduler — V2X 신호 전담</div>
-    <div class="sched-body">
-      <p style="font-size:9.5pt;color:#334155;margin-bottom:8px;"><code>@PostConstruct</code>: jamsil lat/lon/radius로 기본 구역 설정 | <code>@Scheduled(delay=10s, fixedRate=${traffic.poll.interval-ms})</code></p>
-      <table><thead><tr><th>단계</th><th>동작</th></tr></thead><tbody>
-        <tr><td>1</td><td>isAreaRefreshInProgress()? → true 이면 스킵</td></tr>
-        <tr><td>2</td><td>CrossroadRepository.findWithinRadius() — Haversine JPQL</td></tr>
-        <tr><td>3</td><td>V2xApiService.fetchSignalData() — 빈 결과 시 캐시 유지·return</td></tr>
-        <tr><td>4</td><td>supplementalDataCacheService.enrichTrafficStatuses()</td></tr>
-        <tr><td>5</td><td>cacheService.updateAllSignals() → webSocketHandler.broadcast()</td></tr>
-      </tbody></table>
-    </div>
-  </div>
-  <div class="sched-card">
-    <div class="sched-header teal">② SupplementalDataScheduler — 보조 데이터 4종</div>
-    <div class="sched-body">
-      <p style="font-size:9.5pt;color:#334155;margin-bottom:8px;"><code>@ConditionalOnProperty(traffic.supplemental.enabled=true)</code></p>
-      <table><thead><tr><th>메서드</th><th>delay</th><th>rate</th><th>동작</th></tr></thead><tbody>
-        <tr><td><code>refreshWeather()</code></td><td>3s</td><td>10분</td><td>KMA 초단기실황 → updateWeather(), 실패 → markWeatherStale()</td></tr>
-        <tr><td><code>refreshRoadLinkMappings()</code></td><td>10s</td><td>24시간</td><td>교차로↔TOPIS링크·위험도링크 매핑 갱신</td></tr>
-        <tr><td><code>refreshRoadSpeeds()</code></td><td>15s</td><td>60s</td><td>TOPIS 링크별 속도 병렬 수집 (AtomicBoolean 가드)</td></tr>
-        <tr><td><code>refreshRoadRisks()</code></td><td>20s</td><td>5분</td><td>위험도 수집 후 broadcastCurrentTrafficStatuses() — pending 플래그로 구역 변경 즉시 재실행</td></tr>
-      </tbody></table>
-    </div>
-  </div>
-
-  <h2>3.3 인메모리 캐시</h2>
-  <div class="layer-grid">
-    <div class="layer-card"><div class="layer-card-header blue">TrafficCacheService</div><div class="layer-card-body"><ul>
-      <li><code>signalCache: ConcurrentHashMap&lt;crsrdId, TrafficStatus&gt;</code> (PoC — Redis 예정)</li>
-      <li><code>centerLat/Lon/Radius</code>: volatile 현재 구역</li>
-      <li><code>areaRefreshInProgress: AtomicBoolean</code> — 동시 수집 방지</li>
-    </ul></div></div>
-    <div class="layer-card"><div class="layer-card-header teal">SupplementalDataCacheService</div><div class="layer-card-body"><ul>
-      <li>speedCache: linkId → RoadSpeedSnapshot</li>
-      <li>weatherCache: WeatherSnapshot (전역 1개)</li>
-      <li>riskCache: lineString/linkId → RoadRiskSnapshot</li>
-      <li>mappings: crsrdId → CrossroadRoadLinkMapping</li>
-      <li><code>enrichTrafficStatus()</code>: 4종 병합 + stale 플래그</li>
-    </ul></div></div>
-  </div>
-
-  <h2>3.4 WebSocket 발행 주체 (3곳)</h2>
-  <table>
-    <thead><tr><th>발행 주체</th><th>시점</th></tr></thead>
-    <tbody>
-      <tr><td>TrafficScheduler</td><td>V2X 폴링 완료 후</td></tr>
-      <tr><td>SupplementalDataScheduler</td><td>refreshRoadRisks() 완료 후 broadcastCurrentTrafficStatuses()</td></tr>
-      <tr><td>MapController.fetchArea()</td><td>구역 전환(fetch-area) 완료 후</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- §4 AI 에이전트 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">4</div>
-    <div class="section-title">AI 에이전트 (Python FastAPI :8001)</div>
-  </div>
-  <div class="warn-box"><strong>포트 정정:</strong> 일부 MD에 8000 기재 → <code>agent_server.py uvicorn.run()</code> 실제 포트: <strong>8001</strong></div>
-
-  <h2>4.1 엔드포인트 8개</h2>
-  <table>
-    <thead><tr><th>경로</th><th>방식</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td><code>/api/agent/chat</code></td><td>POST 동기</td><td>교통 질의</td></tr>
-      <tr><td><code>/api/agent/chat/stream</code></td><td>POST SSE</td><td>교통 질의 스트리밍</td></tr>
-      <tr><td><code>/api/agent/simulation-chat</code></td><td>POST 동기</td><td>시뮬레이션 채팅</td></tr>
-      <tr><td><code>/api/agent/bottleneck-email</code></td><td>POST 동기</td><td>병목 이메일</td></tr>
-      <tr><td><code>/api/agent/bottleneck-email/stream</code></td><td>POST SSE</td><td>병목 이메일 스트리밍</td></tr>
-      <tr><td><code>/api/agent/district-report</code></td><td>POST 동기</td><td>구 단위 리포트</td></tr>
-      <tr><td><code>/api/agent/district-report/stream</code></td><td>POST SSE</td><td>구 단위 리포트 스트리밍</td></tr>
-      <tr><td><code>/health</code></td><td>GET</td><td>헬스체크</td></tr>
-    </tbody>
-  </table>
-  <p style="font-size:9.5pt;"><strong>LLM:</strong> <code>ChatOllama(model="qwen3:30b-a3b", temperature=0.3, num_predict=4096, num_ctx=8192)</code> &nbsp;|&nbsp; <strong>SSE 이벤트:</strong> action · observation · thought · answer · done · error</p>
-
-  <h2>4.2 MCP 9-tool (mcp_server.py, stdio)</h2>
-  <table>
-    <thead><tr><th>#</th><th>도구명</th><th>실제 동작 (코드 기준)</th></tr></thead>
-    <tbody>
-      <tr><td class="num">1</td><td><code>get_traffic_data</code></td><td>TrafficStatus 조회 — <strong>rmndCs÷10 변환을 MCP에서 수행</strong></td></tr>
-      <tr><td class="num">2</td><td><code>get_bottleneck_list</code></td><td>구 단위 속도 임계치 이하 교차로 목록</td></tr>
-      <tr><td class="num">3</td><td><code>search_crossroad_by_name</code></td><td>교차로명 DB LIKE 검색</td></tr>
-      <tr><td class="num">4</td><td><code>get_district_traffic</code></td><td>구 전체 교통 현황 요약</td></tr>
-      <tr><td class="num">5</td><td><code>set_signal_timing</code></td><td>Spring /api/signal/adjust → <strong>현재 미구현(404)</strong></td></tr>
-      <tr><td class="num">6</td><td><code>send_alert</code></td><td>WebSocket 긴급 알림</td></tr>
-      <tr><td class="num">7</td><td><code>send_email_report</code></td><td>Spring /api/email/send → Gmail SMTP (<strong>Python이 SMTP 직접 접근 안 함</strong>)</td></tr>
-      <tr><td class="num">8</td><td><code>get_simulation_context</code></td><td>시뮬레이션 신호 계획 조회</td></tr>
-      <tr><td class="num">9</td><td><code>search_project_docs</code></td><td>AnythingLLM :3001 RAG (mode=query)</td></tr>
-    </tbody>
-  </table>
-  <p style="font-size:9pt;color:#64748b;">RISK_MAP (코드 기준 4단계): <code>"01"→안전, "02"→주의, "03"→위험, "04"→심각</code></p>
-
-  <h2>4.3 LangGraph ReAct + SSE</h2>
-  <div class="flow-box">
-    <div class="flow-node">Query</div><div class="flow-arrow">→</div>
-    <div class="flow-node green">Thought<br/><span style="font-size:8pt;font-weight:400;">SSE:thought</span></div><div class="flow-arrow">→</div>
-    <div class="flow-node orange">Action<br/><span style="font-size:8pt;font-weight:400;">SSE:action</span></div><div class="flow-arrow">→</div>
-    <div class="flow-node purple">Observation<br/><span style="font-size:8pt;font-weight:400;">SSE:observation</span></div><div class="flow-arrow">→</div>
-    <div class="flow-node teal">Answer<br/><span style="font-size:8pt;font-weight:400;">SSE:answer</span></div><div class="flow-arrow">→</div>
-    <div class="flow-node gray">Done</div>
-  </div>
-  <p style="font-size:9.5pt;"><code>extract_answer()</code>: &lt;think&gt; 태그 제거, think 이후 비면 think 내용 사용. bottleneck-email 스트리밍: 완료 후 Python이 httpx로 직접 <code>/api/email/send</code> 호출.</p>
-</div>
-
-<!-- §5 뉴스 감성 분석 파이프라인 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">5</div>
-    <div class="section-title">뉴스 감성 분석 파이프라인 (Flask :5001)</div>
-  </div>
-
-  <div class="info-box">
-    <strong>파일 위치:</strong> <code>backend/News_flask_server/app.py</code> (Flask 서버) · <code>news_common.py</code> (공통 파이프라인 클래스) · <code>run_all.py</code> (수동 실행 스크립트) <br/>
-    BERT 모델(<code>model.pt</code>), TF-IDF(<code>clickbait_model.joblib</code>, <code>tfidf_vectorizer.joblib</code>)을 서버 시작 시 한 번만 로드(싱글톤 ModelManager).
-  </div>
-
-  <h2>5.1 News Flask 서버 엔드포인트</h2>
-  <table>
-    <thead><tr><th>경로</th><th>메서드</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td><code>/news/fetch</code></td><td>POST</td><td>뉴스 수집 파이프라인 백그라운드 실행 시작. 이미 실행 중이면 409 반환 (threading.Lock 가드)</td></tr>
-      <tr><td><code>/news/latest</code></td><td>GET</td><td>Oracle TRAFFIC_NEWS 테이블에서 최신 뉴스 조회 (?limit=&category=)</td></tr>
-      <tr><td><code>/health</code></td><td>GET</td><td>BERT 모델 로드 상태 포함 헬스체크</td></tr>
-    </tbody>
-  </table>
-  <p style="font-size:9pt;color:#64748b;">* Spring NewsController의 GET /api/news/latest는 Oracle DB를 직접 조회한다. News Flask /news/fetch는 수집 트리거 전용이다.</p>
-
-  <h2>5.2 뉴스 수집 파이프라인 단계별 상세</h2>
-
-  <div class="pipeline-step">
-    
-    <div class="pipeline-content">
-      <div class="pipeline-title">① Naver News API 호출 (섹터별 순차, 0.5초 간격)</div>
-      <div class="pipeline-desc">
-        4개 섹터(서울교통·교통사고·대중교통·날씨교통) 또는 run_all.py 5개 섹터(교통사고·도로혼잡·대중교통·교통정책·스마트교통).<br/>
-        각 섹터별 <code>search_query</code>로 Naver 뉴스 API 호출 → 최대 100건 후보 수집.<br/>
-        헤더: <code>X-Naver-Client-Id / X-Naver-Client-Secret</code> (환경변수 .env)
-      </div>
-    </div>
-  </div>
-  <div class="pipeline-step">
-    
-    <div class="pipeline-content">
-      <div class="pipeline-title">② 뉴스 본문 비동기 수집 (aiohttp, Semaphore=20)</div>
-      <div class="pipeline-desc">
-        각 기사 URL에서 <code>#dic_area, #newsct_article, #articeBody</code> CSS 선택자로 본문 추출.<br/>
-        타임아웃 5초, 실패 시 RSS description 폴백.
-      </div>
-    </div>
-  </div>
-  <div class="pipeline-step">
-    
-    <div class="pipeline-content">
-      <div class="pipeline-title">③ 관련도 필터 (KoNLPy Okt 형태소 분석)</div>
-      <div class="pipeline-desc">
-        공통 제외 단어(<code>EXCLUDE_WORDS</code>: 정치·검찰·부동산 등)·제목 제외 단어(<code>TITLE_EXCLUDE_WORDS</code>: 증시·코스피 등) 필터.<br/>
-        섹터별 <code>keywords</code> 리스트로 제목 직접 포함 또는 KoNLPy 명사 중 1개 이상 매칭 여부 확인.<br/>
-        KoNLPy는 스레드 비안전 → <code>threading.Lock</code> + <code>ThreadPoolExecutor</code> 오프로드.
-      </div>
-    </div>
-  </div>
-  <div class="pipeline-step">
-    
-    <div class="pipeline-content">
-      <div class="pipeline-title">④ TF-IDF + 로지스틱 회귀 — 과장성(클릭베이트) 점수</div>
-      <div class="pipeline-desc">
-        <code>clickbait_model.joblib</code> + <code>tfidf_vectorizer.joblib</code> 로드.<br/>
-        제목 + 본문을 벡터화 → 로지스틱 회귀 예측 → <code>clickbait_prob</code> (0~100%) 계산.<br/>
-        TRAFFIC_NEWS 테이블에 <code>CLICKBAIT_PROB</code>로 저장.
-      </div>
-    </div>
-  </div>
-  <div class="pipeline-step">
-    
-    <div class="pipeline-content">
-      <div class="pipeline-title">⑤ BERT 기사 유형 분류 (ThreadPoolExecutor 오프로드)</div>
-      <div class="pipeline-desc">
-        모델: <code>model.pt</code> (kykim/bert-kor-base 파인튜닝, 4분류 헤드 Linear(768→4)).<br/>
-        본문을 최대 100자 청크로 분리 → 각 청크 128토큰 tokenize → BERT 추론 → Softmax → 가장 많은 레이블 투표.<br/>
-        결과: <strong>사실형 / 예측형 / 대화형 / 추론형</strong> + 신뢰도(%).<br/>
-        CUDA 사용 가능 시 GPU, 없으면 CPU 자동 선택.
-      </div>
-    </div>
-  </div>
-  <div class="pipeline-step">
-    
-    <div class="pipeline-content">
-      <div class="pipeline-title">⑥ Groq API — 1문장 요약 + 감성 분석 (비동기, Semaphore=5)</div>
-      <div class="pipeline-desc">
-        모델: <code>llama-3.1-8b-instant</code> (Groq 외부 API). 3개 API 키 라운드로빈, 429 시 자동 다음 키 전환 (asyncio.sleep 1s).<br/>
-        시스템 프롬프트로 JSON 응답 강제: <code>{"summary": "…", "sentiment": "혼잡악화|교통개선|중립"}</code>.<br/>
-        본문 최대 800자 전송.
-      </div>
-    </div>
-  </div>
-  <div class="pipeline-step">
-    
-    <div class="pipeline-content">
-      <div class="pipeline-title">⑦ asyncio.Queue → Oracle DB 단건 즉시 삽입</div>
-      <div class="pipeline-desc">
-        DB writer는 별도 <code>ThreadPoolExecutor(max_workers=1)</code>로 단일 스레드 순차 삽입.<br/>
-        중복 링크(PK 충돌) → IntegrityError 무시·건너뜀.<br/>
-        테이블: <code>TRAFFIC_NEWS</code> (link·category·title·summary·sentiment·pub_date·clickbait_prob·article_type·type_prob).
-      </div>
-    </div>
-  </div>
-
-  <h2>5.3 ML 모델 상세</h2>
-  <table>
-    <thead><tr><th>모델</th><th>파일</th><th>역할</th><th>출력</th></tr></thead>
-    <tbody>
-      <tr><td>BERT 기사 유형 분류</td><td><code>model.pt</code></td><td>kykim/bert-kor-base 파인튜닝, Linear(768→4) 헤드</td><td>사실형 / 예측형 / 대화형 / 추론형 + 신뢰도%</td></tr>
-      <tr><td>TF-IDF 과장성 탐지</td><td><code>clickbait_model.joblib</code><br/><code>tfidf_vectorizer.joblib</code></td><td>로지스틱 회귀 (scikit-learn joblib)</td><td>클릭베이트 확률 0~100%</td></tr>
-      <tr><td>Groq LLM 요약·감성</td><td>외부 API</td><td>llama-3.1-8b-instant, JSON 응답 강제</td><td>summary 1문장, sentiment 3분류</td></tr>
-    </tbody>
-  </table>
-
-  <h2>5.4 뉴스 카테고리 및 감성 분류 기준</h2>
-  <div class="layer-grid">
-    <div class="layer-card">
-      <div class="layer-card-header pink">뉴스 카테고리 (app.py 기준 4개)</div>
-      <div class="layer-card-body">
-        <table style="margin:0;font-size:9pt;">
-          <thead><tr><th>카테고리</th><th>검색 쿼리</th></tr></thead>
-          <tbody>
-            <tr><td>서울교통</td><td>서울 교통 정체</td></tr>
-            <tr><td>교통사고</td><td>서울 교통사고</td></tr>
-            <tr><td>대중교통</td><td>서울 지하철 버스</td></tr>
-            <tr><td>날씨교통</td><td>서울 기상</td></tr>
-          </tbody>
-        </table>
-        <p style="font-size:8.5pt;color:#64748b;margin-top:8px;">run_all.py는 5개: 교통사고·도로혼잡·대중교통·교통정책·스마트교통</p>
-      </div>
-    </div>
-    <div class="layer-card">
-      <div class="layer-card-header rose">Groq 감성 3분류 기준</div>
-      <div class="layer-card-body">
-        <table style="margin:0;font-size:9pt;">
-          <thead><tr><th>감성</th><th>해당 상황</th></tr></thead>
-          <tbody>
-            <tr><td><span class="badge badge-red">혼잡악화</span></td><td>사고·통제·정체 심화·파업·운행 중단</td></tr>
-            <tr><td><span class="badge badge-green">교통개선</span></td><td>신호 최적화·도로 개통·혼잡 해소·교통 대책</td></tr>
-            <tr><td><span class="badge badge-gray">중립</span></td><td>단순 사실 전달·영향 미미</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- §6 교통량 예측 서버 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">6</div>
-    <div class="section-title">교통량 예측 서버 (Flask :5002)</div>
-  </div>
-
-  <div class="info-box">
-    <strong>파일:</strong> <code>backend/flask_server/app.py</code><br/>
-    Spring <code>ForecastService</code>가 RestTemplate으로 <code>http://127.0.0.1:5002/predict_traffic</code>를 호출한다.
-  </div>
-
-  <h2>6.1 구성</h2>
-  <table>
-    <thead><tr><th>항목</th><th>내용</th></tr></thead>
-    <tbody>
-      <tr><td>엔드포인트</td><td><code>POST /predict_traffic</code></td></tr>
-      <tr><td>ML 모델</td><td><code>xgboost_traffic_model.joblib</code> (XGBoost)</td></tr>
-      <tr><td>입력 피처 9개</td><td>Station_Number, Direction, Latitude, Longitude, Hour(1~24), Weekday_Weekend, Year, Month, Day_of_Week_Num</td></tr>
-      <tr><td>DB 조회</td><td>TRAFFIC_STATION 테이블 → 지점명·위경도 (oracledb Wallet mTLS)</td></tr>
-      <tr><td>예측 범위</td><td>오늘 0~23시, 상행(Direction=0)·하행(Direction=1) 각각</td></tr>
-      <tr><td>출력</td><td><code>{"success":true, "station_number":X, "station_name":"…", "forecast":[{"time":"00:00","direction_0":N,"direction_1":N},…]}</code></td></tr>
-    </tbody>
-  </table>
-
-  <h2>6.2 예측 흐름</h2>
-  <div class="step-list">
-    <div class="step-item"><div class="step-num">1</div><div class="step-content"><div class="step-title">Spring ForecastController → ForecastService.getForecast(stationId)</div><div class="step-desc">RestTemplate.postForObject("http://127.0.0.1:5002/predict_traffic", {Station_Number: id}, Map.class)</div></div></div>
-    <div class="step-item"><div class="step-num">2</div><div class="step-content"><div class="step-title">Flask: DB에서 지점 정보 조회</div><div class="step-desc">TRAFFIC_STATION WHERE STATION_ID = :1 → 이름·위·경도 획득</div></div></div>
-    <div class="step-item"><div class="step-num">3</div><div class="step-content"><div class="step-title">시간대별 피처 생성 (0~23시)</div><div class="step-desc">datetime.now().replace(hour=0) + timedelta(hours=i), weekday/weekend 보정, Hour = i+1</div></div></div>
-    <div class="step-item"><div class="step-num">4</div><div class="step-content"><div class="step-title">XGBoost 예측 (상행·하행 각각)</div><div class="step-desc">DataFrame 컬럼 순서 FEATURE_COLUMNS에 맞춰 정렬 → model.predict() → max(0, round(pred))</div></div></div>
-    <div class="step-item"><div class="step-num">5</div><div class="step-content"><div class="step-title">24시간 예측 배열 반환</div><div class="step-desc">React ForecastChart에서 시간대별 상·하행 교통량 차트로 시각화</div></div></div>
-  </div>
-</div>
-
-<!-- §7 데이터 흐름 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">7</div>
-    <div class="section-title">데이터 흐름 설계</div>
-  </div>
-
-  <h2>7.1 실시간 신호 폴링 (TrafficScheduler, 30s)</h2>
-  <div class="arch-box">① isAreaRefreshInProgress() → true 이면 스킵
-② CrossroadRepository.findWithinRadius(lat,lon,km) — Haversine JPQL
-③ V2xApiService.fetchSignalData() — V2X SPaT (빈 결과→캐시유지)
-④ supplementalDataCacheService.enrichTrafficStatuses()
-   speed(TOPIS) + weather(KMA) + riskGrade(위험도) 병합
-⑤ cacheService.updateAllSignals() → webSocketHandler.broadcast()
-   → React trafficStore → Leaflet 마커 갱신</div>
-
-  <h2>7.2 보조 데이터 수집 (SupplementalDataScheduler, 독립 주기)</h2>
-  <div class="arch-box">refreshWeather (3s delay, 10min rate):
-  KMA 초단기실황 → LCC 격자 변환(KmaGridConverter) → updateWeather()
-
-refreshRoadLinkMappings (10s delay, 24h rate):
-  CrossroadSupplementalMappingService.loadOrCreateMappings()
-  → CROSSROAD_SUPPLEMENTAL_MAPPING DB 조회/없으면 TOPIS·위험도 API로 생성
-
-refreshRoadSpeeds (15s delay, 60s rate, AtomicBoolean 가드):
-  getMappings() → speedLinkId Set
-  forEachParallel(topisSpeedMaxConcurrency, topisSpeedMaxWaitMs)
-  → TopisApiService.fetchSpeed() 병렬 → updateSpeed()
-
-refreshRoadRisks (20s delay, 5min rate, AtomicBoolean+pending 가드):
-  roadRiskRefreshTargets() (minAgeMs 경과 링크만)
-  → RoadRiskApiService.fetchRisk() 병렬(max roadRiskMaxConcurrency)
-  → updateRisk()
-  → broadcastCurrentTrafficStatuses() (WS 재발행)
-  → pending=true 이면 refreshRoadRisksAsync() 즉시 재실행</div>
-
-  <h2>7.3 AI 챗봇 요청·SSE 응답</h2>
-  <div class="arch-box">React → POST /api/chat (Spring ChatController)
-  → ChatService.ask() → GET /api/context/{crsrdId} (TrafficStatus 보강)
-  → HTTP proxy → Python /api/agent/chat/stream (SSE 시작)
-
-Python LangGraph ReAct Loop:
-  SSE:thought → SSE:action
-    MCP tools: get_traffic_data / search_crossroad / search_project_docs
-               / set_signal_timing[404] / send_email_report → Spring /api/email/send
-  SSE:observation → (반복)
-  SSE:answer (token stream) → SSE:done</div>
-
-  <h2>7.4 뉴스 수집 파이프라인</h2>
-  <div class="arch-box">POST /news/fetch (News Flask :5001) → threading.Thread 백그라운드 시작
-
-asyncio.run(run_pipeline_async()):
-  섹터별 Naver News API (0.5s 간격) → 기사 목록
-  forall articles (asyncio.gather):
-    aiohttp 본문 수집 (Semaphore=20)
-    KoNLPy Okt.nouns() 섹터 필터 (ThreadPoolExecutor cpu)
-    TF-IDF predict_clickbait() → clickbait_prob
-    BERT predict_type() 청크 분류 (ThreadPoolExecutor cpu)
-    Groq analyze() 요약+감성 (Semaphore=5, 0.3s sleep)
-    asyncio.Queue.put(news_obj)
-
-DB writer (별도 asyncio Task):
-  Queue.get() → DatabaseManager.save_one()
-  (ThreadPoolExecutor db, max_workers=1)
-  → INSERT INTO TRAFFIC_NEWS ... (중복 IntegrityError 무시)</div>
-
-  <h2>7.5 구역 전환 (fetch-area)</h2>
-  <div class="arch-box">POST /api/fetch-area (MapController)
-① cacheService.beginAreaRefresh() CAS → 실패 시 409
-② setCenter(lat,lon,radius)
-③ CrossroadRepository.findWithinRadius()
-④ supplementalDataCacheService.clearRoadSupplementalData()
-⑤ crossroadSupplementalMappingService.loadOrCreateMappings()
-⑥ V2xApiService.fetchSignalData() → 빈 결과 시 503
-⑦ cacheService.updateAllSignals()
-⑧ SupplementalDataScheduler.refreshCurrentAreaSupplementalDataAsync() [비동기]
-⑨ enrichTrafficStatuses() → webSocketHandler.broadcast()
-finally: cacheService.finishAreaRefresh()</div>
-
-  <h2>7.6 음성 어시스턴트 데이터 흐름 <span style="font-size:9pt;color:#2563eb;">[v4.0 신규]</span></h2>
-  <p style="font-size:9.5pt;color:#334155;margin-bottom:8px;">
-    <code>hooks/useAssistant.js</code>가 박수 감지·STT·TTS·AI 스트리밍을 통합 관리한다. 모든 흐름은 <code>voiceUI.status</code> 상태 머신으로 제어된다.
-  </p>
-  <div class="arch-box">── 활성화 경로 ──────────────────────────────────────────────
-① useClapDetection (hooks/useClapDetection.js)
-   AudioContext.createAnalyser(fftSize=256, smoothing=0.05)
-   requestAnimationFrame 루프: RMS &gt; 0.22 AND delta(RMS) &gt; 0.15 → 박수 1회
-   700ms 이내 2회 누적 → onDoubleClap() → 3초 쿨다운
-   또는: AI 플로팅 버튼 클릭 → onFloatingClick()
-
-── 음성 세션 흐름 (runVoiceSession) ──────────────────────────
-status: idle → greeting
-
-② speakAsync(인사 메시지)  [lib/tts.js]
-   POST https://texttospeech.googleapis.com/v1/text:synthesize
-   voice: ko-KR-Neural2-C, MP3 → Audio.play()
-   전역 단일 큐(_ttsChain) - 발화 순서 보장, 중복 방지
-
-status: greeting → idle(TTS 완료 후)
-
-③ waitForVoiceInput()  [자동 STT 시작, 600ms 딜레이]
-   Web Speech API SpeechRecognition (lang='ko-KR')
-   마이크 버튼으로도 수동 토글 가능
-
-status: idle → listening
-
-④ 네비게이션 의도 분류 (선택적)
-   POST http://localhost:8001/api/nav/intent { text: 사용자발화 }
-   → intent.action: navigate|select_gu|mypage|logout|unknown
-   → action != unknown 이면 onNavIntent(intent) 직접 처리 후 종료
-
-⑤ 이메일 사전 확인 팝업 (email 있을 때)
-   speakAsync("분석 결과를 이메일로 받아보시겠어요?")
-   emailConfirmRef Promise → 버튼(네/아니요) 대기
-
-status: idle → thinking
-
-⑥ AI 스트리밍 (streamAgent)
-   POST http://localhost:8001/api/agent/chat/stream  [SSE]
-   또는 /api/agent/district-report/stream (구 브리핑)
-   Body: { question, userEmail }
-   SSE 이벤트 파싱:
-     type=action  → voiceUI.steps 추가 + speakAsync(label, rate=1.4)
-     type=observation → voiceUI.steps 추가
-     type=answer  → voiceUI.messages 추가
-
-status: thinking → speaking
-
-⑦ 최종 답변 TTS 재생
-   speakAsync(reportText)
-   TTS 재생 중 박수 2번 → window.__stopBriefingAudio() 즉시 중단
-
-⑧ 이메일 발송 확인 (skipEmailConfirm=false일 때)
-   confirmed → POST http://localhost:8080/api/email/send
-   { to, subject, body: reportText }
-
-status: speaking → email_confirm → done
-
-── 패널 닫기 (closeVoiceUI) ────────────────────────────────
-AbortController.abort() → SSE fetch 중단
-stopAllTTS() → window.__stopBriefingAudio()
-voiceInputRef.current(null) → waitForVoiceInput hang 해제
-messages 보존 (active=false만, 재오픈 시 이전 대화 표시)</div>
-
-  <h2>7.7 시민 민원 포털 데이터 흐름 <span style="font-size:9pt;color:#2563eb;">[v4.0 신규]</span></h2>
-  <p style="font-size:9.5pt;color:#334155;margin-bottom:8px;">
-    진입: LoginPage "민원 신고" 버튼 → <code>CivilApp</code> → <code>CivilLoginPage</code> 또는 <code>CivilDashboard</code><br/>
-    인증 세션: <code>localStorage("ts_civil_user")</code> — 내부 관제 JWT와 완전 분리
-  </p>
-  <div class="arch-box">── 시민 인증 (Spring :8080 CivilController /api/civil/auth) ──
-POST /api/civil/auth/login  { userId, password }
-POST /api/civil/auth/register  { userId, password, name, phone, email }
-  → USERS 테이블 role=CIVIL 저장 (BCrypt 해시)
-  → 로그인 성공 시 { success, userId, name, email } → localStorage
-
-── 민원 제출 흐름 (CivilDashboard.jsx) ─────────────────────
-① 카카오맵 클릭 → selectedLoc { lat, lng, address }
-
-② 사진 업로드 → Gemini Vision 분류 (civil_flask_server :8002)
-   POST http://localhost:8002/api/civil/classify  (multipart)
-     file: 사진 (HEIC/HEIF → JPEG 자동 변환 pillow_heif)
-     title: 민원 제목
-   Gemini Vision 호출 순서: gemini-2.5-flash → gemini-2.0-flash
-                            → gemini-2.5-flash-lite → gemini-2.0-flash-lite (폴백)
-   응답: { success, category, department, reason, convertedImage }
-   → UI에 추천 카테고리 + 담당과 표시
-
-③ 날씨 조회
-   GET http://localhost:8080/api/civil/auth/weather?lat=&lng=
-   → WeatherApiService.fetchWeather() → KMA 초단기실황
-   → { temp, precipitation, humidity, windSpeed, weatherDesc }
-
-④ 민원 최종 제출
-   POST http://localhost:8080/api/complaints  (multipart FormData)
-   Params: userId, userName, title, category, content,
-           lat, lng, address, department, aiReason, photos[]
-   → ComplaintService.create()
-     → COMPLAINTS 테이블 INSERT
-     → COMPLAINT_PHOTOS 테이블 INSERT (사진 바이트 저장)
-
-── 관리자 민원 관리 (ComplaintManagePage.jsx) ───────────────
-GET  /api/complaints?guName=    → 목록 조회 (전체 or 구 필터)
-PATCH /api/complaints/{id}/status  { status: "처리중"|"완료" }
-DELETE /api/complaints/{id}
-GET  /api/complaints/photos/{photoId}  → 사진 바이트 반환</div>
-
-  <h2>7.8 관리자 사용자 승인 관리 데이터 흐름 <span style="font-size:9pt;color:#2563eb;">[v4.0 신규]</span></h2>
-  <p style="font-size:9.5pt;color:#334155;margin-bottom:8px;">
-    <code>UserController (/api/auth)</code>가 담당. admin 계정은 서버 시작 시 <code>AdminInitializer</code>가 자동 생성.
-  </p>
-  <div class="arch-box">── 사용자 관리 엔드포인트 (UserController) ─────────────────
-GET  /api/auth/admin/users        → 전체 사용자 목록
-POST /api/auth/admin/approve/{userId}  → USERS.status = APPROVED
-POST /api/auth/admin/reject/{userId}   → USERS.status = REJECTED
-
-── 임시 비밀번호 발급 흐름 ─────────────────────────────────
-POST /api/auth/find-pw  { userId, email }
-① UserService.findPw() — userId + email 일치 검증
-② UUID 기반 임시 비밀번호 생성 → BCrypt 해시 저장
-③ Gmail SMTP (포트 587 STARTTLS) → 사용자 이메일로 발송
-④ isTempPw = true 플래그 설정
-⑤ 해당 사용자 다음 로그인 시:
-   UserService.login() → isTempPw=true 확인
-   응답: { ..., isTempPw: true }
-   → App.jsx: setPage('mypage') 강제 이동
-   → MyPage에서 비밀번호 변경 → isTempPw = false
-
-── AdminInitializer (서버 시작 시) ─────────────────────────
-@PostConstruct: USERS 테이블에 admin 계정 없으면
-  admin / BCrypt(admin1234) / role=ADMIN 자동 INSERT</div>
-</div>
-
-<!-- §8 데이터베이스 설계 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">8</div>
-    <div class="section-title">데이터베이스 설계</div>
-  </div>
-
-  <div class="info-box">Oracle Autonomous Database (Cloud), Wallet mTLS — Spring JPA(HikariCP max=10)와 Python oracledb(직접 연결) 두 경로로 접근한다.</div>
-
-  <h2>8.1 엔티티 9개 (DB 테이블 기준)</h2>
-  <table>
-    <thead><tr><th>Java 엔티티</th><th>DB 테이블</th><th>PK</th><th>주요 컬럼</th></tr></thead>
-    <tbody>
-      <tr><td><code>CctvEntity</code></td><td>CCTV3</td><td>CCTV_ID</td><td>CCTV_NM, LAT, LON, STREAM_ID(UTIC iframe), CCTV_CH</td></tr>
-      <tr><td><code>CrossroadEntity</code></td><td>CROSSROAD</td><td>CRSRD_ID</td><td>CRSRD_NM, LAT, LON (Haversine 쿼리에 사용)</td></tr>
-      <tr><td><code>CrossroadSupplementalMappingEntity</code></td><td>CROSSROAD_SUPPLEMENTAL_MAPPING</td><td>CRSRD_ID</td><td>GU_NAME, RISK_SOURCE_LINK_ID, RISK_LINE_STRING(max4000), RISK_DISTANCE_METERS, SPEED_LINK_ID, SPEED_DISTANCE_METERS, UPDATED_AT_MS</td></tr>
-      <tr><td><code>SignalCrossroadEntity</code></td><td>SIGNAL_CROSSROAD</td><td>INT_NO</td><td>INT_NM, REGION_CD, X_COORD(경도×1e7), Y_COORD(위도×1e7), UPD_DTIME</td></tr>
-      <tr><td><code>SignalPhaseEntity</code></td><td>SIGNAL_PHASE</td><td>@EmbeddedId (INT_NO+MAP_NO)</td><td>A_RING_1~8(방향코드 문자열), B_RING_1~8 — 예: "S183003"=남→북 직진</td></tr>
-      <tr><td><code>SignalPlanEntity</code></td><td>SIGNAL_PLAN</td><td>@EmbeddedId (INT_NO+PLAN_NO+PLAN_IDX_NO)</td><td>OPER_PLAN_HH/MI, CYCLE_VAL, OFFSET_VAL, A/B_RING_1~8(현시별 지속시간 초)</td></tr>
-      <tr><td><code>TrafficNewsEntity</code></td><td>TRAFFIC_NEWS</td><td>LINK (URL)</td><td>CATEGORY, TITLE, SUMMARY(Groq), SENTIMENT(혼잡악화/교통개선/중립), PUB_DATE, CLICKBAIT_PROB, ARTICLE_TYPE(BERT), TYPE_PROB</td></tr>
-      <tr><td><code>TrafficStationEntity</code></td><td>TRAFFIC_STATION</td><td>STATION_ID (LONG)</td><td>STATION_NAME, LATITUDE, LONGITUDE (Flask XGBoost 예측용)</td></tr>
-      <tr><td><code>UserEntity</code></td><td>USERS</td><td>USER_ID (VARCHAR)</td><td>PASSWORD, NAME, PHONE, EMAIL, ALERT_EMAIL(0/1), ROLE(USER/ADMIN), STATUS(PENDING/APPROVED/REJECTED), CREATED_AT, IS_TEMP_PW</td></tr>
-    </tbody>
-  </table>
-
-  <h2>8.2 레포지토리 9개</h2>
-  <table>
-    <thead><tr><th>Repository</th><th>대상</th><th>주요 메서드</th></tr></thead>
-    <tbody>
-      <tr><td><code>CctvRepository</code></td><td>CctvEntity</td><td><code>findAll()</code>, <code>findWithinRadius(lat,lon,km)</code></td></tr>
-      <tr><td><code>CrossroadRepository</code></td><td>CrossroadEntity</td><td><code>findWithinRadius()</code> — Haversine JPQL (TrafficScheduler·MapController 핵심)</td></tr>
-      <tr><td><code>CrossroadSupplementalMappingRepository</code></td><td>CrossroadSupplementalMappingEntity</td><td>CRUD, <code>findByCrsrdIdIn()</code></td></tr>
-      <tr><td><code>SignalCrossroadRepository</code></td><td>SignalCrossroadEntity</td><td><code>findById(intNo)</code>, <code>findAll()</code></td></tr>
-      <tr><td><code>SignalPhaseRepository</code></td><td>SignalPhaseEntity</td><td><code>findByIdIntNo(intNo)</code> — A/B링 방향코드</td></tr>
-      <tr><td><code>SignalPlanRepository</code></td><td>SignalPlanEntity</td><td><code>findByIdIntNo(intNo)</code> — 운영계획</td></tr>
-      <tr><td><code>TrafficNewsRepository</code></td><td>TrafficNewsEntity</td><td><code>findLatest(limit)</code>, <code>findLatestByCategory()</code> (Native Query)</td></tr>
-      <tr><td><code>TrafficStationRepository</code></td><td>TrafficStationEntity</td><td><code>findAll()</code> — ML 예측 지점 목록</td></tr>
-      <tr><td><code>UserRepository</code></td><td>UserEntity</td><td>로그인·회원조회·상태변경 등</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- §9 보안 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">9</div>
-    <div class="section-title">보안 아키텍처</div>
-  </div>
-  <div class="sec-grid">
-    <div class="sec-card"><div class="sec-icon">🤖</div><div class="sec-title">교통 AI 로컬 전용</div><div class="sec-desc">Ollama qwen3 로컬 추론. 교통·사용자 데이터가 외부 LLM에 전송되지 않음.</div></div>
-    <div class="sec-card"><div class="sec-icon">🌐</div><div class="sec-title">뉴스 AI 외부 사용</div><div class="sec-desc">Groq API(llama-3.1-8b)에 뉴스 본문 최대 800자 전송. 개인 데이터 미포함. 3키 라운드로빈.</div></div>
-    <div class="sec-card"><div class="sec-icon">🔐</div><div class="sec-title">Oracle Wallet mTLS</div><div class="sec-desc">Spring JDBC·Python oracledb 모두 Wallet(cwallet.sso+tnsnames.ora) mTLS. 평문 연결 불가.</div></div>
-    <div class="sec-card"><div class="sec-icon">🌐</div><div class="sec-title">CORS 화이트리스트</div><div class="sec-desc">Spring: 5173·8080만 허용. Python FastAPI 동일. News·Forecast Flask: CORS(app)로 전체 허용(로컬 전용).</div></div>
-    <div class="sec-card"><div class="sec-icon">📧</div><div class="sec-title">SMTP 중앙화</div><div class="sec-desc">자격증명은 Spring EmailService만 보유. MCP·Python은 /api/email/send HTTP만 호출.</div></div>
-    <div class="sec-card"><div class="sec-icon">👤</div><div class="sec-title">관리자 승인 플로우</div><div class="sec-desc">STATUS=PENDING → 관리자 approve/reject. 미승인 사용자 접근 불가. 임시비번 이메일 발송.</div></div>
-  </div>
-
-  <h2>민감 정보 관리</h2>
-  <table>
-    <thead><tr><th>민감 정보</th><th>보관 위치</th></tr></thead>
-    <tbody>
-      <tr><td>V2X·TOPIS·KMA·위험도 API 키</td><td>application.yml (gitignore) 또는 환경변수</td></tr>
-      <tr><td>Oracle DB 비밀번호</td><td>application.yml (gitignore)</td></tr>
-      <tr><td>Oracle Wallet 파일</td><td>resources/wallet/ + News_flask_server/wallet/ (gitignore)</td></tr>
-      <tr><td>Naver News API 키</td><td>News_flask_server/.env (NAVER_CLIENT_ID, NAVER_CLIENT_SECRET)</td></tr>
-      <tr><td>Groq API 키 (3개)</td><td>News_flask_server/.env (GROQ_API_KEY_1~3)</td></tr>
-      <tr><td>Google GenAI 키 <span style="font-size:8pt;color:#2563eb;">[v4.0]</span></td><td>civil_flask_server/.env (GOOGLE_API_KEY) — 민원 분류·자동 답변</td></tr>
-      <tr><td>Google Cloud TTS 키 <span style="font-size:8pt;color:#2563eb;">[v4.0]</span></td><td>frontend/.env (VITE_GOOGLE_TTS_KEY) — 음성 어시스턴트 TTS</td></tr>
-      <tr><td>VWorld API 키 <span style="font-size:8pt;color:#2563eb;">[v4.0]</span></td><td>frontend/.env (VITE_VWORLD_API_KEY) — 시뮬레이션 3D 지도</td></tr>
-      <tr><td>AnythingLLM API 키</td><td>ai-agent/.env</td></tr>
-      <tr><td>Gmail SMTP 자격증명</td><td>application.yml (gitignore)</td></tr>
-      <tr><td>Kakao Map App Key</td><td>application.yml: ${kakao.map.app-key}</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- §10 기술 스택 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">10</div>
-    <div class="section-title">기술 스택 전체 명세</div>
-  </div>
-  <div class="success-box">Java·Python·Flask 소스코드 직접 확인. MD 불일치 시 코드 기준.</div>
-
-  <div class="layer-grid">
-    <div class="layer-card"><div class="layer-card-header blue">프론트엔드</div><div class="layer-card-body">
-      <table style="font-size:9pt;margin:0;"><tbody>
-        <tr><td><strong>React</strong></td><td>19.2.5</td></tr>
-        <tr><td><strong>Vite</strong></td><td>8.0.10</td></tr>
-        <tr><td>Zustand</td><td>전역 상태 trafficStore</td></tr>
-        <tr><td>Leaflet / React-Leaflet</td><td>교통 지도</td></tr>
-        <tr><td>Tailwind CSS</td><td>4.x</td></tr>
-        <tr><td>EventSource</td><td>SSE 소비</td></tr>
-        <tr><td>WebSocket</td><td>실시간 신호</td></tr>
-      </tbody></table>
-    </div></div>
-    <div class="layer-card"><div class="layer-card-header green">Spring Boot 백엔드</div><div class="layer-card-body">
-      <table style="font-size:9pt;margin:0;"><tbody>
-        <tr><td><strong>Java</strong></td><td>17 (LTS)</td></tr>
-        <tr><td><strong>Spring Boot</strong></td><td>3.5.x</td></tr>
-        <tr><td>Spring Data JPA</td><td>Oracle Dialect</td></tr>
-        <tr><td>Spring WebSocket</td><td>/ws/traffic</td></tr>
-        <tr><td>HikariCP</td><td>max=10, minIdle=3</td></tr>
-        <tr><td>Oracle JDBC</td><td>Wallet mTLS</td></tr>
-        <tr><td>JavaMailSender</td><td>Gmail SMTP</td></tr>
-        <tr><td>RestTemplate</td><td>Flask:5002 호출</td></tr>
-      </tbody></table>
-    </div></div>
-    <div class="layer-card"><div class="layer-card-header purple">Python AI 에이전트</div><div class="layer-card-body">
-      <table style="font-size:9pt;margin:0;"><tbody>
-        <tr><td><strong>FastAPI</strong></td><td>:8001</td></tr>
-        <tr><td>Uvicorn</td><td>ASGI 서버</td></tr>
-        <tr><td>LangGraph</td><td>ReAct 오케스트레이션</td></tr>
-        <tr><td>langchain-ollama</td><td>ChatOllama</td></tr>
-        <tr><td>MCP (stdio)</td><td>9-tool 프로토콜</td></tr>
-        <tr><td>httpx</td><td>비동기 HTTP</td></tr>
-      </tbody></table>
-    </div></div>
-    <div class="layer-card"><div class="layer-card-header pink">뉴스 감성 분석 Flask</div><div class="layer-card-body">
-      <table style="font-size:9pt;margin:0;"><tbody>
-        <tr><td><strong>Flask</strong></td><td>:5001</td></tr>
-        <tr><td>Transformers (BERT)</td><td>kykim/bert-kor-base</td></tr>
-        <tr><td>PyTorch</td><td>BERT 추론 (GPU/CPU)</td></tr>
-        <tr><td>scikit-learn</td><td>TF-IDF + 로지스틱 회귀</td></tr>
-        <tr><td>KoNLPy (Okt)</td><td>한국어 형태소 분석</td></tr>
-        <tr><td>aiohttp</td><td>비동기 본문 수집</td></tr>
-        <tr><td>openai (AsyncOpenAI)</td><td>Groq API 클라이언트</td></tr>
-        <tr><td>oracledb</td><td>Python Oracle 직접 연결</td></tr>
-        <tr><td>BeautifulSoup4</td><td>HTML 본문 파싱</td></tr>
-        <tr><td>joblib</td><td>모델 파일 로드</td></tr>
-      </tbody></table>
-    </div></div>
-    <div class="layer-card"><div class="layer-card-header orange">교통량 예측 Flask</div><div class="layer-card-body">
-      <table style="font-size:9pt;margin:0;"><tbody>
-        <tr><td><strong>Flask</strong></td><td>:5002</td></tr>
-        <tr><td>XGBoost</td><td>교통량 예측 모델</td></tr>
-        <tr><td>pandas</td><td>DataFrame 피처 생성</td></tr>
-        <tr><td>joblib</td><td>모델 파일 로드</td></tr>
-        <tr><td>oracledb</td><td>TRAFFIC_STATION 조회</td></tr>
-      </tbody></table>
-    </div></div>
-    <div class="layer-card"><div class="layer-card-header teal">LLM / RAG / 인프라</div><div class="layer-card-body">
-      <table style="font-size:9pt;margin:0;"><tbody>
-        <tr><td><strong>Ollama</strong></td><td>:11434 로컬 LLM</td></tr>
-        <tr><td>qwen3:30b-a3b</td><td>MoE 30B/Active 3B</td></tr>
-        <tr><td>AnythingLLM</td><td>:3001 로컬 RAG</td></tr>
-        <tr><td>Groq API</td><td>llama-3.1-8b-instant (외부)</td></tr>
-        <tr><td>Naver News API</td><td>뉴스 수집 (외부)</td></tr>
-        <tr><td>Oracle Autonomous DB</td><td>Cloud Wallet mTLS</td></tr>
-        <tr><td>Maven</td><td>Spring 빌드</td></tr>
-        <tr><td>python-dotenv</td><td>.env 환경변수 관리</td></tr>
-      </tbody></table>
-    </div></div>
-  </div>
-</div>
-
-<!-- §11 포트 구성 및 API 목록 -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">11</div>
-    <div class="section-title">포트 구성 및 전체 API 목록</div>
-  </div>
-
-  <h2>11.1 서비스별 포트 (9개)</h2>
-  <div class="port-row"><div class="port-badge">:5173</div><div class="port-desc"><strong>React 프론트엔드</strong> (Vite) — 사용자 브라우저 진입점.</div></div>
-  <div class="port-row"><div class="port-badge green">:8080</div><div class="port-desc"><strong>Spring Boot 백엔드</strong> — REST 8컨트롤러 + WebSocket(/ws/traffic) + 스케줄러 2개. 모든 외부 요청의 단일 진입점.</div></div>
-  <div class="port-row"><div class="port-badge purple">:8001</div><div class="port-desc"><strong>Python AI 에이전트</strong> (FastAPI/Uvicorn) — LangGraph ReAct + MCP 9-tool + SSE 스트리밍. <span class="badge badge-red">일부 문서 8000 오기재 — 코드 기준 8001</span></div></div>
-  <div class="port-row"><div class="port-badge pink">:5001</div><div class="port-desc"><strong>뉴스 감성 분석 Flask</strong> (News_flask_server/app.py) — BERT+TF-IDF+Groq 파이프라인 트리거, /news/fetch·/news/latest·/health.</div></div>
-  <div class="port-row"><div class="port-badge rose">:5002</div><div class="port-desc"><strong>교통량 예측 Flask</strong> (flask_server/app.py) — XGBoost /predict_traffic. Spring ForecastService가 RestTemplate으로 호출.</div></div>
-  <div class="port-row"><div class="port-badge">:8002</div><div class="port-desc"><strong>민원 Flask</strong> (civil_flask_server/app.py) — 시민 민원 제출·사진 업로드·Google GenAI 민원 분류·자동 답변 이메일. Frontend가 직접 호출. <span style="font-size:8pt;color:#2563eb;">[v4.0 신규]</span></div></div>
-  <div class="port-row"><div class="port-badge orange">:11434</div><div class="port-desc"><strong>Ollama LLM</strong> — qwen3:30b-a3b 로컬 추론. Python AI 에이전트만 접근.</div></div>
-  <div class="port-row"><div class="port-badge teal">:3001</div><div class="port-desc"><strong>AnythingLLM RAG</strong> — 프로젝트 문서 검색. MCP search_project_docs 도구 전용.</div></div>
-  <div class="port-row"><div class="port-badge gray">Cloud</div><div class="port-desc"><strong>Oracle Autonomous DB</strong> — Spring JDBC(Wallet) + Python oracledb(Wallet) 두 경로로 접근.</div></div>
-  <div class="port-row"><div class="port-badge gray">외부</div><div class="port-desc"><strong>Naver News API</strong> (뉴스 수집) + <strong>Groq API</strong> (뉴스 요약·감성) + <strong>공공 API</strong> (V2X·TOPIS·KMA·위험도)</div></div>
-
-  <h2>11.2 Spring Boot (:8080) 전체 API</h2>
-  <table>
-    <thead><tr><th>컨트롤러</th><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td rowspan="4">ChatController</td><td>GET</td><td>/api/context/{crsrdId}</td><td>TrafficStatus 단건</td></tr>
-      <tr><td>POST</td><td>/api/chat</td><td>AI 교통 챗봇</td></tr>
-      <tr><td>POST</td><td>/api/bottleneck-email</td><td>병목 이메일</td></tr>
-      <tr><td>POST</td><td>/api/simulation-chat</td><td>시뮬레이션 채팅</td></tr>
-      <tr><td rowspan="3">MapController</td><td>GET</td><td>/api/signals</td><td>캐시 전체 조회 (디버깅)</td></tr>
-      <tr><td>POST</td><td>/api/fetch-area</td><td>구역 전환</td></tr>
-      <tr><td>POST</td><td>/api/district/report</td><td>구 AI 리포트</td></tr>
-      <tr><td rowspan="3">SignalController</td><td>GET</td><td>/api/signal/crossroads</td><td>전체 교차로 (지도 핀)</td></tr>
-      <tr><td>GET</td><td>/api/signal/crossroads/{intNo}</td><td>현시+운영계획</td></tr>
-      <tr><td>GET</td><td>/api/signal/simulation/context/{intNo}</td><td>시뮬레이션 컨텍스트</td></tr>
-      <tr><td rowspan="2">CctvController</td><td>GET</td><td>/api/cctv</td><td>전체 CCTV</td></tr>
-      <tr><td>GET</td><td>/api/cctv/area</td><td>반경 내 CCTV</td></tr>
-      <tr><td>NewsController</td><td>GET</td><td>/api/news/latest</td><td>최신 뉴스 (DB 직접)</td></tr>
-      <tr><td rowspan="2">ForecastController</td><td>GET</td><td>/api/forecast/station/{stationId}</td><td>XGBoost 예측 결과</td></tr>
-      <tr><td>GET</td><td>/api/stations</td><td>교통량 지점 목록</td></tr>
-      <tr><td rowspan="10">UserController</td><td>POST</td><td>/api/auth/login</td><td>로그인</td></tr>
-      <tr><td>POST</td><td>/api/auth/register</td><td>회원가입</td></tr>
-      <tr><td>POST</td><td>/api/auth/find-pw</td><td>임시 비밀번호 발송</td></tr>
-      <tr><td>GET</td><td>/api/auth/find-id</td><td>아이디 찾기</td></tr>
-      <tr><td>GET</td><td>/api/auth/admin/users</td><td>유저 목록 조회</td></tr>
-      <tr><td>GET</td><td>/api/auth/alert-emails</td><td>알림 수신 이메일 목록</td></tr>
-      <tr><td>POST</td><td>/api/auth/admin/approve/{userId}</td><td>회원 승인</td></tr>
-      <tr><td>POST</td><td>/api/auth/admin/reject/{userId}</td><td>회원 거절</td></tr>
-      <tr><td>POST</td><td>/api/auth/alert</td><td>알림 수신 토글</td></tr>
-      <tr><td>POST</td><td>/api/auth/change-pw</td><td>비밀번호 변경</td></tr>
-      <tr><td>EmailController</td><td>POST</td><td>/api/email/send</td><td>이메일 발송 공통 창구</td></tr>
-      <tr><td>WebSocket</td><td>WS</td><td>ws://localhost:8080/ws/traffic</td><td>실시간 TrafficStatus</td></tr>
-    </tbody>
-  </table>
-
-  <h2>11.3 실행 순서 (개발 환경)</h2>
-  <div class="step-list">
-    <div class="step-item"><div class="step-num">1</div><div class="step-content"><div class="step-title">Ollama</div><div class="step-desc"><code>ollama run qwen3:30b-a3b</code> → :11434</div></div></div>
-    <div class="step-item"><div class="step-num">2</div><div class="step-content"><div class="step-title">AnythingLLM</div><div class="step-desc">:3001 RAG 서버, workspace 문서 임베딩 확인</div></div></div>
-    <div class="step-item"><div class="step-num">3</div><div class="step-content"><div class="step-title">뉴스 감성 분석 Flask</div><div class="step-desc"><code>cd backend/News_flask_server && python app.py</code> → :5001 (BERT·TF-IDF 모델 로드)</div></div></div>
-    <div class="step-item"><div class="step-num">4</div><div class="step-content"><div class="step-title">교통량 예측 Flask</div><div class="step-desc"><code>cd backend/flask_server && python app.py</code> → :5002 (XGBoost 모델 로드)</div></div></div>
-    <div class="step-item"><div class="step-num">5</div><div class="step-content"><div class="step-title">Spring Boot</div><div class="step-desc"><code>mvn spring-boot:run</code> → :8080 (Oracle Wallet 연결 확인)</div></div></div>
-    <div class="step-item"><div class="step-num">6</div><div class="step-content"><div class="step-title">Python AI 에이전트</div><div class="step-desc"><code>python agent_server.py</code> → :8001 (MCP stdio 자동 연결)</div></div></div>
-    <div class="step-item"><div class="step-num">7</div><div class="step-content"><div class="step-title">React 프론트엔드</div><div class="step-desc"><code>npm run dev</code> → :5173</div></div></div>
-  </div>
-
-  <div class="warn-box">
-    <strong>미구현:</strong> <code>POST /api/signal/adjust</code> — MCP set_signal_timing이 호출하나 Spring에서 404 반환. 구현 시 Human-in-the-loop 신호 제어 플로우 활성화됨.
-  </div>
-
-  <footer>
-    <p>TrafficSync — 시스템 아키텍처 설계서 (TS-DOC-07) · v4.0 · 최초: 2026-05-28 · 수정: 2026-06-02</p>
-    <p>엔티티 9개 · 레포지토리 9개 · 스케줄러 2개 · 컨트롤러 8개 · Flask 서버 2개(:5001 뉴스·:5002 예측) · 포트 9개 · ML 모델 3종(BERT·TF-IDF·XGBoost)</p>
-  </footer>
-</div>
-
+<div class="footer"><span>Syncro | 교통 관제 시스템 — 시스템 아키텍처 설계서</span><span>2026. 06. 13.</span></div>
 </body>
 </html>

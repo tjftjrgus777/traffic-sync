@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"https://apis.data.go.kr/B551982/rti/tl_drct_info?serviceKey=0d4976602f7999e595dcb4e745919c5eea367a73806d11173b6c47b63897886f&pageNo=1&numOfRows=1000&type=JSON&stdgCd=1100000000\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s \"http://localhost:8080/api/map/crossroads?lat=37.4979&lon=127.0577&radius=2.5\")",
+      "Bash(curl -s \"http://localhost:8080/api/crossroads/nearby?lat=37.4979&lon=127.0577&radius=2.5\")",
+      "Bash(curl -s \"https://apis.data.go.kr/B551982/rti/tl_drct_info?serviceKey=0d4976602f7999e595dcb4e745919c5eea367a73806d11173b6c47b63897886f&pageNo=1&numOfRows=10&type=JSON&stdgCd=1100000000\")",
+      "Bash(sed -n '350,470p' components/sidebar/AIChatBot.jsx)",
+      "Bash(sed -n '230,330p' components/sidebar/AIChatBot.jsx)",
+      "Bash(sed -n '280,360p' pages/SimulationDashboard.jsx)",
+      "Bash(sed -n '270,340p' hooks/useAssistant.js)",
+      "Bash(sed -i '' -e 's|<span>문서번호 SYN-DOC-0[0-9]</span>|<span></span>|' -e 's|<td class=\"k\">작성 팀</td><td>Syncro</td><td class=\"k\">문서 버전</td><td>v2.0 \\(전면 개정\\)</td>|<td class=\"k\">작성 팀</td><td>Syncro</td><td class=\"k\">작성자</td><td>kimsua · heeyoun · jinminkyeong · seokhyun</td>|' -e 's| v2.0</span>|</span>|' 0*.html)",
+      "Bash(sed -i '' '/<td class=\"k\">작성자<\\\\/td><td colspan=\"3\">kimsua · heeyoun · jinminkyeong · seokhyun<\\\\/td>/d' 01_요구사항정의서.html)"
+    ]
+  }
+}

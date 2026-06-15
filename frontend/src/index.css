@@ -1,5 +1,78 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
+:root,
+[data-syncro-theme="dark"] {
+  --syncro-bg0: #03060a;
+  --syncro-bg1: #0c131d;
+  --syncro-bg2: #121c2a;
+  --syncro-bg3: #172437;
+  --syncro-line: #3f506a;
+  --syncro-line2: #5a7193;
+  --syncro-ink0: #f7faff;
+  --syncro-ink1: #d2dbea;
+  --syncro-ink2: #9aa8bb;
+  --syncro-ink3: #657386;
+  --syncro-white: #ffffff;
+  --syncro-panel-gradient: linear-gradient(180deg, #0c131d 0%, #070b11 100%);
+  --syncro-panel-header: linear-gradient(180deg, rgba(20,31,47,0.95), rgba(11,17,26,0.95));
+  --syncro-inner-gradient: linear-gradient(180deg, #121c2a 0%, #0b111a 100%);
+  --syncro-selected-bg: #141414;
+  --syncro-grid-line: #141414;
+  --syncro-input-bg: #141414;
+  --syncro-map-panel-bg: #000000;
+  --syncro-icon-filter: invert(1);
+  --syncro-icon-button-bg: rgba(255,255,255,0.025);
+  --syncro-icon-button-bd: #3f506a;
+  --syncro-icon-button-fg: #d2dbea;
+  --syncro-success-bg: #0c1a12;
+  --syncro-success-bd: #1a3a24;
+  --syncro-success-text: #2ee07a;
+  --syncro-warning-bg: #1a1206;
+  --syncro-warning-bd: #3a2a14;
+  --syncro-warning-text: #ffaa33;
+  --syncro-danger-bg: #1a0a10;
+  --syncro-danger-bd: #3a1820;
+  --syncro-danger-text: #ff5566;
+  --syncro-shadow: 0 0 0 1px rgba(78,166,255,0.08), 0 14px 34px rgba(0,0,0,0.46);
+  --syncro-inner-shadow: inset 0 1px 0 rgba(255,255,255,0.045), 0 8px 18px rgba(0,0,0,0.32);
+}
+
+[data-syncro-theme="light"] {
+  --syncro-bg0: #eef4fb;
+  --syncro-bg1: #ffffff;
+  --syncro-bg2: #f8fbff;
+  --syncro-bg3: #edf4ff;
+  --syncro-line: #c7d6ea;
+  --syncro-line2: #9eb6d5;
+  --syncro-ink0: #102033;
+  --syncro-ink1: #334155;
+  --syncro-ink2: #64748b;
+  --syncro-ink3: #94a3b8;
+  --syncro-white: #102033;
+  --syncro-panel-gradient: linear-gradient(180deg, #ffffff 0%, #f4f8fe 100%);
+  --syncro-panel-header: linear-gradient(180deg, rgba(248,251,255,0.98), rgba(232,240,251,0.96));
+  --syncro-inner-gradient: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  --syncro-selected-bg: #dceafe;
+  --syncro-grid-line: #d9e4f3;
+  --syncro-input-bg: #ffffff;
+  --syncro-map-panel-bg: #f8fbff;
+  --syncro-icon-filter: none;
+  --syncro-icon-button-bg: #ffffff;
+  --syncro-icon-button-bd: #b7cef0;
+  --syncro-icon-button-fg: #1d4ed8;
+  --syncro-success-bg: #dcfce7;
+  --syncro-success-bd: #86efac;
+  --syncro-success-text: #166534;
+  --syncro-warning-bg: #fff7ed;
+  --syncro-warning-bd: #fdba74;
+  --syncro-warning-text: #c2410c;
+  --syncro-danger-bg: #fee2e2;
+  --syncro-danger-bd: #fca5a5;
+  --syncro-danger-text: #be123c;
+  --syncro-shadow: 0 0 0 1px rgba(59,130,246,0.08), 0 12px 28px rgba(30,64,120,0.12);
+  --syncro-inner-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 18px rgba(30,64,120,0.08);
+}
+
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -13,8 +86,8 @@ html, body, #root {
 
 body {
   font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
-  background: #070c17;
-  color: #e2e8f0;
+  background: var(--syncro-bg0);
+  color: var(--syncro-ink0);
 }
 
 ::-webkit-scrollbar {

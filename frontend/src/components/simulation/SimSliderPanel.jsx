@@ -121,7 +121,7 @@ export default function SimSliderPanel({
   }, [aiAdjustKey]);
 
   if (!intNo) return null;
-  if (loading) return <div style={{ padding: "12px 0", fontSize: 12, color: "#64748b", textAlign: "center" }}>슬라이더 데이터 로딩 중...</div>;
+  if (loading) return <div style={{ padding: "12px 0", fontSize: 12, color: "var(--syncro-ink2)", textAlign: "center" }}>슬라이더 데이터 로딩 중...</div>;
   if (!phases.length) return null;
 
   const totalSec = phases.reduce((s, p) => s + (sliders[p.no] ?? p.sec), 0);
@@ -139,22 +139,22 @@ export default function SimSliderPanel({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: autoAnimating ? "#22c55e" : "#94a3b8" }}>신호 시뮬레이션 조정</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: autoAnimating ? "#22c55e" : "var(--syncro-ink2)" }}>신호 시뮬레이션 조정</div>
         {autoAnimating && <div style={{ fontSize: 10, color: "#22c55e", fontWeight: 800 }}>자동 조정 중...</div>}
       </div>
       {phases.map(p => {
         const sec = sliders[p.no] ?? p.sec;
         const changed = sliders[p.no] != null && sliders[p.no] !== p.sec;
         return (
-          <div key={p.no} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${changed ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.07)"}`, borderRadius: 5, padding: "8px 10px" }}>
+          <div key={p.no} style={{ background: "var(--syncro-bg2)", border: `1px solid ${changed ? "rgba(245,158,11,0.4)" : "var(--syncro-line)"}`, borderRadius: 5, padding: "8px 10px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8" }}>현시 {p.no}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--syncro-ink2)" }}>현시 {p.no}</span>
                 {p.dirs?.map((d, i) => (
                   <span key={i} style={{ fontSize: 10, padding: "1px 6px", borderRadius: 3, background: "rgba(78,166,255,0.1)", border: "1px solid rgba(78,166,255,0.2)", color: "#4ea6ff" }}>{d}</span>
                 ))}
               </div>
-              <span style={{ fontSize: 11, fontFamily: "monospace", color: changed ? "#f59e0b" : "#64748b" }}>
+              <span style={{ fontSize: 11, fontFamily: "monospace", color: changed ? "#f59e0b" : "var(--syncro-ink2)" }}>
                 {sec}s{changed ? ` (원래 ${p.sec}s)` : ""}
               </span>
             </div>
@@ -167,9 +167,9 @@ export default function SimSliderPanel({
         );
       })}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 11, color: "#64748b" }}>
+        <span style={{ fontSize: 11, color: "var(--syncro-ink2)" }}>
           합계: <span style={{ color: overTarget ? "#ef4444" : totalSec < cycleTarget ? "#f59e0b" : "#22c55e", fontWeight: 600 }}>{totalSec}s</span>
-          <span style={{ color: "#475569" }}> / 목표 {cycleTarget}s</span>
+          <span style={{ color: "var(--syncro-ink3)" }}> / 목표 {cycleTarget}s</span>
         </span>
         <button
           onClick={handleSave}

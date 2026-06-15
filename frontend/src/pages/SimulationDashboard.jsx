@@ -130,7 +130,7 @@ function numberOrNull(value) {
 }
 
 
-export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoCctv, onGoComplaints, onGoMyPage, onLogout, selectedGu, isMuted, onToggleMute, isMicActive, onToggleMic, wsData = [] }) {
+export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoCctv, onGoComplaints, onGoMyPage, onLogout, selectedGu, isMuted, onToggleMute, isMicActive, onToggleMic, wsData = [], themeMode, onToggleTheme }) {
   useEffect(() => {
     console.log('[SimDashboard] MOUNTED, viewer:', !!window.ws3d?.viewer)
     return () => console.log('[SimDashboard] UNMOUNTED')
@@ -154,6 +154,7 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
   const [routeTraffic, setRouteTraffic] = useState(null);
   const [routeAnalysis, setRouteAnalysis] = useState(null);
   const [routeReport, setRouteReport] = useState(null);
+  const [emailSending, setEmailSending] = useState(false);
   const [routeAnalysisLoading, setRouteAnalysisLoading] = useState(false);
   const [aiAdjustment, setAiAdjustment] = useState(null);
   const [aiAdjustKey, setAiAdjustKey] = useState(0);
@@ -570,16 +571,45 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
       : unapplied[0];
 
     if (!target?.intNo || !target?.phases?.length) {
-      // 모두 적용 완료
       setIsOptimized(true);
       return;
     }
 
     applyAdjustment(target);
-    setAppliedIntNos(prev => new Set([...prev, String(target.intNo)]));
+    const newApplied = new Set([...appliedIntNos, String(target.intNo)]);
+    setAppliedIntNos(newApplied);
     setAppliedAdjustmentsMap(prev => ({ ...prev, [String(target.intNo)]: target }));
-
     setIsOptimized(true);
+
+    // 모두 적용 완료 시 이메일 자동 발송
+    const allDone = newApplied.size >= adjustments.length;
+    if (allDone && routeReport) {
+      const userEmail = JSON.parse(localStorage.getItem("ts_user") || "{}").email;
+      if (!userEmail || emailSending) return;
+      setEmailSending(true);
+
+      // 변경 요약 텍스트 생성
+      const summary = Object.values({ ...appliedAdjustmentsMap, [String(target.intNo)]: target })
+        .map(adj => {
+          const name = bottleneckCrossroads.find(c => String(c.intNo) === String(adj.intNo))?.crsrdNm || adj.intNo;
+          const lines = (adj.phases || []).map(p => `현시${p.no}: ${p.sec}s`).join(", ");
+          return `${name} — ${lines}`;
+        })
+        .join("\n");
+
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
+      const subject = `[Syncro] 신호제어 적용 완료 — ${dateStr}`;
+      const body = `[AI 신호 자동조정 분석 보고서]\n발행일시: ${dateStr}\n\n━━━ 적용 요약 ━━━\n${summary}\n\n━━━ 상세 분석 ━━━\n${routeReport}`;
+
+      fetch(`${API_BASE}/api/email/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: userEmail, subject, body }),
+      })
+        .catch(() => {/* 이메일 실패는 제어 흐름에 영향 없음 */})
+        .finally(() => setEmailSending(false));
+    }
   };
 
   const handleAutoApplied = (simulation) => {
@@ -617,7 +647,7 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
   const activeSignalPhaseOverride = simPhaseTarget === activeSignalKey ? simPhases : null;
 
   return (
-    <div style={{ fontFamily: "'Noto Sans KR','Malgun Gothic',sans-serif", background: "#12100a", color: "#e2e8f0", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div style={{ fontFamily: "'Noto Sans KR','Malgun Gothic',sans-serif", background: "var(--syncro-bg0)", color: "var(--syncro-ink0)", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <AppHeader
         activePage="simulation"
         selectedGu={selectedGu}
@@ -625,6 +655,8 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
         statusLive={!!(start && end && isOptimized)}
         onGoMain={onGoMain} onGoMap={onGoMap} onGoNews={onGoNews} onGoCctv={onGoCctv}
         onGoSimulation={() => {}} onGoComplaints={onGoComplaints} onGoMyPage={onGoMyPage} onLogout={onLogout}
+        themeMode={themeMode}
+        onToggleTheme={onToggleTheme}
         rightExtra={(
           <>
             {onToggleMute && (
@@ -632,8 +664,8 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
                 onClick={onToggleMute}
                 title={isMuted ? "음소거 해제" : "음소거"}
                 style={{
-                  background: isMuted ? "#1a0a0a" : "transparent",
-                  border: 0,
+                  background: isMuted ? "var(--syncro-danger-bg)" : "var(--syncro-icon-button-bg)",
+                  border: `1px solid ${isMuted ? "var(--syncro-danger-bd)" : "var(--syncro-icon-button-bd)"}`,
                   borderRadius: 999,
                   width: 32,
                   height: 32,
@@ -641,20 +673,12 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
+                  color: isMuted ? "var(--syncro-danger-text)" : "var(--syncro-icon-button-fg)",
+                  fontSize: 16,
                   flexShrink: 0,
                 }}
               >
-                <img
-                  src={isMuted ? "/icons/mute.png" : "/icons/speaker.png"}
-                  alt=""
-                  style={{
-                    width: 18,
-                    height: 18,
-                    objectFit: "contain",
-                    filter: "invert(1)",
-                    opacity: isMuted ? 1 : 0.9,
-                  }}
-                />
+                {isMuted ? "🔇" : "🔊"}
               </button>
             )}
           </>
@@ -665,7 +689,7 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
 
         {/* 지도 영역 */}
         <div style={{ padding: "10px 6px 10px 10px", minHeight: 0, position: "relative" }}>
-          <div style={{ height: "100%", borderRadius: 11, overflow: "hidden", border: `1px solid ${isOptimized ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.08)"}`, boxShadow: isOptimized ? "0 0 20px rgba(34,197,94,0.1)" : "none" }}>
+          <div style={{ height: "100%", borderRadius: 11, overflow: "hidden", border: `1px solid ${isOptimized ? "rgba(34,197,94,0.3)" : "var(--syncro-line)"}`, boxShadow: isOptimized ? "0 0 20px rgba(34,197,94,0.1)" : "none" }}>
             <SimulationMapView
               selectedList={selectedList} selectedGu={selectedGu} onSelect={handleSelect}
               isOptimized={isOptimized} onStatsChange={handleMapStatsChange} onAutoWaypointsChange={setAutoWaypoints}
@@ -673,6 +697,7 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
               onResetRoute={resetSimulation} routeTraffic={routeTraffic}
               optimizedRouteTraffic={optimizedRouteTraffic}
               onDriveViewChange={setDriveView}
+              themeMode={themeMode}
             />
           </div>
         </div>
@@ -682,8 +707,8 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "10px 6px 10px 4px", overflowY: "auto" }}>
             <div style={cardStyle}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <div style={{ fontWeight: 800, color: "#ffffff", fontSize: 15 }}>목적지 기반 시뮬레이션</div>
-                <button onClick={resetSimulation} style={{ background: "transparent", border: "1px solid #334155", color: "#94a3b8", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 11 }}>초기화</button>
+                <div style={{ fontWeight: 800, color: "var(--syncro-ink0)", fontSize: 15 }}>목적지 기반 시뮬레이션</div>
+                <button onClick={resetSimulation} style={{ background: "transparent", border: "1px solid var(--syncro-line)", color: "var(--syncro-ink2)", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 11 }}>초기화</button>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
                 <RoutePointCard type="start" title="출발지" crossroad={start} empty="지도에서 첫 번째 마커를 클릭하세요" />
@@ -697,16 +722,16 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
 
             {/* 병목구간 분석 */}
             <div style={cardStyle}>
-              <div style={{ fontWeight: 800, color: "#ffffff", fontSize: 14, marginBottom: 10 }}>병목구간 분석</div>
+              <div style={{ fontWeight: 800, color: "var(--syncro-ink0)", fontSize: 14, marginBottom: 10 }}>병목구간 분석</div>
               {stats ? (
                 <>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                     <MetricBox label="전체 거리" value={formatDistance(stats.distanceMeters)} />
                     <MetricBox label="병목구간" value={stats.bottleneckCount != null ? `${stats.bottleneckCount}개` : routeAnalysisLoading ? "수집 중..." : "-"} />
                   </div>
-                  <div style={{ padding: 10, borderRadius: 5, fontSize: 12, lineHeight: 1.6, whiteSpace: "pre-wrap", background: routeAnalysisLoading ? "rgba(96,165,250,0.06)" : isOptimized ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${routeAnalysisLoading ? "rgba(96,165,250,0.2)" : isOptimized ? "rgba(34,197,94,0.28)" : "rgba(239,68,68,0.25)"}`, color: isOptimized ? "#bbf7d0" : "#fecaca" }}>
+                  <div style={{ padding: 10, borderRadius: 5, fontSize: 12, lineHeight: 1.6, whiteSpace: "pre-wrap", background: routeAnalysisLoading ? "rgba(96,165,250,0.06)" : isOptimized ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${routeAnalysisLoading ? "rgba(96,165,250,0.2)" : isOptimized ? "rgba(34,197,94,0.28)" : "rgba(239,68,68,0.25)"}`, color: isOptimized ? "#166534" : "#b91c1c" }}>
                     {speedUnavailable
-                      ? <span style={{ color: "#64748b" }}>속도 수집 불가 — TOPIS 미수집 구간입니다. 신호계획 기반으로 수동 조정하세요.</span>
+                      ? <span style={{ color: "var(--syncro-ink3)" }}>속도 수집 불가 — TOPIS 미수집 구간입니다. 신호계획 기반으로 수동 조정하세요.</span>
                       : routeAnalysisLoading ? <AnalysisLoadingBlock />
                       : routeAnalysis ? routeAnalysis
                       : isOptimized ? "관제사가 병목구간의 직진 신호 시간을 늘려 통과속도가 개선된 상태입니다."
@@ -714,7 +739,7 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
                   </div>
                 </>
               ) : (
-                <div style={{ color: "#64748b", fontSize: 13, lineHeight: 1.7 }}>출발지와 목적지를 모두 선택하면 경로와 병목구간이 표시됩니다.</div>
+                <div style={{ color: "var(--syncro-ink2)", fontSize: 13, lineHeight: 1.7 }}>출발지와 목적지를 모두 선택하면 경로와 병목구간이 표시됩니다.</div>
               )}
             </div>
 
@@ -755,7 +780,7 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
               const appliedCount = appliedIntNos.size;
               const allApplied = totalAdj > 0 && appliedCount >= totalAdj;
               return (
-                <div style={{ border: "none", borderRadius: 6, padding: "12px 14px", textAlign: "center", background: allApplied ? "#166534" : routeAnalysisLoading ? "rgba(96,165,250,0.1)" : "#1f2937", color: allApplied ? "#fff" : routeAnalysisLoading ? "#60a5fa" : "#94a3b8", fontSize: 13, fontWeight: 900 }}>
+                <div style={{ border: "1px solid var(--syncro-line)", borderRadius: 6, padding: "12px 14px", textAlign: "center", background: allApplied ? "#166534" : routeAnalysisLoading ? "rgba(96,165,250,0.1)" : "var(--syncro-bg2)", color: allApplied ? "#fff" : routeAnalysisLoading ? "#2563eb" : "var(--syncro-ink1)", fontSize: 13, fontWeight: 900 }}>
                   {allApplied ? `✓ ${totalAdj}개 교차로 제어 완료 — AI 분석 포함 이메일 발송됨`
                     : routeAnalysisLoading ? "● AI 병목 분석 중..."
                     : totalAdj > 0 && appliedCount > 0 ? `병목지 ${appliedCount}/${totalAdj} 적용 완료 — 나머지 병목지를 선택 후 제어하세요`
@@ -768,8 +793,8 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
 
             {/* 사용 방법 */}
             <div style={{ ...cardStyle, flexShrink: 0 }}>
-              <div style={{ fontWeight: 800, color: "#cbd5e1", fontSize: 13, marginBottom: 8 }}>사용 방법</div>
-              <ol style={{ margin: 0, paddingLeft: 18, color: "#94a3b8", fontSize: 12, lineHeight: 1.8 }}>
+              <div style={{ fontWeight: 800, color: "var(--syncro-ink1)", fontSize: 13, marginBottom: 8 }}>사용 방법</div>
+              <ol style={{ margin: 0, paddingLeft: 18, color: "var(--syncro-ink2)", fontSize: 12, lineHeight: 1.8 }}>
                 <li>지도에서 첫 번째 마커를 클릭해 출발지를 선택합니다.</li>
                 <li>두 번째 마커를 클릭하면 목적지와 경로가 생성됩니다.</li>
                 <li>가운데 패널에서 속도 API 기반 병목구간을 먼저 확인합니다.</li>
@@ -784,8 +809,8 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "10px 10px 10px 4px", overflowY: "auto" }}>
           <div style={cardStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div style={{ fontWeight: 900, color: "#ffffff", fontSize: 15 }}>출발지/경유지/병목지/목적지 신호체계</div>
-              <div style={{ fontSize: 11, color: "#64748b" }}>선택 확인</div>
+              <div style={{ fontWeight: 900, color: "var(--syncro-ink0)", fontSize: 15 }}>출발지/경유지/병목지/목적지 신호체계</div>
+              <div style={{ fontSize: 11, color: "var(--syncro-ink2)" }}>선택 확인</div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
               <button onClick={() => setSliderTarget("start")} disabled={!start} style={tabButtonStyle(sliderTarget === "start", !!start)}>출발지</button>
@@ -806,12 +831,12 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
           {hasActiveSignalCrossroad && (
             <div style={cardStyle}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <div style={{ fontWeight: 800, color: "#ffffff", fontSize: 13 }}>
+                <div style={{ fontWeight: 800, color: "var(--syncro-ink0)", fontSize: 13 }}>
                   {activeSignal.icon} {sliderTarget === "waypoint" ? `경유지 ${clampedWaypointIndex + 1} 신호체계` : activeSignal.signalTitle}
                 </div>
-                <div style={{ fontSize: 11, color: "#64748b" }}>{activeSignal.crossroad.intNm}</div>
+                <div style={{ fontSize: 11, color: "var(--syncro-ink2)" }}>{activeSignal.crossroad.intNm}</div>
               </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, color: "#94a3b8", fontSize: 11 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, color: "var(--syncro-ink2)", fontSize: 11 }}>
                 <span>🟢 현재 켜진 현시</span>
                 <span>🚗 차량 추종 예정 현시</span>
               </div>
@@ -828,10 +853,10 @@ export default function SimulationDashboard({ onGoMain, onGoMap, onGoNews, onGoC
           {hasActiveSignalCrossroad && (
             <div style={cardStyle}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <div style={{ fontWeight: 800, color: "#ffffff", fontSize: 13 }}>
+                <div style={{ fontWeight: 800, color: "var(--syncro-ink0)", fontSize: 13 }}>
                   {activeSignal.icon} {sliderTarget === "waypoint" ? `경유지 ${clampedWaypointIndex + 1} 신호 조정` : panelTitle}
                 </div>
-                <div style={{ fontSize: 11, color: "#64748b" }}>{sliderCrossroad.intNm}</div>
+                <div style={{ fontSize: 11, color: "var(--syncro-ink2)" }}>{sliderCrossroad.intNm}</div>
               </div>
               <SimSliderPanel
                 key={`slider-${activeSignalKey}`}

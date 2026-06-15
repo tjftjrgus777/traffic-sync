@@ -3,1030 +3,234 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>TrafficSync — 교통·기상·돌발상황 공공데이터 분석 자료</title>
+<title>Syncro — 교통·기상·돌발상황 공공데이터 분석</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:10pt;color:#1a202c;background:#fff;line-height:1.75;}
-
-/* ── 표지 ── */
-.cover{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:linear-gradient(155deg,#0a1628 0%,#0d3b6e 55%,#0a1628 100%);color:#fff;text-align:center;padding:60px;position:relative;}
-.cover::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(59,130,246,0.15) 0%,transparent 60%);}
-.cover-badge{font-size:9.5pt;letter-spacing:5px;color:#60a5fa;text-transform:uppercase;margin-bottom:24px;font-weight:500;position:relative;}
-.cover-title{font-size:32pt;font-weight:700;line-height:1.2;margin-bottom:10px;position:relative;}
-.cover-title span{color₩:#60a5fa;}
-.cover-doc-type{font-size:15pt;font-weight:600;color:#e2e8f0;margin-top:18px;position:relative;}
-.cover-doc-sub{font-size:10pt;color:#64748b;margin-top:6px;position:relative;}
-.cover-divider{width:56px;height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa);margin:36px auto;border-radius:2px;position:relative;}
-.cover-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:680px;width:100%;position:relative;}
-.cover-meta-item{text-align:center;}
-.cover-meta-label{font-size:8pt;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
-.cover-meta-value{font-size:10pt;color:#cbd5e1;font-weight:500;}
-
-/* ── 본문 ── */
-.page{max-width:210mm;margin:0 auto;padding:18mm 22mm;}
-.page-break{page-break-before:always;}
-
-/* ── 섹션 헤더 ── */
-.section-header{display:flex;align-items:center;gap:12px;margin-bottom:6px;margin-top:34px;}
-.section-header:first-child{margin-top:0;}
-.section-num{background:#1e40af;color:#fff;font-size:11pt;font-weight:700;
-  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.section-title{font-size:16pt;font-weight:700;color:#0f172a;border-bottom:3px solid #1e40af;flex:1;padding-bottom:7px;}
-h2{font-size:12.5pt;font-weight:700;color:#1e3a5f;margin-top:26px;margin-bottom:10px;padding-left:11px;border-left:4px solid #3b82f6;}
-h3{font-size:11pt;font-weight:600;color:#334155;margin-top:16px;margin-bottom:7px;}
-p{margin-bottom:9px;color:#334155;}
-
-/* ── 표 ── */
-table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:9.5pt;}
-thead tr{background:#1e40af;color:#fff;}
-thead th{padding:8px 12px;text-align:left;font-weight:600;letter-spacing:.3px;}
-tbody tr:nth-child(even){background:#f1f5f9;}
-tbody td{padding:8px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top;line-height:1.6;}
-td.num{text-align:center;color:#64748b;font-size:9pt;width:30px;}
-code{font-family:'Consolas',monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:8.5pt;color:#1d4ed8;}
-
-/* ── 배지 ── */
-.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:8.5pt;font-weight:600;}
-.badge-blue,.badge-green,.badge-yellow,.badge-gray,.badge-purple,.badge-red,.badge-orange{
-  background:#dbeafe;color:#1d4ed8;}
-
-/* ── 박스 ── */
-.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #3b82f6;border-radius:6px;padding:13px 16px;margin:13px 0;font-size:10pt;color:#1e40af;}
-.warn-box{background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f97316;border-radius:6px;padding:13px 16px;margin:13px 0;font-size:10pt;color:#9a3412;}
-.success-box{background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid #22c55e;border-radius:6px;padding:13px 16px;margin:13px 0;font-size:10pt;color:#14532d;}
-.gray-box{background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #94a3b8;border-radius:6px;padding:13px 16px;margin:13px 0;font-size:10pt;color:#334155;}
-
-/* ── 흐름도 ── */
-.flow-box{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:14px 0;}
-.flow-node{background:#fff;color:#1a1a2e;border:1.5px solid #1a1a2e;padding:7px 14px;border-radius:8px;font-size:9.5pt;font-weight:600;text-align:center;min-width:100px;}
-.flow-node.gray,.flow-node.green,.flow-node.orange,
-.flow-node.purple,.flow-node.teal,.flow-node.red{
-  background:#fff;color:#1a1a2e;border:1.5px solid #1a1a2e;}
-.flow-arrow{font-size:14pt;color:#6b7280;flex-shrink:0;}
-
-/* ── 스텝 ── */
-.step-list{display:flex;flex-direction:column;gap:8px;margin:14px 0;}
-.step-item{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-radius:8px;background:#fff;border:1.5px solid #1a1a2e;}
-.step-num{background:#fff;border:2px solid #1a1a2e;color:#1a1a2e;font-size:9pt;font-weight:700;
-  width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
-.step-content{flex:1;}
-.step-title{font-size:10.5pt;font-weight:600;color:#111827;margin-bottom:2px;}
-.step-desc{font-size:9.5pt;color:#374151;line-height:1.5;}
-
-/* ── 목차 ── */
-.toc-item{display:flex;align-items:baseline;gap:6px;padding:5px 0;border-bottom:1px dotted #e2e8f0;font-size:10.5pt;}
-.toc-num{color:#2563eb;font-weight:700;min-width:26px;}
-.toc-title{flex:1;color:#334155;}
-.toc-bold{font-weight:600;color:#0f172a;}
-.toc-sub{padding-left:20px;font-size:9.5pt;}
-
-/* ── 개정이력 ── */
-.rev-label{font-size:13pt;font-weight:700;color:#0f172a;border-bottom:2px solid #1e40af;padding-bottom:6px;margin-bottom:12px;}
-
-/* ── 데이터 카드 ── */
-.data-card{border:1.5px solid #1a1a2e;border-radius:8px;margin:18px 0;overflow:hidden;}
-.data-card-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#1e3a5f;color:#fff;}
-.data-card-icon{display:none;}
-.data-card-title{font-size:12pt;font-weight:700;}
-.data-card-sub{margin-left:auto;font-size:8.5pt;background:rgba(255,255,255,0.15);padding:2px 10px;border-radius:12px;white-space:nowrap;}
-.data-card-body{padding:14px 16px;}
-
-/* ── 도메인 지식 박스 ── */
-.domain-box{border:1px solid #bfdbfe;border-left:4px solid #3b82f6;border-radius:6px;padding:14px 16px;margin:12px 0;background:#eff6ff;}
-.domain-title{font-size:10.5pt;font-weight:700;color:#1e40af;margin-bottom:8px;}
-
-/* ── 품질 지표 그리드 ── */
-.quality-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;}
-.quality-card{border:1.5px solid #1a1a2e;border-radius:8px;padding:14px;text-align:center;background:#fff;}
-.quality-icon{display:none;}
-.quality-title{font-size:10pt;font-weight:700;color:#0f172a;margin-bottom:6px;}
-.quality-desc{font-size:9pt;color:#374151;line-height:1.5;}
-
-ol,ul{padding-left:20px;margin-bottom:10px;}
-li{margin-bottom:4px;color:#334155;line-height:1.65;}
-footer{text-align:center;font-size:8.5pt;color:#94a3b8;margin-top:44px;padding-top:13px;border-top:1px solid #e2e8f0;}
-
-@media print{
-  .cover{height:100vh;}
-  .page-break{page-break-before:always;}
-  table{page-break-inside:avoid;}
-}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:10pt;color:#1b1f24;background:#fff;line-height:1.7}
+.cover{max-width:210mm;margin:0 auto;min-height:97vh;padding:28mm 22mm 20mm;display:flex;flex-direction:column;justify-content:space-between}
+.cover-top{border-top:3px solid #16263e;padding-top:12px;display:flex;justify-content:space-between;font-size:9.5pt;color:#5a6472}
+.cover-docno{font-size:9.5pt;color:#5a6472;letter-spacing:3px;margin-bottom:16px}
+.cover-title{font-size:26pt;font-weight:700;color:#16263e;line-height:1.3}
+.cover-sub{font-size:12.5pt;color:#3a4656;margin-top:10px;font-weight:500}
+.cover-rule{width:100%;height:1px;background:#16263e;margin:26px 0}
+.cover-desc{font-size:10pt;color:#4a525c;max-width:560px}
+.cover-meta{width:100%;border-collapse:collapse;margin-top:34px;font-size:9.5pt}
+.cover-meta td{border:1px solid #c9ced6;padding:7px 12px}
+.cover-meta td.k{background:#f2f4f7;width:120px;font-weight:700;color:#16263e}
+.cover-bottom{border-bottom:3px solid #16263e;padding-bottom:12px;display:flex;justify-content:space-between;font-size:9pt;color:#5a6472}
+.page{max-width:210mm;margin:0 auto;padding:14mm 20mm}
+.doc-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #16263e;padding-bottom:6px;margin-bottom:24px;font-size:9pt;color:#5a6472}
+.doc-head b{font-size:10.5pt;color:#16263e}
+h1.sec{font-size:14.5pt;font-weight:700;color:#16263e;border-bottom:2px solid #16263e;padding-bottom:6px;margin:34px 0 14px}
+h2{font-size:11.5pt;font-weight:700;color:#16263e;margin:22px 0 8px}
+p{margin:0 0 8px;color:#2a3138}
+ul,ol{margin:0 0 10px 20px}
+li{margin-bottom:3px;color:#2a3138}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:9pt}
+th{background:#1f3147;color:#fff;font-weight:600;padding:7px 10px;border:1px solid #1f3147;text-align:left}
+td{padding:6px 10px;border:1px solid #c8ccd2;vertical-align:top;line-height:1.55;color:#262c33;background:#fff;word-break:keep-all}
+code{font-family:Consolas,'D2Coding',monospace;font-size:8.5pt;background:#f1f3f5;border:1px solid #e1e4e8;padding:0 4px;color:#1c3050}
+.note{border:1px solid #c8ccd2;border-left:3px solid #16263e;background:#fafbfc;padding:10px 14px;margin:12px 0;font-size:9.5pt;color:#333}
+.note b{color:#16263e}
+.diagram{border:1px solid #2a3a52;padding:14px 16px;margin:14px 0}
+.diagram-title{font-size:9.5pt;font-weight:700;color:#16263e;border-left:3px solid #16263e;padding-left:8px;margin-bottom:12px}
+.flow{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin:6px 0}
+.fnode{border:1px solid #2a3a52;background:#fff;padding:8px 12px;text-align:center;min-width:104px;display:flex;flex-direction:column;justify-content:center}
+.fnode .t{font-size:9.5pt;font-weight:700;color:#16263e}
+.fnode .s{font-size:8pt;color:#6a7380;margin-top:2px}
+.farr{color:#8a93a0;font-size:12pt;align-self:center}
+.fline{font-size:8.5pt;color:#5a6472;margin:4px 0 10px;padding-left:4px}
+pre{font-family:Consolas,'D2Coding',monospace;font-size:8.5pt;background:#f7f8fa;border:1px solid #d8dce2;padding:12px 14px;margin:10px 0 16px;line-height:1.6;overflow-x:auto;color:#22303f}
+.footer{max-width:210mm;margin:24px auto 0;padding:10px 20mm 26px;border-top:1px solid #c9ced6;display:flex;justify-content:space-between;font-size:8.5pt;color:#7c848e}
+@media print{.page-break{page-break-before:always}}
 </style>
 </head>
 <body>
 
-<!-- ════ 표지 ════ -->
 <div class="cover">
-  <div class="cover-badge">Public Data Analysis Report</div>
-  <div class="cover-title">Traffic<span>Sync</span></div>
-  <div class="cover-doc-type">교통·기상·돌발상황<br>공공데이터 분석 자료</div>
-  <div class="cover-doc-sub">실시간 교통 AI 모니터링 시스템 — 데이터 수집·처리·활용 특성 분석</div>
-  <div class="cover-divider"></div>
-  <div class="cover-meta">
-    <div class="cover-meta-item">
-      <div class="cover-meta-label">문서번호</div>
-      <div class="cover-meta-value">TS-DOC-05</div>
+  <div class="cover-top"><span>Syncro | 교통 관제 시스템</span><span></span></div>
+  <div>
+    <div class="cover-docno">SYNCRO PROJECT DOCUMENTATION</div>
+    <div class="cover-title">교통·기상·돌발상황<br/>공공데이터 분석</div>
+    <div class="cover-sub">실시간 V2X 기반 AI 교통 관제 시스템 Syncro</div>
+    <div class="cover-rule"></div>
+    <div class="cover-desc">
+      본 문서는 Syncro가 수집·통합하는 4종 공공데이터(교통 신호·도로 속도·기상·도로 위험도)의
+      데이터 명세, 수집 방식, 전처리 로직, 파생 지표 산출 기준과 데이터 품질 관리 방안을 분석한다.
     </div>
-    <div class="cover-meta-item">
-      <div class="cover-meta-label">버전</div>
-      <div class="cover-meta-value">v1.0</div>
-    </div>
-    <div class="cover-meta-item">
-      <div class="cover-meta-label">작성일</div>
-      <div class="cover-meta-value">2026. 05. 28</div>
-    </div>
-    <div class="cover-meta-item">
-      <div class="cover-meta-label">작성자</div>
-      <div class="cover-meta-value">박희윤</div>
-    </div>
-  </div>
-</div>
-
-<!-- ════ 개정이력 + 목차 ════ -->
-<div class="page">
-  <div class="rev-label">개정 이력</div>
-  <table>
-    <thead><tr><th>버전</th><th>일자</th><th>작성자</th><th>변경 내용</th><th>상태</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><strong>v1.0</strong></td><td>2026-05-28</td><td>박희윤</td>
-        <td>최초 작성 — 교통·기상·돌발상황 공공데이터 수집·처리·품질 분석 전체</td>
-        <td><span class="badge badge-yellow">초안</span></td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="rev-label" style="margin-top:36px;">목차</div>
-  <div class="toc-item"><span class="toc-num">1</span><span class="toc-title toc-bold">분석 개요</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">1.1</span><span class="toc-title">분석 목적 및 범위</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">1.2</span><span class="toc-title">대상 공공 API 요약</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">1.3</span><span class="toc-title">수집 아키텍처 개요</span></div>
-  <div class="toc-item"><span class="toc-num">2</span><span class="toc-title toc-bold">교통 데이터 분석</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">2.1</span><span class="toc-title">V2X 교차로 신호 데이터</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">2.2</span><span class="toc-title">TOPIS 도로 속도 데이터</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">2.3</span><span class="toc-title">교통 도메인 분석 — 혼잡도·병목 판단 기준</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">2.4</span><span class="toc-title">신호 최적화 도메인 지식 (Webster 공식)</span></div>
-  <div class="toc-item"><span class="toc-num">3</span><span class="toc-title toc-bold">기상 데이터 분석</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">3.1</span><span class="toc-title">기상청 초단기실황 API</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">3.2</span><span class="toc-title">KMA 격자 좌표 변환</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">3.3</span><span class="toc-title">날씨별 교통 영향 분석</span></div>
-  <div class="toc-item"><span class="toc-num">4</span><span class="toc-title toc-bold">돌발상황·도로 위험도 데이터 분석</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">4.1</span><span class="toc-title">도로 위험도 API 명세</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">4.2</span><span class="toc-title">LineString 파라미터 생성 방식</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">4.3</span><span class="toc-title">위험도 등급 기준 및 활용</span></div>
-  <div class="toc-item"><span class="toc-num">5</span><span class="toc-title toc-bold">데이터 통합 처리 구조</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">5.1</span><span class="toc-title">TrafficStatus 통합 JSON 명세</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">5.2</span><span class="toc-title">데이터 수집 주기 비교</span></div>
-  <div class="toc-item toc-sub"><span class="toc-num" style="font-size:9pt;">5.3</span><span class="toc-title">Stale 처리 메커니즘</span></div>
-  <div class="toc-item"><span class="toc-num">6</span><span class="toc-title toc-bold">데이터 품질 특성 및 한계</span></div>
-</div>
-
-<!-- ════ 1. 분석 개요 ════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">1</div>
-    <div class="section-title">분석 개요</div>
-  </div>
-
-  <h2>1.1 분석 목적 및 범위</h2>
-  <p>
-    TrafficSync는 서울시 전역의 교통 상황을 실시간으로 모니터링하기 위해 국토교통부 V2X 신호 API, 서울시 TOPIS 도로 속도 API, 기상청 초단기실황 API, 공공데이터포털 도로 위험도 API의 4종 공공 데이터를 수집·통합한다. 본 문서는 각 API의 데이터 명세, 수집 방식, 전처리 로직, 활용 방법을 분석하며, AI 에이전트가 교통 상황을 자연어로 해석하기 위해 필요한 교통·기상 도메인 지식을 함께 기술한다.
-  </p>
-  <div class="info-box">
-    <strong>분석 범위:</strong> ① 교통 신호·속도 데이터 &nbsp;|&nbsp; ② 기상 조건 데이터 &nbsp;|&nbsp; ③ 도로 위험도(돌발상황 지수) 데이터 &nbsp;|&nbsp; ④ 데이터 통합 처리 및 품질 관리
-  </div>
-
-  <h2>1.2 대상 공공 API 요약</h2>
-  <table>
-    <thead>
-      <tr><th>#</th><th>API명</th><th>제공기관</th><th>분류</th><th>수집 주기</th><th>주요 활용</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="num">1</td>
-        <td><strong>V2X 신호 정보</strong><br><code>tl_drct_info</code></td>
-        <td>국토교통부</td>
-        <td><span class="badge badge-blue">교통·신호</span></td>
-        <td>30초</td>
-        <td>교차로 8방향 신호 현황, 잔여시간</td>
-      </tr>
-      <tr>
-        <td class="num">2</td>
-        <td><strong>V2X 교차로 정보</strong><br><code>crsrd_map_info</code></td>
-        <td>국토교통부</td>
-        <td><span class="badge badge-blue">교통·신호</span></td>
-        <td>초기 1회</td>
-        <td>교차로 위치(위경도), ID, 자치구 DB 적재</td>
-      </tr>
-      <tr>
-        <td class="num">3</td>
-        <td><strong>TOPIS 도로 속도</strong><br><code>TrafficInfo</code></td>
-        <td>서울시 TOPIS</td>
-        <td><span class="badge badge-blue">교통·속도</span></td>
-        <td>60초</td>
-        <td>링크별 실시간 속도(km/h), 여행시간(초)</td>
-      </tr>
-      <tr>
-        <td class="num">4</td>
-        <td><strong>TOPIS 링크 버텍스</strong><br><code>LinkVertex</code></td>
-        <td>서울시 TOPIS</td>
-        <td><span class="badge badge-blue">교통·도형</span></td>
-        <td>초기 1회 (xlsx)</td>
-        <td>도로 링크 기하좌표, LineString 생성</td>
-      </tr>
-      <tr>
-        <td class="num">5</td>
-        <td><strong>기상청 초단기실황</strong><br><code>getUltraSrtNcst</code></td>
-        <td>기상청</td>
-        <td><span class="badge badge-purple">기상</span></td>
-        <td>10분</td>
-        <td>기온·강수량·습도·풍속 (교통 영향 보조)</td>
-      </tr>
-      <tr>
-        <td class="num">6</td>
-        <td><strong>도로 위험도</strong><br><code>getRestRoadDgdgrLink</code></td>
-        <td>공공데이터포털<br>(B552061)</td>
-        <td><span class="badge badge-red">안전·위험</span></td>
-        <td>5분</td>
-        <td>도로 링크 단위 위험 지수(0~100), 위험 등급</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>1.3 수집 아키텍처 개요</h2>
-
-  <!-- ① 메인 파이프라인 -->
-  <p style="font-size:9pt;font-weight:700;color:#374151;margin:14px 0 6px;padding-left:10px;border-left:3px solid #1a1a2e;">① 메인 처리 파이프라인 — V2X 10초 주기</p>
-  <div class="flow-box">
-    <div class="flow-node" style="min-width:110px;">V2X API<br><small>국토교통부</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:130px;">signalCache<br><small>교차로ID → TrafficStatus</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:140px;">enrichTrafficStatus()<br><small>4종 데이터 합산</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:110px;">WebSocket<br><small>프론트 브로드캐스트</small></div>
-  </div>
-
-  <!-- ② 보조 데이터 -->
-  <p style="font-size:9pt;font-weight:700;color:#374151;margin:20px 0 6px;padding-left:10px;border-left:3px solid #1a1a2e;">② 보조 데이터 수집 — enrichTrafficStatus() 호출 시 아래 캐시를 참조해 합산</p>
-  <div class="flow-box">
-    <div class="flow-node" style="min-width:130px;">TOPIS API<br><small>서울시 · 60초</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:200px;">speedsByLinkId<br><small>linkId → 속도(km/h) · 통행시간(초)</small></div>
-  </div>
-  <div class="flow-box" style="margin-top:6px;">
-    <div class="flow-node" style="min-width:130px;">위험도 API<br><small>B552061 · 300초</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:200px;">risksByLinkId<br><small>lineString → 위험등급 · 위험지수</small></div>
-  </div>
-  <div class="flow-box" style="margin-top:6px;">
-    <div class="flow-node" style="min-width:130px;">기상청 KMA<br><small>600초</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:200px;">weather<br><small>전역 단일 스냅샷 (기온·강수·풍속)</small></div>
-  </div>
-  <div class="flow-box" style="margin-top:6px;">
-    <div class="flow-node" style="min-width:130px;">CROSSROAD_SUPPLEMENTAL<br><small>_MAPPING (DB)</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:200px;">mappingsByCrossroadId<br><small>교차로ID → SPEED_LINK_ID · RISK_LINE_STRING</small></div>
-  </div>
-
-  <!-- ③ AI 에이전트 -->
-  <p style="font-size:9pt;font-weight:700;color:#374151;margin:20px 0 6px;padding-left:10px;border-left:3px solid #1a1a2e;">③ AI 에이전트 조회 경로 — REST API 경유, 두 캐시를 간접 참조</p>
-  <div class="flow-box">
-    <div class="flow-node" style="min-width:130px;">AI 에이전트<br><small>MCP 도구 호출</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:175px;">Spring Boot<br><small>GET /api/context/{crsrdId}</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:175px;">메인 캐시 조회<br><small>signalCache → TrafficStatus</small></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node" style="min-width:175px;">보조 캐시 합산<br><small>enrichTrafficStatus() 호출 후 반환</small></div>
-  </div>
-
-  <p style="margin-top:12px;">
-    V2X 신호가 <code>signalCache</code>에 뼈대를 만들면 <code>enrichTrafficStatus()</code>가 ②의 보조캐시 3종을 합산한다.
-    TOPIS·위험도 API는 교차로 ID가 아닌 <strong>linkId / lineString</strong> 체계를 사용하므로
-    <code>mappingsByCrossroadId</code>(교차로ID ↔ linkId 연결표)를 먼저 조회한 뒤 각 캐시에서 값을 꺼낸다.
-  </p>
-</div>
-
-<!-- ════ 2. 교통 데이터 분석 ════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">2</div>
-    <div class="section-title">교통 데이터 분석</div>
-  </div>
-
-  <h2>2.1 V2X 교차로 신호 데이터</h2>
-
-  <div class="data-card">
-    <div class="data-card-header">
-      <div class="data-card-icon">🚦</div>
-      <div class="data-card-title">V2X 신호 정보 API (국토교통부)</div>
-      <div class="data-card-sub">apis.data.go.kr / B551982</div>
-    </div>
-    <div class="data-card-body">
-      <table>
-        <thead><tr><th style="width:130px;">항목</th><th>내용</th></tr></thead>
-        <tbody>
-          <tr><td><strong>엔드포인트</strong></td><td><code>apis.data.go.kr/B551982/rti/tl_drct_info</code></td></tr>
-          <tr><td><strong>수집 방식</strong></td><td>Spring WebClient 비동기 호출 → 30초 주기 스케줄러 (<code>@Scheduled fixedRate</code>)</td></tr>
-          <tr><td><strong>파라미터</strong></td><td>교차로 ID(<code>crsrdId</code>) 목록, 서비스키</td></tr>
-          <tr><td><strong>응답 형식</strong></td><td>JSON — 교차로 1개 = 1 응답 객체</td></tr>
-          <tr><td><strong>타임아웃</strong></td><td>API 응답 지연 시 직전 캐시 유지 (<code>speedStale=true</code>)</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <h3>V2X 신호 응답 필드 명세</h3>
-  <table>
-    <thead><tr><th>필드명</th><th>타입</th><th>단위</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td><code>crsrdId</code></td><td>String</td><td>—</td><td>교차로 고유 ID (V2X 시스템 기준)</td></tr>
-      <tr><td><code>crsrdNm</code></td><td>String</td><td>—</td><td>교차로 명칭</td></tr>
-      <tr><td><code>lat</code> / <code>lon</code></td><td>double</td><td>도(°)</td><td>교차로 위도 / 경도 (WGS84)</td></tr>
-      <tr><td><code>guName</code></td><td>String</td><td>—</td><td>자치구명. 매핑 없으면 null</td></tr>
-      <tr><td><code>totDt</code></td><td>String</td><td>yyyyMMddHHmmss</td><td>V2X API 수집 시각 (문자열)</td></tr>
-      <tr><td><code>serverTimeMs</code></td><td>long</td><td>epoch ms</td><td>Spring 서버 처리 시각</td></tr>
-    </tbody>
-  </table>
-
-  <h3>signals 객체 구조 — 방향 × 신호 유형</h3>
-  <p>교차로 1개의 <code>signals</code> 필드는 방향 8개와 신호 유형 6개의 2차원 구조로 이루어진다.</p>
-  <table>
-    <thead><tr><th>방향 키</th><th>의미</th><th>신호 유형 키</th><th>의미</th></tr></thead>
-    <tbody>
-      <tr><td><code>nt</code></td><td>북 직진</td><td><code>stsg</code></td><td>직진 신호</td></tr>
-      <tr><td><code>et</code></td><td>동 직진</td><td><code>ltsg</code></td><td>좌회전 신호</td></tr>
-      <tr><td><code>st</code></td><td>남 직진</td><td><code>pdsg</code></td><td>보행자 신호</td></tr>
-      <tr><td><code>wt</code></td><td>서 직진</td><td><code>utsg</code></td><td>유턴 신호</td></tr>
-      <tr><td><code>ne</code> / <code>se</code> / <code>sw</code> / <code>nw</code></td><td>대각 방향 4개</td><td><code>bssg</code></td><td>버스 신호</td></tr>
-      <tr><td>—</td><td>—</td><td><code>bcsg</code></td><td>자전거 신호</td></tr>
-    </tbody>
-  </table>
-
-  <table style="margin-top:0;">
-    <thead><tr><th>필드</th><th>타입</th><th>단위</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td><code>status</code></td><td>String</td><td>—</td><td>신호 상태 문자열 (아래 신호 상태값 표 참조)</td></tr>
-      <tr><td><code>rmndCs</code></td><td>Integer</td><td>1/10초</td><td>현재 상태 잔여시간. 초 변환: <code>÷ 10</code>. 전체 주기 알 수 없음</td></tr>
-    </tbody>
-  </table>
-
-  <h3>V2X 신호 상태값 의미</h3>
-  <table>
-    <thead><tr><th>status 값</th><th>색상</th><th>의미</th><th>AI 분석 활용</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><code>protected-Movement-Allowed</code></td>
-        <td><span class="badge badge-green">녹색</span></td>
-        <td>보호 직진·좌회전 허용 (교차 교통 없음)</td>
-        <td>해당 방향 진행 가능. rmndCs 낮으면 혼잡 시 녹색 연장 권고</td>
-      </tr>
-      <tr>
-        <td><code>permissive-Movement-Allowed</code></td>
-        <td><span class="badge badge-green">녹색(양보)</span></td>
-        <td>양보 조건부 진행 허용 (대향 차량 주의)</td>
-        <td>좌회전 시 교차 위험 주의 문구 권고</td>
-      </tr>
-      <tr>
-        <td><code>stop-And-Remain</code></td>
-        <td><span class="badge badge-red">적색</span></td>
-        <td>정지 유지 (진행 금지)</td>
-        <td>rmndCs 높으면 대기 시간 긴 방향 → 적색 단축 권고</td>
-      </tr>
-      <tr>
-        <td><code>protected-clearance</code></td>
-        <td><span class="badge badge-yellow">황색</span></td>
-        <td>신호 전환 준비 (클리어런스)</td>
-        <td>전환 직전 상태. 수초 내 적색 전환 예고</td>
-      </tr>
-      <tr>
-        <td><code>caution-Conflicting-Traffic</code></td>
-        <td><span class="badge badge-yellow">황색(주의)</span></td>
-        <td>교차 교통 주의 진행</td>
-        <td>우선순위 낮음. 보행자 연계 시 안전 강조</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="warn-box">
-    <strong>⚠ rmndCs 해석 주의:</strong> V2X API는 현재 상태의 잔여시간(스냅샷)만 제공하며 전체 신호 사이클 길이는 알 수 없다. 신호 최적화 권고 시 반드시 보수적으로 해석해야 한다.
-  </div>
-
-  <h3>평균 대기시간(avgWaitSec) 계산 방식</h3>
-  <p>Spring <code>SupplementalDataCacheService.calculateAverageWaitSec()</code>에서 자동 계산:</p>
-  <div class="gray-box">
-    <strong>계산 공식:</strong><br>
-    ① 각 방향(<code>nt, et, st, wt, ne, se, sw, nw</code>)의 직진 신호(<code>stsg</code>) 잔여시간 합산<br>
-    ② <code>rmndCs ÷ 10</code> (초 변환) → 전방향 평균<br>
-    ③ 결과: <code>avgWaitSec</code> (초 단위 Integer, null 가능)
-  </div>
-</div>
-
-<!-- ════ 2.2 TOPIS ════ -->
-<div class="page page-break">
-  <h2>2.2 TOPIS 도로 속도 데이터</h2>
-
-  <div class="data-card">
-    <div class="data-card-header">
-      <div class="data-card-icon">🛣️</div>
-      <div class="data-card-title">서울시 TOPIS 도로 속도 API</div>
-      <div class="data-card-sub">openapi.seoul.go.kr:8088</div>
-    </div>
-    <div class="data-card-body">
-      <table>
-        <thead><tr><th style="width:130px;">항목</th><th>내용</th></tr></thead>
-        <tbody>
-          <tr><td><strong>속도 엔드포인트</strong></td><td><code>openapi.seoul.go.kr:8088/{key}/{format}/TrafficInfo/1/5/{linkId}</code></td></tr>
-          <tr><td><strong>버텍스 엔드포인트</strong></td><td><code>openapi.seoul.go.kr:8088/{key}/{format}/LinkVertex/{start}/{end}</code></td></tr>
-          <tr><td><strong>응답 형식</strong></td><td>XML 또는 JSON (설정값: <code>topis.api.response-format</code>)</td></tr>
-          <tr><td><strong>수집 주기</strong></td><td>60초 (4스레드 병렬 수집)</td></tr>
-          <tr><td><strong>타임아웃</strong></td><td>3초 (설정값: <code>topis.api.request-timeout-seconds</code>)</td></tr>
-          <tr><td><strong>버텍스 소스</strong></td><td>기본은 <code>topis-link-vertex-2025.xlsx</code> 로컬 파일 사용 (<code>topis.link-vertex.prefer-file=true</code>)</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <h3>속도 응답 필드 명세</h3>
-  <table>
-    <thead><tr><th>필드명(후보)</th><th>타입</th><th>단위</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td><code>linkId</code> / <code>LINK_ID</code></td><td>String</td><td>—</td><td>서울시 도로 링크 고유 ID</td></tr>
-      <tr><td><code>speed</code> / <code>SPEED</code> / <code>prcs_spd</code></td><td>Double</td><td>km/h</td><td>해당 링크 실측 속도</td></tr>
-      <tr><td><code>travelTime</code> / <code>trvl_tm</code> / <code>prcs_trv_time</code></td><td>Integer</td><td>초</td><td>해당 링크 구간 통행시간</td></tr>
-    </tbody>
-  </table>
-  <div class="info-box">
-    <strong>다중 필드명 대응:</strong> TOPIS API는 버전별로 필드명 케이스·언더스코어 형태가 다양하다. <code>TopisApiService</code>는 <code>linkId / link_id / LINK_ID</code> 등 후보 목록을 순서대로 검색하여 첫 번째 유효값을 사용한다.
-  </div>
-
-  <h3>교차로 ↔ 도로 링크 매핑 구조</h3>
-  <p>V2X 교차로 ID와 TOPIS 링크 ID는 서로 다른 체계를 사용하므로 <code>CrossroadRoadLinkMapping</code> 테이블을 통해 연결한다.</p>
-  <div class="flow-box">
-    <div class="flow-node" style="min-width:100px;">교차로<br><code>crsrdId</code></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node teal" style="min-width:140px;">CrossroadRoadLink<br>Mapping</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node orange" style="min-width:130px;"><code>linkId</code> / <code>speedLinkId</code><br>속도 조회 키</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node green" style="min-width:110px;">RoadSpeed<br>Snapshot</div>
-  </div>
-  <table style="margin-top:12px;">
-    <thead><tr><th>매핑 필드</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td><code>linkId</code></td><td>TOPIS 기본 도로 링크 ID. 속도·위험도 공통 조회 키</td></tr>
-      <tr><td><code>speedLinkId</code></td><td>속도 전용 링크 ID. null이면 <code>linkId</code> 대체 사용</td></tr>
-      <tr><td><code>lineString</code></td><td>위험도 API 조회용 WGS84 좌표 문자열. null이면 <code>linkId</code> 대체</td></tr>
-    </tbody>
-  </table>
-  <div class="warn-box">
-    <strong>⚠ 매핑 없는 교차로:</strong> 매핑이 없으면 <code>speedKph</code>, <code>riskGrade</code> 모두 null. 프론트에서 "데이터 없음"으로 표시하며 혼잡도는 V2X 신호 잔여시간 보조 계산으로 대체한다.
-  </div>
-
-  <h3>TOPIS 링크 버텍스 좌표 변환</h3>
-  <p>서울시 TOPIS 좌표계는 TM(트랜스버스 메르카토르) 기반이며, 카카오맵 지도 및 위험도 API에서 사용하는 WGS84로 변환이 필요하다.</p>
-  <div class="step-list">
-    <div class="step-item">
-      <div class="step-num">1</div>
-      <div class="step-content">
-        <div class="step-title">버텍스 수집</div>
-        <div class="step-desc">LinkVertex API 또는 로컬 xlsx 파일에서 링크 ID별 버텍스 순번(seq)과 TM 좌표(tmx, tmy) 수집</div>
-      </div>
-    </div>
-    <div class="step-item">
-      <div class="step-num">2</div>
-      <div class="step-content">
-        <div class="step-title">TM → WGS84 변환</div>
-        <div class="step-desc"><code>CoordinateTransformService.toWgs84(tmx, tmy)</code> 로 위경도 변환. 한국 중부원점 기준 투영 역변환 적용</div>
-      </div>
-    </div>
-    <div class="step-item">
-      <div class="step-num">3</div>
-      <div class="step-content">
-        <div class="step-title">버텍스 순번 정렬 → TopisLinkGeometry 생성</div>
-        <div class="step-desc">TreeMap(seq 키)으로 정렬 후 순서대로 GeoPoint 리스트 조립 → <code>TopisLinkGeometry.vertices</code></div>
-      </div>
-    </div>
-    <div class="step-item">
-      <div class="step-num">4</div>
-      <div class="step-content">
-        <div class="step-title">LineString 조립</div>
-        <div class="step-desc"><code>RoadRiskApiService.buildLineString(vertices)</code>: <code>LineString(lon lat,lon lat,...)</code> 형식. 최대 3900자 제한 (URL 길이 초과 방지)</div>
-      </div>
-    </div>
-  </div>
-
-  <h2>2.3 교통 도메인 분석 — 혼잡도·병목 판단 기준</h2>
-
-  <h3>속도 기반 혼잡도 분류</h3>
-  <p>Spring <code>SupplementalDataCacheService.calculateCongestion()</code>에서 자동 계산하여 <code>TrafficStatus.congestion</code> 필드에 저장한다.</p>
-  <table>
-    <thead><tr><th>speedKph</th><th>congestion 값</th><th>의미</th><th>지도 표시 색상</th></tr></thead>
-    <tbody>
-      <tr><td><strong>40 km/h 이상</strong></td><td><strong>원활</strong></td><td>정상 소통</td><td><span class="badge badge-green">초록</span></td></tr>
-      <tr><td><strong>20 ~ 40 km/h</strong></td><td><strong>서행</strong></td><td>주의 구간</td><td><span class="badge badge-yellow">주황</span></td></tr>
-      <tr><td><strong>20 km/h 미만</strong></td><td><strong>혼잡</strong></td><td>병목 상태</td><td><span class="badge badge-red">빨강</span></td></tr>
-      <tr><td><strong>null</strong></td><td>보조 계산 (아래)</td><td>속도 미수집</td><td><span class="badge badge-gray">회색</span></td></tr>
-    </tbody>
-  </table>
-
-  <h3>speedKph null 시 V2X 신호 보조 계산</h3>
-  <p>속도 API 미연결 또는 링크 매핑 없는 교차로의 혼잡도를 V2X 직진 신호(<code>stsg</code>) 적색 잔여시간으로 보조 추정한다.</p>
-  <table>
-    <thead><tr><th>평균 적색 직진 대기시간</th><th>보조 혼잡도</th></tr></thead>
-    <tbody>
-      <tr><td>60초 초과</td><td>혼잡</td></tr>
-      <tr><td>30 ~ 60초</td><td>서행</td></tr>
-      <tr><td>30초 이하</td><td>원활</td></tr>
-      <tr><td>신호 데이터 없음</td><td>알 수 없음</td></tr>
-    </tbody>
-  </table>
-
-  <h3>병목 교차로 필터 기준 (bottleneck_under_15)</h3>
-  <p>AI 에이전트 MCP 도구 <code>get_district_traffic</code> 내부에서 적용하는 이메일 경보 기준이다.</p>
-  <div class="domain-box">
-    <div class="domain-title">병목 필터 조건</div>
-    <ul>
-      <li><strong>조건:</strong> <code>speedKph &gt; 0 AND speedKph ≤ 15</code> (km/h)</li>
-      <li><strong>제외:</strong> 속도 0 (정차·미수집 구분 불가) 및 null (링크 매핑 없음)</li>
-      <li><strong>정렬:</strong> 속도 오름차순 (가장 느린 교차로부터 나열)</li>
-      <li><strong>경보 기준:</strong> 목록에 교차로 1개 이상 → 관제사 이메일 자동 발송</li>
-    </ul>
-  </div>
-
-  <h2>2.4 신호 최적화 도메인 지식 — Webster 공식</h2>
-
-  <div class="domain-box">
-    <div class="domain-title">Webster 최적 신호 주기 공식 (교통공학 고전 공식)</div>
-    <p style="font-size:11pt;font-weight:600;color:#1e40af;margin:8px 0;">Co = (1.5 × L + 5) / (1 − Y)</p>
-    <table>
-      <thead><tr><th>변수</th><th>의미</th><th>단위</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Co</strong></td><td>최적 신호 주기</td><td>초</td></tr>
-        <tr><td><strong>L</strong></td><td>총 손실 시간 (신호 전환 시 미출발 시간, 보통 4초/페이즈)</td><td>초</td></tr>
-        <tr><td><strong>Y</strong></td><td>총 포화도 (각 현시 교통량 / 포화 교통량 합)</td><td>0~1</td></tr>
-      </tbody>
+    <table class="cover-meta">
+      <tr><td class="k">작성 팀</td><td>Syncro</td><td class="k">작성자</td><td>kimsua · heeyoun · jinminkyeong · seokhyun</td></tr>
+      <tr><td class="k">작성일</td><td>2026. 06. 13.</td><td class="k">문서 분류</td><td>공공데이터 분석 자료</td></tr>
+      <tr><td class="k">시스템명</td><td>Syncro (교통 관제 시스템)</td><td class="k">작성 기준</td><td>구현 코드 기준</td></tr>
     </table>
-    <p style="margin-top:8px;"><strong>계산 예시:</strong> L=12초(3페이즈×4초), Y=0.6 → Co = (1.5×12+5) / (1-0.6) = 23 / 0.4 = <strong>57.5초</strong></p>
-    <p style="margin-top:4px;color:#9a3412;font-size:9.5pt;"><strong>한계:</strong> 정상 상태 가정(피크 시간 부정확), 좌회전·우회전 분리 미반영 → 실시간 데이터 보정 조합 권장</p>
   </div>
-
-  <h3>날씨·속도별 권고 신호 주기</h3>
-  <table>
-    <thead><tr><th>조건</th><th>권고 신호 주기</th><th>근거</th></tr></thead>
-    <tbody>
-      <tr><td>맑음 + 고속 (50km/h↑)</td><td>30~40초</td><td>처리량 최대화</td></tr>
-      <tr><td>맑음 + 저속 (30km/h↓)</td><td>40~50초</td><td>대기 행렬 분산</td></tr>
-      <tr><td>비 + 저속</td><td>45~60초</td><td>안전거리 확보, 제동 지연</td></tr>
-      <tr><td>눈 + 저속</td><td>60초 이상</td><td>제동거리 2.5배 증가</td></tr>
-      <tr><td>출퇴근 피크</td><td>90~120초</td><td>긴 주기로 교차로 처리량 ↑</td></tr>
-      <tr><td>심야</td><td>60초 이하</td><td>대기 시간 최소화</td></tr>
-    </tbody>
-  </table>
-
-  <h3>신호 최적화 권고 표현 기준</h3>
-  <div class="success-box">
-    <strong>좋은 권고 예시:</strong> "비 + 저속(25km/h) 상태로, 현재 60초 주기를 75초로 +15초 연장 권고. 보행자 안전 확보 + 차량 처리량 안정."<br>
-    <strong style="color:#9a3412;">나쁜 권고 예시:</strong> "신호 늘려야 함."<br>
-    → <em>근거(날씨·속도) + 수치(초) + 효과(보행 안전·처리량)를 함께 제시해야 관제사 신뢰를 얻는다.</em>
-  </div>
+  <div class="cover-bottom"><span>Syncro Team</span><span></span></div>
 </div>
 
-<!-- ════ 3. 기상 데이터 분석 ════ -->
 <div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">3</div>
-    <div class="section-title">기상 데이터 분석</div>
+<div class="doc-head"><b>교통·기상·돌발상황 공공데이터 분석</b><span>Syncro | 교통 관제 시스템</span></div>
+
+<h1 class="sec">1. 분석 개요</h1>
+<h2>1.1 분석 목적 및 범위</h2>
+<p>
+Syncro는 서울시 교통 상황의 실시간 모니터링을 위해 국토교통부 V2X 신호 API, 서울시 TOPIS 도로 속도 API,
+기상청 초단기실황 API, 행정안전부 도로 위험지수 API의 4종 공공데이터를 수집·통합한다.
+본 문서는 각 API의 데이터 명세, 수집 방식, 전처리 로직, 활용 방법을 분석하며,
+AI 에이전트가 교통 상황을 자연어로 해석하기 위해 필요한 교통·기상 도메인 지식을 함께 기술한다.
+</p>
+<p>분석 범위: ① 교통 신호·속도 데이터 ② 기상 조건 데이터 ③ 도로 위험도(돌발상황 지수) 데이터 ④ 데이터 통합 처리 및 품질 관리</p>
+
+<h2>1.2 대상 공공 API 요약</h2>
+<table>
+  <tr><th style="width:165px">API</th><th style="width:100px">제공기관</th><th style="width:80px">수집 주기</th><th>핵심 항목</th></tr>
+  <tr><td>V2X 교차로 신호정보</td><td>국토교통부</td><td>30초</td><td>방향별 신호 상태, 잔여시간(1/10초)</td></tr>
+  <tr><td>TOPIS 도로 소통정보</td><td>서울시</td><td>60초</td><td>링크별 구간 속도(km/h), 통행시간(초)</td></tr>
+  <tr><td>초단기실황</td><td>기상청</td><td>10분</td><td>기온, 강수량, 습도, 풍속</td></tr>
+  <tr><td>도로 위험지수</td><td>행정안전부</td><td>5분</td><td>링크별 위험지수, 위험등급(01~04)</td></tr>
+</table>
+
+<h2>1.3 수집 아키텍처 개요</h2>
+<div class="diagram">
+  <div class="diagram-title">메인 처리 파이프라인 — V2X 30초 주기</div>
+  <div class="flow">
+    <div class="fnode"><span class="t">V2X API</span><span class="s">국토교통부</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">signalCache</span><span class="s">교차로ID → TrafficStatus</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">enrichTrafficStatus()</span><span class="s">4종 데이터 합산</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">WebSocket</span><span class="s">프론트 브로드캐스트</span></div>
   </div>
-
-  <h2>3.1 기상청 초단기실황 API</h2>
-
-  <div class="data-card">
-    <div class="data-card-header">
-      <div class="data-card-icon">🌤️</div>
-      <div class="data-card-title">기상청 초단기실황 API (getUltraSrtNcst)</div>
-      <div class="data-card-sub">apis.data.go.kr / 기상청</div>
-    </div>
-    <div class="data-card-body">
-      <table>
-        <thead><tr><th style="width:130px;">항목</th><th>내용</th></tr></thead>
-        <tbody>
-          <tr><td><strong>엔드포인트</strong></td><td><code>apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst</code></td></tr>
-          <tr><td><strong>수집 주기</strong></td><td>10분 (기상청 초단기실황 발표 간격)</td></tr>
-          <tr><td><strong>파라미터</strong></td><td><code>nx</code> (격자 X), <code>ny</code> (격자 Y) — WGS84 → KMA 격자 변환 필수</td></tr>
-          <tr><td><strong>기준 좌표</strong></td><td>서울 강남구 대표 좌표 → KMA 격자 변환 후 적용</td></tr>
-          <tr><td><strong>응답 형식</strong></td><td>JSON, 카테고리별 다수 행 반환</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <h3>수집 기상 변수 명세</h3>
-  <table>
-    <thead><tr><th>카테고리</th><th>TrafficStatus 필드</th><th>타입</th><th>단위</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td><code>T1H</code></td><td><code>weather.temperatureC</code></td><td>Double</td><td>°C</td><td>1시간 기온</td></tr>
-      <tr><td><code>RN1</code></td><td><code>weather.precipitationMm</code></td><td>Double</td><td>mm/h</td><td>1시간 강수량. 0.0 = 강수 없음</td></tr>
-      <tr><td><code>REH</code></td><td><code>weather.humidityPercent</code></td><td>Integer</td><td>%</td><td>상대 습도</td></tr>
-      <tr><td><code>WSD</code></td><td><code>weather.windSpeedMs</code></td><td>Double</td><td>m/s</td><td>풍속</td></tr>
-      <tr><td>—</td><td><code>weather.baseDateTime</code></td><td>String</td><td>yyyyMMddHHmm</td><td>기상청 예보 기준 시각</td></tr>
-      <tr><td>—</td><td><code>weather.stale</code></td><td>boolean</td><td>—</td><td>true = API 미응답, 직전 캐시값 사용 중</td></tr>
-      <tr><td>—</td><td><code>weather.lastFetchedAtMs</code></td><td>long</td><td>epoch ms</td><td>마지막 실제 수집 시각</td></tr>
-    </tbody>
-  </table>
-
-  <h2>3.2 KMA 격자 좌표 변환</h2>
-  <p>
-    기상청 API는 Lambert 정각원추 투영(LCC) 기반 격자 좌표계(<code>nx</code>, <code>ny</code>)를 사용한다. 교차로 위경도(WGS84)를 기상청 격자 좌표로 변환하기 위해 <code>KmaGridConverter.toGrid(lat, lon)</code>를 사용한다.
-  </p>
-  <table>
-    <thead><tr><th>파라미터</th><th>값</th><th>의미</th></tr></thead>
-    <tbody>
-      <tr><td>RE (지구 반경)</td><td>6371.00877 km</td><td>기상청 채택 지구 반경</td></tr>
-      <tr><td>GRID (격자 간격)</td><td>5.0 km</td><td>격자 해상도</td></tr>
-      <tr><td>SLAT1 / SLAT2</td><td>30° / 60°</td><td>LCC 표준위선</td></tr>
-      <tr><td>OLON / OLAT</td><td>126° / 38°</td><td>원점 경위도</td></tr>
-      <tr><td>XO / YO</td><td>43 / 136</td><td>원점 격자 좌표</td></tr>
-    </tbody>
-  </table>
-  <div class="info-box">
-    <strong>변환 예시:</strong> 서울 강남구 (37.5173° N, 127.0473° E) → 격자 nx=61, ny=126 → 기상청 API 파라미터로 사용
-  </div>
-
-  <h2>3.3 날씨별 교통 영향 분석</h2>
-  <p>AI 에이전트가 기상 조건과 교통 상황을 연관 분석할 때 사용하는 도메인 지식이다.</p>
-
-  <table>
-    <thead><tr><th>날씨 조건</th><th>속도 영향</th><th>사고 위험</th><th>제동거리</th><th>적용 예시</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><strong>맑음</strong> <span class="badge badge-green">기준</span></td>
-        <td>기준값</td><td>1.0 (기준)</td><td>1.0 (기준)</td>
-        <td>50km/h → 제동거리 15m</td>
-      </tr>
-      <tr>
-        <td><strong>비</strong> <span class="badge badge-blue">주의</span></td>
-        <td>−20%</td><td>1.3배</td><td>1.5배</td>
-        <td>50km/h → 40km/h 권고 / 15m → 22.5m</td>
-      </tr>
-      <tr>
-        <td><strong>눈</strong> <span class="badge badge-red">위험</span></td>
-        <td>−40%</td><td>2.1배</td><td>2.5배</td>
-        <td>50km/h → 30km/h 권고 / 15m → 37.5m</td>
-      </tr>
-      <tr>
-        <td><strong>안개</strong> <span class="badge badge-yellow">주의</span></td>
-        <td>−30%</td><td>1.8배</td><td>1.3배</td>
-        <td>50km/h → 35km/h 권고 / 시인성 감소</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3>한국 도로 제한 속도 기준</h3>
-  <table>
-    <thead><tr><th>도로 유형</th><th>제한 속도</th><th>비고</th></tr></thead>
-    <tbody>
-      <tr><td>도심 일반 도로</td><td>50 km/h</td><td>2021년부터 서울 시내 전면 적용</td></tr>
-      <tr><td>어린이 보호구역 (스쿨존)</td><td>30 km/h</td><td>정속 제한, 과속 시 가중 처벌</td></tr>
-      <tr><td>자동차 전용도로</td><td>80 km/h</td><td>강변북로·올림픽대로 등</td></tr>
-      <tr><td>고속도로</td><td>100~110 km/h</td><td>구간별 상이</td></tr>
-    </tbody>
-  </table>
-
-  <h3>보행자 안전 신호 기준</h3>
-  <table>
-    <thead><tr><th>기준</th><th>내용</th></tr></thead>
-    <tbody>
-      <tr><td>보행 신호 최소 시간</td><td>4초 + (보행 횡단 거리 ÷ 1.0 m/s)</td></tr>
-      <tr><td>노인·어린이 보호구역</td><td>1.0 m/s → 0.8 m/s 기준으로 연장</td></tr>
-      <tr><td>일반 교차로 신호 주기</td><td>60~120초 (도로교통법 권고)</td></tr>
-    </tbody>
-  </table>
 </div>
-
-<!-- ════ 4. 돌발상황·위험도 ════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">4</div>
-    <div class="section-title">돌발상황·도로 위험도 데이터 분석</div>
+<div class="diagram">
+  <div class="diagram-title">보조 데이터 수집 — enrichTrafficStatus() 호출 시 아래 캐시를 참조해 합산</div>
+  <div class="flow">
+    <div class="fnode"><span class="t">TOPIS API</span><span class="s">서울시 · 60초</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">speedsByLinkId</span><span class="s">linkId → 속도(km/h)·통행시간(초)</span></div>
   </div>
-
-  <h2>4.1 도로 위험도 API 명세</h2>
-
-  <div class="data-card">
-    <div class="data-card-header">
-      <div class="data-card-icon">⚠️</div>
-      <div class="data-card-title">도로 위험도 API (getRestRoadDgdgrLink)</div>
-      <div class="data-card-sub">apis.data.go.kr / B552061</div>
-    </div>
-    <div class="data-card-body">
-      <table>
-        <thead><tr><th style="width:130px;">항목</th><th>내용</th></tr></thead>
-        <tbody>
-          <tr><td><strong>엔드포인트</strong></td><td><code>apis.data.go.kr/B552061/roadDgdgrLink/getRestRoadDgdgrLink</code></td></tr>
-          <tr><td><strong>수집 주기</strong></td><td>5분 (4스레드 병렬 수집)</td></tr>
-          <tr><td><strong>핵심 파라미터</strong></td><td><code>searchLineString</code> (WGS84 LineString), <code>vhctyCd</code> (차종코드), <code>numOfRows</code></td></tr>
-          <tr><td><strong>차종 코드</strong></td><td><code>01</code> = 승용차 (기본값 <code>road-risk.vehicle-type</code>)</td></tr>
-          <tr><td><strong>응답 형식</strong></td><td>JSON</td></tr>
-          <tr><td><strong>타임아웃</strong></td><td>3초 (설정값 <code>road-risk.api.request-timeout-seconds</code>)</td></tr>
-        </tbody>
-      </table>
-    </div>
+  <div class="flow">
+    <div class="fnode"><span class="t">도로위험도 API</span><span class="s">행안부 · 5분</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">risksByLinkId</span><span class="s">링크 → 위험지수·등급</span></div>
   </div>
-
-  <h3>위험도 응답 필드 명세</h3>
-  <table>
-    <thead><tr><th>응답 필드(후보)</th><th>TrafficStatus 매핑</th><th>타입</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td><code>anals_value</code> / <code>ANALS_VALUE</code> / <code>riskIndex</code></td><td><code>riskIndex</code>, <code>riskScore</code></td><td>Double</td><td>위험 지수 (0~100, 높을수록 위험)</td></tr>
-      <tr><td><code>anals_grd</code> / <code>ANALS_GRD</code> / <code>riskGrade</code></td><td><code>riskGrade</code></td><td>String</td><td>위험 등급 (1~5 숫자 또는 등급 문자열)</td></tr>
-      <tr><td>—</td><td><code>riskStale</code></td><td>boolean</td><td>true = API 미응답, 직전 캐시값 사용 중</td></tr>
-    </tbody>
-  </table>
-
-  <h3>다중 결과 처리 방식</h3>
-  <p>하나의 LineString에 대해 여러 도로 링크 결과가 반환될 수 있다. <code>RoadRiskApiService</code>는 가장 위험한 결과를 대표값으로 선택한다.</p>
-  <div class="gray-box">
-    <strong>우선순위 선택 로직:</strong><br>
-    ① 위험 등급(riskGrade) 숫자값 내림차순<br>
-    ② 동일 등급이면 riskIndex 높은 값 우선<br>
-    → 교차로에서 가장 위험한 링크의 등급과 지수를 <code>TrafficStatus</code>에 반영
-  </div>
-
-  <h2>4.2 LineString 파라미터 생성 방식</h2>
-  <p>
-    도로 위험도 API는 도로 구간의 기하 좌표를 <code>searchLineString</code> 파라미터로 받는다. TOPIS 링크 버텍스 좌표에서 이 값을 생성한다.
-  </p>
-
-  <h3>기본 LineString 생성 (<code>buildLineString</code>)</h3>
-  <div class="gray-box">
-    <strong>형식:</strong> <code>LineString(lon1 lat1,lon2 lat2,...)</code><br>
-    <strong>좌표 순서:</strong> 경도(lon) 먼저, 위도(lat) 나중 (WKT 표준)<br>
-    <strong>소수점:</strong> 7자리 (예: <code>126.9779451 37.5662952</code>)<br>
-    <strong>최대 길이:</strong> 3900자 제한 (URL 파라미터 인코딩 후 초과 방지)
-  </div>
-
-  <h3>교차로 근처 부분 LineString 생성 (<code>buildLineStringNearPoint</code>)</h3>
-  <p>링크가 길 경우 교차로 위치에서 일정 반경만 잘라 API 정확도를 높인다.</p>
-  <div class="step-list">
-    <div class="step-item">
-      <div class="step-num">1</div>
-      <div class="step-content">
-        <div class="step-title">폴리라인 위 최근접 위치 탐색</div>
-        <div class="step-desc">교차로 좌표를 각 버텍스 세그먼트에 사영(projection)하여 폴리라인 위 최근접 지점 거리 계산 (Haversine 공식)</div>
-      </div>
-    </div>
-    <div class="step-item">
-      <div class="step-num">2</div>
-      <div class="step-content">
-        <div class="step-title">지정 길이(meters) 구간 추출</div>
-        <div class="step-desc">최근접 지점 기준 앞뒤로 <code>lengthMeters/2</code> 씩 폴리라인 위에서 보간(interpolation)하여 시작/끝점 산출</div>
-      </div>
-    </div>
-    <div class="step-item">
-      <div class="step-num">3</div>
-      <div class="step-content">
-        <div class="step-title">부분 LineString 반환</div>
-        <div class="step-desc">시작점~끝점 2개 좌표로 <code>LineString(lon lat,lon lat)</code> 조립 → API 파라미터로 사용</div>
-      </div>
-    </div>
-  </div>
-
-  <h2>4.3 위험도 등급 기준 및 활용</h2>
-  <table>
-    <thead><tr><th>등급</th><th>riskGrade</th><th>의미</th><th>시스템 대응</th></tr></thead>
-    <tbody>
-      <tr><td><span class="badge badge-red">위험</span></td><td>높음 / 5</td><td>즉각 조치 필요. 사고 다발·도로 구조 취약</td><td>사이드바 위험 목록 최상단 표시, AI 경보 우선 언급</td></tr>
-      <tr><td><span class="badge badge-yellow">보통</span></td><td>중간 / 3~4</td><td>관찰 필요. 잠재 위험 구간</td><td>사이드바 위험 목록 표시</td></tr>
-      <tr><td><span class="badge badge-green">안전</span></td><td>낮음 / 1~2</td><td>정상 구간</td><td>일반 마커로 표시</td></tr>
-      <tr><td><span class="badge badge-gray">미수집</span></td><td>null</td><td>API 미연결 또는 링크 매핑 없음</td><td>"데이터 없음" 표시. 병목 판단에서 제외</td></tr>
-    </tbody>
-  </table>
-
-  <h3>병목 판단 4가지 기준 (도메인 지식)</h3>
-  <p>다음 중 하나라도 만족 시 해당 교차로를 "병목 상태"로 판정한다.</p>
-  <table>
-    <thead><tr><th>#</th><th>기준</th><th>임계값</th></tr></thead>
-    <tbody>
-      <tr><td class="num">1</td><td><strong>평균 속도 지속 저하</strong></td><td>15 km/h 이하 10분 이상 지속</td></tr>
-      <tr><td class="num">2</td><td><strong>대기 차량 급증 패턴</strong></td><td>5분 평균 대비 200% 이상 증가</td></tr>
-      <tr><td class="num">3</td><td><strong>급감속 연속 감지</strong></td><td>V2X에서 5초 내 −10 km/h 이상 감속 3회 이상</td></tr>
-      <tr><td class="num">4</td><td><strong>신호 대기시간 초과</strong></td><td>평균 신호 대기 90초 초과</td></tr>
-    </tbody>
-  </table>
-
-  <h3>비상 상황 대응 기준</h3>
-  <table>
-    <thead><tr><th>상황</th><th>권고 대응</th></tr></thead>
-    <tbody>
-      <tr><td>화재·구급차 긴급 통과</td><td>전방 교차로 전체 청색 신호 (긴급차량 전용 통로)</td></tr>
-      <tr><td>교통사고 발생</td><td>우회로 신호 주기 +20초 연장, 사고 구간 신호 차단 검토</td></tr>
-      <tr><td>정전·신호기 고장</td><td>점멸 신호 모드 (황색 점멸, 실질적 적색 처리)</td></tr>
-      <tr><td>집회·행사로 통제</td><td>수동 신호 모드, 관제사 직접 제어</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- ════ 5. 데이터 통합 처리 ════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">5</div>
-    <div class="section-title">데이터 통합 처리 구조</div>
-  </div>
-
-  <h2>5.1 TrafficStatus 통합 JSON 명세</h2>
-  <p>
-    4종 API 데이터를 하나의 교차로 상태 객체로 통합한 최종 응답 구조다. Spring <code>SupplementalDataCacheService.enrichTrafficStatus()</code>가 V2X 신호 데이터를 골격으로 속도·날씨·위험도를 합산한다.
-  </p>
-  <table>
-    <thead><tr><th>필드</th><th>타입</th><th>출처 API</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td><code>crsrdId</code></td><td>String</td><td>V2X</td><td>교차로 ID</td></tr>
-      <tr><td><code>crsrdNm</code></td><td>String</td><td>V2X</td><td>교차로 이름</td></tr>
-      <tr><td><code>lat</code> / <code>lon</code></td><td>double</td><td>V2X</td><td>교차로 위경도 (WGS84)</td></tr>
-      <tr><td><code>guName</code></td><td>String</td><td>V2X</td><td>자치구명 (null 가능)</td></tr>
-      <tr><td><code>totDt</code></td><td>String</td><td>V2X</td><td>V2X 수집 시각 (yyyyMMddHHmmss)</td></tr>
-      <tr><td><code>serverTimeMs</code></td><td>long</td><td>Spring</td><td>서버 처리 시각 (epoch ms)</td></tr>
-      <tr><td><code>avgWaitSec</code></td><td>Integer</td><td>V2X 계산</td><td>전방향 평균 직진 신호 대기시간 (초)</td></tr>
-      <tr><td><code>congestion</code></td><td>String</td><td>Spring 계산</td><td>원활 / 서행 / 혼잡 / 알 수 없음</td></tr>
-      <tr><td><code>speedKph</code></td><td>Double</td><td>TOPIS</td><td>실측 구간 속도 (km/h). null=미수집</td></tr>
-      <tr><td><code>travelTimeSec</code></td><td>Integer</td><td>TOPIS</td><td>구간 통행시간 (초). null=미수집</td></tr>
-      <tr><td><code>speedStale</code></td><td>boolean</td><td>Spring</td><td>true=속도 API 끊김, 캐시값 사용 중</td></tr>
-      <tr><td><code>riskIndex</code></td><td>Double</td><td>위험도 API</td><td>위험 지수 (0~100). null=미수집</td></tr>
-      <tr><td><code>riskGrade</code></td><td>String</td><td>위험도 API</td><td>위험 등급. null=미수집</td></tr>
-      <tr><td><code>riskScore</code></td><td>Double</td><td>위험도 API</td><td>riskIndex와 동일 (현재 코드 동기화)</td></tr>
-      <tr><td><code>riskStale</code></td><td>boolean</td><td>Spring</td><td>true=위험도 API 끊김, 캐시값 사용 중</td></tr>
-      <tr><td><code>weather.temperatureC</code></td><td>Double</td><td>기상청</td><td>기온 (°C)</td></tr>
-      <tr><td><code>weather.precipitationMm</code></td><td>Double</td><td>기상청</td><td>강수량 (mm/h)</td></tr>
-      <tr><td><code>weather.humidityPercent</code></td><td>Integer</td><td>기상청</td><td>습도 (%)</td></tr>
-      <tr><td><code>weather.windSpeedMs</code></td><td>Double</td><td>기상청</td><td>풍속 (m/s)</td></tr>
-      <tr><td><code>weather.stale</code></td><td>boolean</td><td>Spring</td><td>true=날씨 API 끊김, 캐시값 사용 중</td></tr>
-      <tr><td><code>signals</code></td><td>Map</td><td>V2X</td><td>8방향 × 6신호 유형 신호 상태 객체</td></tr>
-    </tbody>
-  </table>
-
-  <h2>5.2 데이터 수집 주기 비교</h2>
-  <table>
-    <thead><tr><th>데이터</th><th>수집 주기</th><th>담당 스케줄러</th><th>병렬 처리</th></tr></thead>
-    <tbody>
-      <tr><td>V2X 신호 (교차로별)</td><td><strong>30초</strong></td><td>TrafficScheduler</td><td>—</td></tr>
-      <tr><td>TOPIS 도로 속도</td><td><strong>60초</strong></td><td>TopisScheduler</td><td>4스레드</td></tr>
-      <tr><td>도로 위험도</td><td><strong>5분</strong></td><td>RiskScheduler</td><td>4스레드</td></tr>
-      <tr><td>기상청 날씨</td><td><strong>10분</strong></td><td>WeatherScheduler</td><td>—</td></tr>
-      <tr><td>교차로·링크 매핑</td><td><strong>24시간</strong></td><td>MappingScheduler</td><td>—</td></tr>
-      <tr><td>V2X 교차로 목록 (정적)</td><td>앱 시작 1회</td><td>CrossroadDataInitService</td><td>—</td></tr>
-      <tr><td>TOPIS 링크 버텍스 (정적)</td><td>앱 시작 1회</td><td>TopisApiService</td><td>—</td></tr>
-    </tbody>
-  </table>
-
-  <h2>5.3 Stale 처리 메커니즘</h2>
-  <p>
-    외부 API 응답 실패 또는 타임아웃 발생 시 직전 캐시값을 유지하면서 해당 데이터의 <code>stale</code> 플래그를 <code>true</code>로 표시한다. 이를 통해 일부 데이터 장애가 발생해도 시스템 전체가 중단되지 않고 가용한 데이터를 계속 서비스한다.
-  </p>
-  <table>
-    <thead><tr><th>stale 필드</th><th>설정 조건</th><th>복구 조건</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><code>speedStale</code></td>
-        <td>TOPIS API 타임아웃(3초) 또는 링크 매핑 없음</td>
-        <td>다음 60초 주기에 정상 응답 수신 시 false로 초기화</td>
-      </tr>
-      <tr>
-        <td><code>riskStale</code></td>
-        <td>위험도 API 타임아웃(3초) 또는 LineString 파라미터 없음</td>
-        <td>다음 5분 주기에 정상 응답 수신 시 false로 초기화</td>
-      </tr>
-      <tr>
-        <td><code>weather.stale</code></td>
-        <td>기상청 API 타임아웃 또는 격자 좌표 변환 실패</td>
-        <td>다음 10분 주기에 정상 응답 수신 시 false로 초기화</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="info-box">
-    <strong>Stale 데이터 활용:</strong> AI 에이전트는 <code>stale=true</code> 필드를 감지하면 "일시적으로 이전 데이터를 표시 중" 문구를 답변에 포함시켜 관제사에게 데이터 신뢰도를 명시한다.
-  </div>
-
-  <h3>구역 전환 시 데이터 초기화</h3>
-  <p>사용자가 다른 자치구를 선택하면 이전 구역의 속도·위험도 데이터가 새 구역 데이터에 섞이지 않도록 <code>clearRoadSupplementalData()</code>가 즉시 캐시를 비운다.</p>
-  <div class="flow-box">
-    <div class="flow-node gray">구 클릭<br>(handleSelectGu)</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node red">clearRoadSupplemental<br>Data()</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node">fetch-area API<br>호출</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node green">새 구역 교차로<br>데이터 수집</div>
+  <div class="flow">
+    <div class="fnode"><span class="t">기상청 API</span><span class="s">10분</span></div><span class="farr">→</span>
+    <div class="fnode"><span class="t">weather</span><span class="s">전역 스냅샷(기온·강수·습도·풍속)</span></div>
   </div>
 </div>
 
-<!-- ════ 6. 데이터 품질 특성 ════ -->
-<div class="page page-break">
-  <div class="section-header">
-    <div class="section-num">6</div>
-    <div class="section-title">데이터 품질 특성 및 한계</div>
-  </div>
+<h1 class="sec">2. 교통 신호 데이터 (V2X)</h1>
+<h2>2.1 데이터 구조</h2>
+<p>
+응답 1건은 교차로 1개의 평탄(flat) 필드 집합이며, 필드명은 방향 접두사와 신호유형의 조합으로 구성된다.
+시스템은 이를 방향 → 신호유형의 2단 계층 구조로 변환한다.
+</p>
+<table>
+  <tr><th style="width:120px">구분</th><th>값</th></tr>
+  <tr><td>방향 코드 8종</td><td>nt(북) · et(동) · st(남) · wt(서) · ne(북동) · se(남동) · sw(남서) · nw(북서)</td></tr>
+  <tr><td>신호유형 6종</td><td>Stsg(직진) · Ltsg(좌회전) · Pdsg(보행) · Utsg(유턴) · Bssg(버스) · Bcsg(자전거)</td></tr>
+  <tr><td>필드 조합 예</td><td><code>ntStsgSttsNm</code>(북 직진 상태), <code>ntStsgRmndCs</code>(북 직진 잔여시간)</td></tr>
+</table>
+<h2>2.2 신호 상태 값</h2>
+<table>
+  <tr><th style="width:240px">상태 값</th><th>의미</th></tr>
+  <tr><td><code>stop-And-Remain</code></td><td>적색 — 정지 유지</td></tr>
+  <tr><td><code>protected-Movement-Allowed</code></td><td>녹색 — 보호 이동 허용</td></tr>
+  <tr><td><code>permissive-Movement-Allowed</code></td><td>비보호 이동 허용</td></tr>
+</table>
+<h2>2.3 잔여시간(rmndCs) 해석 — 핵심 유의사항</h2>
+<ul>
+  <li>단위는 1/10초(데시초)다. 값 300 = 30초. 시스템은 AI 전달·화면 표시 전에 10으로 나눈다.</li>
+  <li><b>36000 이상은 센티넬 값</b>(잔여시간 불명)으로, 해당 신호 데이터를 폐기한다.</li>
+  <li>rmndCs는 <b>수집 시점의 스냅샷 잔여시간</b>이며 신호 사이클 전체 길이가 아니다. AI 도구 설명에 이 한계를 명시하여 과잉 추론을 차단한다.</li>
+  <li>화면의 초단위 카운트다운은 30초 폴링 사이를 클라이언트 0.1초 타이머로 보간한 값이다(잔여시간 − 경과시간, 0 미만 클램프).</li>
+</ul>
+<h2>2.4 신호 해석 규칙 (AI 권고 근거)</h2>
+<table>
+  <tr><th style="width:260px">관측 패턴</th><th>해석 및 권고 방향</th></tr>
+  <tr><td>적색 + 잔여시간 높음</td><td>해당 방향 대기 과다 — 적색 단축 또는 대향 녹색 단축으로 순서 앞당김 권고</td></tr>
+  <tr><td>녹색 + 잔여시간 낮음</td><td>곧 적색 전환 — 혼잡 시 녹색 연장 검토</td></tr>
+  <tr><td>속도 낮음 + 특정 방향 적색 장기</td><td>해당 진입 방향이 혼잡 원인일 가능성 — 방향별 속도와 교차 검증</td></tr>
+</table>
 
-  <div class="quality-grid">
-    <div class="quality-card">
-      <div class="quality-icon">🕐</div>
-      <div class="quality-title">API 응답 지연</div>
-      <div class="quality-desc">TOPIS·위험도 API 모두 타임아웃 3초 설정. 피크 시간 응답 지연 시 Stale 플래그로 전환되며 캐시값 제공</div>
-    </div>
-    <div class="quality-card">
-      <div class="quality-icon">🔗</div>
-      <div class="quality-title">링크 매핑 공백</div>
-      <div class="quality-desc">교차로–TOPIS 링크 매핑이 없는 경우 speedKph·riskGrade 모두 null. 서울 외곽 및 신설 교차로에서 빈번</div>
-    </div>
-    <div class="quality-card">
-      <div class="quality-icon">📐</div>
-      <div class="quality-title">V2X 주기 편차</div>
-      <div class="quality-desc">V2X API는 30초 주기이나 교차로별 실제 응답 타이밍이 다를 수 있음. totDt와 serverTimeMs 차이로 지연 감지 가능</div>
-    </div>
-    <div class="quality-card">
-      <div class="quality-icon">🌐</div>
-      <div class="quality-title">기상 격자 단위</div>
-      <div class="quality-desc">기상청 격자 1칸 = 5km × 5km. 서울 전체에 단일 격자값 적용. 구별 미세 기상 차이 반영 불가</div>
-    </div>
-    <div class="quality-card">
-      <div class="quality-icon">🔄</div>
-      <div class="quality-title">위험도 갱신 간격</div>
-      <div class="quality-desc">도로 위험도는 5분마다 갱신. 급작스러운 돌발상황(사고·노면 결빙)은 최대 5분 지연 후 반영될 수 있음</div>
-    </div>
-    <div class="quality-card">
-      <div class="quality-icon">📊</div>
-      <div class="quality-title">신호 스냅샷 한계</div>
-      <div class="quality-desc">V2X rmndCs는 현재 상태 잔여시간만 제공. 전체 신호 사이클 길이 파악 불가로 완전한 신호 최적화에 제한</div>
-    </div>
-  </div>
+<h1 class="sec">3. 도로 속도 데이터 (TOPIS)</h1>
+<h2>3.1 수집·매핑 구조</h2>
+<ul>
+  <li>속도는 도로 <b>링크(linkId) 단위</b>로 제공된다. 교차로와 직접 연결되지 않으므로 매핑 테이블을 생성한다.</li>
+  <li>대표 링크 매핑: 교차로 최근접 링크(거리 상한 내). 방향별 매핑: 진입 링크의 접근 방위각을 V2X 8방향 코드에 스냅(허용 오차 67.5도).</li>
+  <li>갱신은 60초 주기, 회당 최대 80링크를 라운드로빈으로 순환(전체 링크가 80개를 초과할 때 호출량 보호).</li>
+</ul>
+<h2>3.2 대표 속도 산출 규칙</h2>
+<div class="note"><b>규칙.</b> 교차로 대표 속도(speedKph)는 방향별 진입 속도가 존재하면 그 중 <b>최저값(가장 막힌 진입)</b>으로 한다.
+교차로 혼잡은 평균이 아니라 최악 진입로가 결정하기 때문이며, 방향별 원본 값도 함께 제공하여 세부 분석을 지원한다.</div>
 
-  <h2>데이터별 Null 발생 시점 정리</h2>
-  <table>
-    <thead><tr><th>필드</th><th>null / stale 발생 조건</th><th>시스템 대응</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><code>speedKph</code></td>
-        <td>① 교차로–링크 매핑 없음 ② TOPIS API 응답 없음 ③ 속도 0 (정차 간주)</td>
-        <td>null 시 V2X 신호 잔여시간 보조 계산으로 혼잡도 추정</td>
-      </tr>
-      <tr>
-        <td><code>riskGrade</code></td>
-        <td>① 교차로–링크 매핑 없음 ② LineString 파라미터 생성 불가 ③ API 응답 없음</td>
-        <td>null 시 "데이터 없음" 표시. 병목·위험 목록에서 제외</td>
-      </tr>
-      <tr>
-        <td><code>weather.*</code></td>
-        <td>기상청 API 응답 없음 또는 초단기실황 미발표 시각 (정각 전)</td>
-        <td>stale=true로 마킹. 이전 수집값 유지하여 프론트 표시</td>
-      </tr>
-      <tr>
-        <td><code>guName</code></td>
-        <td>V2X API가 자치구명을 제공하지 않는 교차로</td>
-        <td>구 단위 필터링 불가. 해당 교차로 구역 선택에서 제외</td>
-      </tr>
-      <tr>
-        <td><code>avgWaitSec</code></td>
-        <td>V2X 신호 데이터 없거나 모든 방향 stsg가 null</td>
-        <td>null 반환. 평균 대기시간 표시 생략</td>
-      </tr>
-    </tbody>
-  </table>
+<h1 class="sec">4. 기상 데이터 (기상청 초단기실황)</h1>
+<h2>4.1 좌표 변환과 기준시각</h2>
+<ul>
+  <li>요청 좌표는 위경도가 아닌 기상청 격자(nx, ny)다. Lambert Conformal Conic 투영(표준위도 30°/60°, 기준 126°E/38°N, 격자 5km)으로 변환한다.</li>
+  <li><b>기준시각 규칙</b>: 현재 분이 45분 미만이면 한 시간 전 정시를 base_time으로 사용한다. 초단기실황이 매시 40분경 생성되므로 직전 정시 데이터가 아직 없을 수 있기 때문이다.</li>
+</ul>
+<h2>4.2 활용 항목</h2>
+<table>
+  <tr><th style="width:110px">카테고리</th><th style="width:130px">항목</th><th>활용</th></tr>
+  <tr><td>T1H</td><td>기온(°C)</td><td>대시보드·브리핑 표시, AI 컨텍스트</td></tr>
+  <tr><td>RN1</td><td>1시간 강수량(mm)</td><td>강수 시 감속·신호 보수 운영 권고 근거, 날씨 설명(0 맑음 / 1mm 미만 흐림 / 이상 비)</td></tr>
+  <tr><td>REH</td><td>습도(%)</td><td>표시용</td></tr>
+  <tr><td>WSD</td><td>풍속(m/s)</td><td>표시·경보 리포트 항목</td></tr>
+</table>
+<p>날씨는 구 단위 분석 특성상 전역 스냅샷 1건을 전 교차로가 공유한다(같은 구는 사실상 동일 격자).</p>
 
-  <h2>데이터 활용 시 주요 유의사항</h2>
-  <div class="warn-box" style="margin-bottom:10px;">
-    <strong>① V2X 신호 잔여시간(rmndCs):</strong> 1/10초 단위로 내려온다. 초 변환 시 반드시 ÷10 적용. MCP 서버에서 자동 변환하여 초 단위로 AI에 전달.
-  </div>
-  <div class="warn-box" style="margin-bottom:10px;">
-    <strong>② 병목 필터에서 속도 0 제외:</strong> speedKph=0은 정차 또는 미수집 구분 불가. 오탐(false positive) 방지를 위해 <code>speed &gt; 0 AND speed ≤ 15</code> 조건을 엄격히 적용.
-  </div>
-  <div class="warn-box" style="margin-bottom:10px;">
-    <strong>③ LineString 좌표 순서:</strong> WKT 표준은 경도(lon) 먼저, 위도(lat) 나중. <code>String.format("%.7f %.7f", lon, lat)</code> 형식으로 조립. 순서 반전 시 API 오류 또는 엉뚱한 위치 조회.
-  </div>
-  <div class="warn-box">
-    <strong>④ 날씨 데이터 단일 격자 적용:</strong> 기상청 5km 격자 기준으로 서울 전역에 동일 날씨 데이터 적용. 강남·강북의 미세 기상 차이나 국지성 소나기 등은 반영되지 않음.
-  </div>
+<h1 class="sec">5. 도로 위험도 데이터 (돌발상황 지수)</h1>
+<h2>5.1 등급 체계</h2>
+<table>
+  <tr><th style="width:90px">코드</th><th style="width:90px">등급</th><th>해석</th></tr>
+  <tr><td>01</td><td>안전</td><td>통상 운영</td></tr>
+  <tr><td>02</td><td>주의</td><td>모니터링 강화</td></tr>
+  <tr><td>03</td><td>위험</td><td>관제 주의·우회 검토</td></tr>
+  <tr><td>04</td><td>심각</td><td>우선 대응 대상</td></tr>
+</table>
+<h2>5.2 수집 정책</h2>
+<ul>
+  <li>5분 주기. 회당 최대 250건, 동시성 2, 동일 링크 최소 재요청 간격 5분.</li>
+  <li>이전 실행 진행 중 새 구역 요청이 오면 보류 플래그를 세우고, 현재 실행 종료 직후 즉시 재실행한다.</li>
+  <li>연속 실패가 임계치를 넘으면 해당 회차를 중단한다(외부 API 보호).</li>
+</ul>
 
-  <h2>Green Wave (신호 연동) 고려사항</h2>
-  <p>현재 TrafficSync는 교차로 단위 신호 데이터를 수집하며, TOPIS 실시간 도로 소통 정보(상행/하행 속도)와 신호계획 DB를 결합하여 시뮬레이션 페이지에서 병목 구간 신호 최적화를 지원한다. <span style="color:#2563eb;font-size:8.5pt;">[v1.1 변경 — T Data 미사용]</span></p>
-  <table>
-    <thead><tr><th>개념</th><th>내용</th></tr></thead>
-    <tbody>
-      <tr><td><strong>Green Wave</strong></td><td>연속된 교차로 신호를 동기화하여 차량이 한 번에 여러 신호를 연속 통과하도록 최적화</td></tr>
-      <tr><td><strong>신호 오프셋 계산</strong></td><td>평균 속도 × 교차로 간 거리 = 오프셋 시간 (예: 50km/h, 250m 간격 → 18초 오프셋)</td></tr>
-      <tr><td><strong>단방향 조정 위험</strong></td><td>한 교차로만 조정 시 인접 교차로와 동기화 깨져 역효과 가능 → 5초 이내 미세 조정 권장</td></tr>
-      <tr><td><strong>현재 구현 방식 <span style="color:#2563eb;">[v1.1]</span></strong></td><td>TOPIS 링크 속도 급락 구간을 병목으로 탐지 → VWorld 3D 시뮬레이션에서 해당 교차로 신호 타이밍 조정 → Qwen3 AI가 제어 전·후 도착시간 단축 효과 분석</td></tr>
-    </tbody>
-  </table>
+<h1 class="sec">6. 파생 지표 산출 기준</h1>
+<h2>6.1 혼잡도 판정</h2>
+<table>
+  <tr><th style="width:170px">조건</th><th style="width:100px">판정</th><th>비고</th></tr>
+  <tr><td>속도 &lt; 15 km/h</td><td>정체</td><td rowspan="3">속도 데이터 존재 시 — 시스템 전 영역(병목·색상·AI) 동일 기준</td></tr>
+  <tr><td>15 ≤ 속도 &lt; 25</td><td>서행</td></tr>
+  <tr><td>속도 ≥ 25</td><td>원활</td></tr>
+  <tr><td>적색 평균 잔여 &gt; 60초</td><td>혼잡</td><td rowspan="2">속도 부재 시 보조 판정(신호 기반)</td></tr>
+  <tr><td>적색 평균 잔여 &gt; 30초</td><td>서행</td></tr>
+</table>
+<h2>6.2 평균 대기시간(avgWaitSec)</h2>
+<p>전 방향 직진 신호 잔여시간(초 환산)의 평균. 외부 API 값이 아니라 V2X 신호로부터의 계산 지표임을 명시한다.</p>
+<h2>6.3 Webster ΣY 추정 (시뮬레이션 입력)</h2>
+<table>
+  <tr><th style="width:150px">속도 구간(km/h)</th><th style="width:90px">혼잡 등급</th><th style="width:70px">ΣY</th><th>비고</th></tr>
+  <tr><td>u &lt; 15</td><td>심각</td><td>0.85</td><td rowspan="4">방향별 교통량 미계측 환경에서 속도-포화도의 단조 역관계를 등급화한 추정값. 보고서에 추정임을 명시</td></tr>
+  <tr><td>15 ≤ u &lt; 25</td><td>혼잡</td><td>0.75</td></tr>
+  <tr><td>25 ≤ u ≤ 30</td><td>서행</td><td>0.65</td></tr>
+  <tr><td>u &gt; 30</td><td>원활</td><td>0.50</td></tr>
+</table>
 
-  <footer>
-    TrafficSync — 교통·기상·돌발상황 공공데이터 분석 자료 TS-DOC-05 v1.1 &nbsp;|&nbsp; 최초: 2026-05-28 &nbsp;|&nbsp; 수정: 2026-06-02 &nbsp;|&nbsp; 박희윤
-  </footer>
+<h1 class="sec">7. 데이터 통합·품질 관리</h1>
+<h2>7.1 통합 원칙</h2>
+<ul>
+  <li>화면과 AI가 <b>동일한 통합 객체(TrafficStatus)</b>를 본다 — 단일 합산 지점(enrichTrafficStatus)에서만 병합한다.</li>
+  <li>식별자 체계가 다른 데이터(경찰청 신호 ↔ V2X)는 좌표 기반 350m 최근접 매칭으로 결합하고 매칭 거리를 함께 기록한다.</li>
+</ul>
+<h2>7.2 품질 관리 규칙</h2>
+<table>
+  <tr><th style="width:210px">상황</th><th>처리</th></tr>
+  <tr><td>V2X 빈 응답</td><td>캐시를 비우지 않고 유지, 다음 주기 재시도. 구역 전환 시 3회 재시도</td></tr>
+  <tr><td>보조 API 실패</td><td>기존 값 유지 + stale 플래그 — 더미·랜덤 값을 생성하지 않는다</td></tr>
+  <tr><td>잔여시간 센티넬(≥36000)</td><td>해당 신호 폐기</td></tr>
+  <tr><td>방향 속도 부재</td><td>"측정값 없음"으로 표기(통행 불가로 오해되지 않도록 용어 고정)</td></tr>
+  <tr><td>좌표 매칭 실패(>350m)</td><td>실시간 데이터 없음으로 명시, 매칭 거리 기록</td></tr>
+</table>
+
 </div>
-
+<div class="footer"><span>Syncro | 교통 관제 시스템 — 공공데이터 분석</span><span>2026. 06. 13.</span></div>
 </body>
 </html>

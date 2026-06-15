@@ -61,7 +61,7 @@ function CardHeader({ title, sub, isAdmin }) {
           ADMIN
         </div>
       )}
-      <div style={{ fontSize: 34, fontWeight: 800, color: isAdmin ? V.ink : V.pri, letterSpacing: "-.4px", lineHeight: 1 }}>TrafficSync{isAdmin ? " 관제 시스템" : ""}</div>
+      <div style={{ fontSize: 34, fontWeight: 800, color: isAdmin ? V.ink : V.pri, letterSpacing: "-.4px", lineHeight: 1 }}>Syncro{isAdmin ? " 관제 시스템" : ""}</div>
       <div style={{ marginTop: 11, fontFamily: V.mono, fontSize: 13, color: V.ink2, letterSpacing: "1.4px", textTransform: "uppercase" }}>{sub}</div>
       <div style={{ height: 1, background: "rgba(255,255,255,.10)", margin: "30px -54px 28px" }} />
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 20 }}>
@@ -345,15 +345,15 @@ function ScreenApproval({ onBack }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 10, background: V.bg, display: "flex", flexDirection: "column", fontFamily: V.sans }}>
       {/* 상단 헤더 */}
       <div style={{ height: 54, display: "flex", alignItems: "center", gap: 16, padding: "0 20px", borderBottom: `1px solid ${V.bd}`, background: "#0a0a0a" }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: V.ink }}>회원가입 승인</span>
-        <span style={{ color: V.ink4, fontFamily: V.mono, fontSize: 11.5 }}>│</span>
-        <span style={{ fontFamily: V.mono, fontSize: 11.5, color: V.ink3 }}>관리자 · admin@trafficsync</span>
-        <span style={{ color: V.ink4, fontFamily: V.mono, fontSize: 11.5 }}>│</span>
-        <span style={{ fontFamily: V.mono, fontSize: 11.5, color: V.ink3 }}>{timeStr.substring(0, 10)}</span>
+        <span style={{ fontSize: 18, fontWeight: 700, color: V.ink }}>회원가입 승인</span>
+        <span style={{ color: V.ink4, fontFamily: V.mono, fontSize: 13 }}>│</span>
+        <span style={{ fontFamily: V.mono, fontSize: 13, color: V.ink3 }}>관리자 · admin@syncro</span>
+        <span style={{ color: V.ink4, fontFamily: V.mono, fontSize: 13 }}>│</span>
+        <span style={{ fontFamily: V.mono, fontSize: 13, color: V.ink3 }}>{timeStr.substring(0, 10)}</span>
         <div style={{ marginLeft: "auto", display: "flex" }}>
           {[["pending", "대기", V.warn], ["approved", "승인", V.ok], ["rejected", "거절", V.err], ["all", "전체", V.ink2]].map(([key, label, color]) => (
-            <div key={key} style={{ padding: "0 16px", borderLeft: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 11.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 7, color: V.ink3 }}>
-              {label} <b style={{ fontSize: 14, color }}>{counts[key]}</b>
+            <div key={key} style={{ padding: "0 18px", borderLeft: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, color: V.ink3 }}>
+              {label} <b style={{ fontSize: 17, color }}>{counts[key]}</b>
             </div>
           ))}
         </div>
@@ -361,27 +361,27 @@ function ScreenApproval({ onBack }) {
 
       {/* 툴바 */}
       <div style={{ height: 44, display: "flex", alignItems: "center", gap: 10, padding: "0 20px", borderBottom: `1px solid ${V.bd}`, background: V.bg }}>
-        <span style={{ fontFamily: V.mono, fontSize: 10.5, color: V.ink4, letterSpacing: ".5px" }}>FILTER</span>
+        <span style={{ fontFamily: V.mono, fontSize: 12, color: V.ink4, letterSpacing: ".5px" }}>FILTER</span>
         <div style={{ display: "flex", background: "#0a0a0a", border: `1px solid ${V.bd}`, borderRadius: 2 }}>
           {Object.entries(filterLabels).map(([key, label]) => (
-            <button key={key} onClick={() => setFilter(key)} style={{ background: filter === key ? "#141414" : "transparent", border: 0, borderRight: `1px solid ${V.bd}`, color: filter === key ? V.ink : V.ink3, padding: "6px 14px", fontSize: 11.5, fontWeight: 600, cursor: "pointer", fontFamily: V.mono }}>
+            <button key={key} onClick={() => setFilter(key)} style={{ background: filter === key ? "#141414" : "transparent", border: 0, borderRight: `1px solid ${V.bd}`, color: filter === key ? V.ink : V.ink3, padding: "7px 16px", fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: V.mono }}>
               {label}
             </button>
           ))}
         </div>
         <div style={{ marginLeft: "auto", height: 30, display: "flex", alignItems: "center", gap: 10, padding: "0 12px", background: "#0a0a0a", border: `1px solid ${V.bd}`, borderRadius: 2, minWidth: 280 }}>
-          <span style={{ fontFamily: V.mono, color: V.ink4, fontSize: 11 }}>⌕</span>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="이름, 아이디, 이메일 검색" style={{ flex: 1, background: "transparent", border: 0, outline: 0, color: V.ink, fontSize: 12.5, fontFamily: V.sans }} />
+          <span style={{ fontFamily: V.mono, color: V.ink4, fontSize: 13 }}>⌕</span>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="이름, 아이디, 이메일 검색" style={{ flex: 1, background: "transparent", border: 0, outline: 0, color: V.ink, fontSize: 14.5, fontFamily: V.sans }} />
         </div>
       </div>
 
       {/* 테이블 */}
       <div style={{ flex: 1, overflow: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
           <thead>
             <tr>
               {["이름", "아이디", "이메일", "가입일시", "상태", "처리"].map((h, i) => (
-                <th key={h} style={{ position: "sticky", top: 0, background: "#0a0a0a", borderBottom: `1px solid ${V.bd}`, textAlign: i === 5 ? "right" : "left", fontFamily: V.mono, fontSize: 10.5, fontWeight: 700, color: V.ink3, letterSpacing: ".5px", textTransform: "uppercase", padding: "10px 16px" }}>{h}</th>
+                <th key={h} style={{ position: "sticky", top: 0, background: "#0a0a0a", borderBottom: `1px solid ${V.bd}`, textAlign: i === 5 ? "right" : "left", fontFamily: V.mono, fontSize: 12.5, fontWeight: 700, color: V.ink3, letterSpacing: ".5px", textTransform: "uppercase", padding: "12px 16px" }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -392,19 +392,19 @@ function ScreenApproval({ onBack }) {
               return (
                 <tr key={u.userId}>
                   {[u.name, u.userId, u.email, u.createdAt?.substring(0, 16)?.replace("T", " ") || "-"].map((v, j) => (
-                    <td key={j} style={{ padding: "11px 16px", borderBottom: `1px solid ${V.bd}`, background: i % 2 === 0 ? "rgba(255,255,255,.02)" : "#000", color: j === 0 ? V.ink : j === 1 ? V.ink : V.ink2, fontWeight: j < 2 ? 600 : 500, fontFamily: j >= 2 ? V.mono : V.sans, fontSize: j >= 2 ? 11.5 : 13 }}>{v}</td>
+                    <td key={j} style={{ padding: "13px 16px", borderBottom: `1px solid ${V.bd}`, background: i % 2 === 0 ? "rgba(255,255,255,.02)" : "#000", color: j === 0 ? V.ink : j === 1 ? V.ink : V.ink2, fontWeight: j < 2 ? 600 : 500, fontFamily: j >= 2 ? V.mono : V.sans, fontSize: j >= 2 ? 13 : 15 }}>{v}</td>
                   ))}
-                  <td style={{ padding: "11px 16px", borderBottom: `1px solid ${V.bd}`, background: i % 2 === 0 ? "rgba(255,255,255,.02)" : "#000" }}>
-                    <span style={{ fontFamily: V.mono, fontSize: 11.5, fontWeight: 700, letterSpacing: ".5px", color }}>{u.status?.toUpperCase()}</span>
+                  <td style={{ padding: "13px 16px", borderBottom: `1px solid ${V.bd}`, background: i % 2 === 0 ? "rgba(255,255,255,.02)" : "#000" }}>
+                    <span style={{ fontFamily: V.mono, fontSize: 13.5, fontWeight: 700, letterSpacing: ".5px", color }}>{u.status?.toUpperCase()}</span>
                   </td>
-                  <td style={{ padding: "11px 16px", borderBottom: `1px solid ${V.bd}`, background: i % 2 === 0 ? "rgba(255,255,255,.02)" : "#000", textAlign: "right" }}>
+                  <td style={{ padding: "13px 16px", borderBottom: `1px solid ${V.bd}`, background: i % 2 === 0 ? "rgba(255,255,255,.02)" : "#000", textAlign: "right" }}>
                     {st === "pending" ? (
                       <span style={{ display: "flex", gap: 5, justifyContent: "flex-end" }}>
-                        <button onClick={() => handleApprove(u.userId)} style={{ padding: "4px 10px", background: "transparent", border: 0, color: V.ok, fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: V.sans }}>승인</button>
-                        <button onClick={() => handleReject(u.userId)}  style={{ padding: "4px 10px", background: "transparent", border: 0, color: V.err, fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: V.sans }}>거절</button>
+                        <button onClick={() => handleApprove(u.userId)} style={{ padding: "5px 12px", background: "transparent", border: 0, color: V.ok, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: V.sans }}>승인</button>
+                        <button onClick={() => handleReject(u.userId)}  style={{ padding: "5px 12px", background: "transparent", border: 0, color: V.err, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: V.sans }}>거절</button>
                       </span>
                     ) : (
-                      <button onClick={() => {}} style={{ padding: "4px 10px", background: "transparent", border: 0, color: V.ink3, fontSize: 12.5, cursor: "pointer", fontFamily: V.sans }}>상태 변경</button>
+                      <button onClick={() => {}} style={{ padding: "5px 12px", background: "transparent", border: 0, color: V.ink3, fontSize: 14, cursor: "pointer", fontFamily: V.sans }}>상태 변경</button>
                     )}
                   </td>
                 </tr>
@@ -415,7 +415,7 @@ function ScreenApproval({ onBack }) {
       </div>
 
       {/* 하단 */}
-      <div style={{ height: 38, display: "flex", alignItems: "center", padding: "0 20px", borderTop: `1px solid ${V.bd}`, background: "#0a0a0a", fontFamily: V.mono, fontSize: 11, color: V.ink3, letterSpacing: ".3px" }}>
+      <div style={{ height: 42, display: "flex", alignItems: "center", padding: "0 20px", borderTop: `1px solid ${V.bd}`, background: "#0a0a0a", fontFamily: V.mono, fontSize: 13, color: V.ink3, letterSpacing: ".3px" }}>
         <a onClick={onBack} style={{ marginRight: 14, color: V.ink4, cursor: "pointer", letterSpacing: ".3px" }}>← 로그인 페이지</a>
         <span>총 {filtered.length}건</span>
       </div>
@@ -456,7 +456,7 @@ export default function LoginPage({ onLoginSuccess, onCivil }) {
       {/* status bar */}
       <header style={{ height: 28, display: window.innerWidth <= 768 ? "none" : "flex", alignItems: "center", gap: 16, padding: "0 16px", background: "#0a0a0a", borderBottom: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 11, color: V.ink3, letterSpacing: ".3px", zIndex: 30, flexShrink: 0 }}>
         <span style={{ width: 8, height: 8, background: V.ok, display: "inline-block" }} />
-        <span>TRAFFICSYNC AUTH SERVER · 정상</span>
+        <span>Syncro AUTH SERVER · 정상</span>
         <span style={{ color: V.ink4 }}>│</span>
         <span>SECURE TLS 1.3</span>
         <span style={{ color: V.ink4 }}>│</span>
@@ -516,7 +516,7 @@ export default function LoginPage({ onLoginSuccess, onCivil }) {
 
       {/* footer */}
       <footer style={{ height: 24, display: window.innerWidth <= 768 ? "none" : "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", background: "#0a0a0a", borderTop: `1px solid ${V.bd}`, fontFamily: V.mono, fontSize: 11, color: V.ink4, letterSpacing: ".3px", flexShrink: 0 }}>
-        <span>TRAFFICSYNC · v2.4.0 · © 2026 서울특별시 교통정보센터</span>
+        <span>Syncro · v2.4.0 · © 2026 서울특별시 교통정보센터</span>
         <span>비인가 접근 금지 · 모든 활동은 감사 로그에 기록됨</span>
       </footer>
     </div>

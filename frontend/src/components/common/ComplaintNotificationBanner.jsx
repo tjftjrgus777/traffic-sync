@@ -88,12 +88,12 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                 display:      'flex',
                 alignItems:   'flex-start',
                 gap:          12,
-                padding:      '12px 14px',
-                background:   'linear-gradient(135deg, #12100a 0%, #0f0d08 100%)',
-                border:       '1px solid #3a3020',
-                borderLeft:   '4px solid #ffaa33',
+                padding:      '14px 15px',
+                background:   'linear-gradient(135deg, rgba(255,250,232,0.98) 0%, rgba(255,238,199,0.96) 100%)',
+                border:       '1px solid rgba(255,170,51,0.72)',
+                borderLeft:   '5px solid #ffaa33',
                 borderRadius: 8,
-                boxShadow:    '0 8px 32px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,170,51,0.08)',
+                boxShadow:    '0 18px 42px rgba(0,0,0,0.48), 0 0 0 1px rgba(255,255,255,0.72), 0 0 24px rgba(255,170,51,0.28)',
               }}>
 
                 {/* 종 아이콘 (테두리/배경 없음) */}
@@ -102,6 +102,7 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                   fontSize:       22,
                   lineHeight:     1,
                   marginTop:      2,
+                  color:          '#b45309',
                   animation:      isNewest ? 'bellRing 0.7s ease 0.1s' : 'none',
                 }}>
                   🔔
@@ -110,7 +111,7 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize:      11,
-                    color:         '#ffaa33',
+                    color:         '#b45309',
                     fontWeight:    700,
                     letterSpacing: '0.1em',
                     marginBottom:  5,
@@ -121,7 +122,7 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                   </div>
                   <div style={{
                     fontSize:     15,
-                    color:        '#e7ecf5',
+                    color:        '#111827',
                     fontWeight:   700,
                     overflow:     'hidden',
                     textOverflow: 'ellipsis',
@@ -132,7 +133,7 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                   {c.title && (
                     <div style={{
                       fontSize:     12,
-                      color:        '#8a96a8',
+                      color:        '#475569',
                       marginTop:    4,
                       overflow:     'hidden',
                       textOverflow: 'ellipsis',
@@ -148,9 +149,9 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                     width:          26,
                     height:         26,
                     borderRadius:   '50%',
-                    background:     'transparent',
-                    border:         '1px solid #3a3a3a',
-                    color:          '#7a7a7a',
+                    background:     'rgba(255,255,255,0.55)',
+                    border:         '1px solid rgba(180,83,9,0.25)',
+                    color:          '#92400e',
                     cursor:         'pointer',
                     display:        'flex',
                     alignItems:     'center',
@@ -161,13 +162,13 @@ export default function ComplaintNotificationBanner({ queue, onDismiss, isMuted 
                   }}
                   onMouseEnter={e => {
                     e.currentTarget.style.borderColor = '#ffaa33'
-                    e.currentTarget.style.color = '#ffaa33'
-                    e.currentTarget.style.background = 'rgba(255,170,51,0.08)'
+                    e.currentTarget.style.color = '#7c2d12'
+                    e.currentTarget.style.background = 'rgba(255,170,51,0.22)'
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = '#3a3a3a'
-                    e.currentTarget.style.color = '#7a7a7a'
-                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.borderColor = 'rgba(180,83,9,0.25)'
+                    e.currentTarget.style.color = '#92400e'
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.55)'
                   }}
                 >✕</button>
               </div>

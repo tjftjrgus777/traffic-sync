@@ -339,7 +339,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
           {/* 모바일 1행: 타이틀 + 로그아웃 */}
           <div style={{ height: 44, display: "flex", alignItems: "center", gap: 8, padding: "0 14px" }}>
             <span style={{ width: 7, height: 7, background: V.org, borderRadius: "50%", display: "inline-block", flexShrink: 0 }} />
-            <span style={{ fontWeight: 700, fontSize: 13, flex: 1 }}>TrafficSync 민원 신청</span>
+            <span style={{ fontWeight: 700, fontSize: 13, flex: 1 }}>Syncro 민원 신청</span>
             {submitOk && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.grn }}>✓ 접수완료</span>}
             <button onClick={onLogout} style={{ height: 30, padding: "0 12px", background: "transparent", border: "1px solid #3a1820", borderRadius: 2, color: V.red, fontSize: 12, cursor: "pointer", fontFamily: V.sans, flexShrink: 0 }}>로그아웃</button>
           </div>
@@ -358,7 +358,7 @@ export default function CivilDashboard({ civilUser, onLogout }) {
       ) : (
         <div style={{ height: 56, display: "flex", alignItems: "center", gap: 8, padding: "0 16px", background: V.bg1, borderBottom: `1px solid ${V.line}`, flexShrink: 0 }}>
           <span style={{ width: 8, height: 8, background: V.org, borderRadius: "50%", display: "inline-block", flexShrink: 0 }} />
-          <span style={{ fontWeight: 700, fontSize: 15, whiteSpace: "nowrap" }}>TrafficSync 민원 신청</span>
+          <span style={{ fontWeight: 700, fontSize: 15, whiteSpace: "nowrap" }}>Syncro 민원 신청</span>
           <div style={{ width: 1, height: 18, background: V.line }} />
           <span style={{ fontFamily: V.mono, fontSize: 12, color: V.ink2, whiteSpace: "nowrap" }}>{civilUser.name} 님</span>
           <div style={{ display: "flex", gap: 6, marginLeft: 8, flex: 1, maxWidth: 360 }}>

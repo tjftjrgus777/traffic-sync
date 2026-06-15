@@ -57,7 +57,7 @@ public class UserController {
             String name   = (String) result.get("name");
             emailService.send(
                 email,
-                "[TrafficSync] 임시 비밀번호 안내",
+                "[Syncro] 임시 비밀번호 안내",
                 name + "님, 임시 비밀번호는 " + tempPw + " 입니다.\n로그인 후 반드시 비밀번호를 변경해주세요."
             );
         } catch (Exception ignored) {}

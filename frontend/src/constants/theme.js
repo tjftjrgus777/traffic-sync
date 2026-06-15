@@ -7,9 +7,9 @@
  */
 export const V = {
   // 배경 / 구분선
-  bg0: "#000", bg1: "#0a0a0a", line: "#1a1a1a",
+  bg0: "var(--syncro-bg0)", bg1: "var(--syncro-bg1)", line: "var(--syncro-line)",
   // 텍스트 명도 단계 (0=밝음 → 3=어두움)
-  ink0: "#e7ecf5", ink1: "#aab4c8", ink2: "#7a7a7a", ink3: "#3a3a3a",
+  ink0: "var(--syncro-ink0)", ink1: "var(--syncro-ink1)", ink2: "var(--syncro-ink2)", ink3: "var(--syncro-ink3)",
   // 상태 색상
   grn: "#2ee07a", yel: "#facc15", red: "#ff5566", org: "#ffaa33", blu: "#4ea6ff",
   // 폰트

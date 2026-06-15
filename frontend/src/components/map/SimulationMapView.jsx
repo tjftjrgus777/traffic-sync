@@ -25,6 +25,7 @@ export default function SimulationMapView({
   onDriveViewChange,
   carReady = false,
   optimizedRouteTraffic = null,
+  themeMode = "dark",
 }) {
   const markerEntitiesRef = useRef({});
   const routePointsRef = useRef([]);
@@ -37,6 +38,7 @@ export default function SimulationMapView({
 
   const [crossroads, setCrossroads] = useState([]);
   const [driveView, setDriveView] = useState(false);
+  const isLight = themeMode === "light";
   const [routePlan, setRoutePlan] = useState({ points: [], viaCrossroads: [] });
 
   const start = selectedList[0] ?? null;
@@ -434,33 +436,40 @@ export default function SimulationMapView({
   }, [mapReady, simulationCompleted]);
 
   // ─── JSX ──────────────────────────────────────────────────────────────────
+  const inactiveButtonBg = isLight ? "rgba(248,251,255,0.92)" : "rgba(12,19,29,0.86)";
+  const inactiveButtonColor = isLight ? "var(--syncro-ink0)" : "#f7faff";
+  const infoPanelBg = isLight ? "rgba(248,251,255,0.90)" : "rgba(3,6,10,0.68)";
+  const infoTextColor = isLight ? "var(--syncro-ink0)" : "#f7faff";
+  const infoTitleColor = isLight ? "#60a5fa" : "#4ea6ff";
+  const stateGreen = isLight ? "#166534" : "#2ee07a";
+  const stateRed = isLight ? "#b91c1c" : "#ff5566";
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative", background: "#0a0f1e" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative", background: "var(--syncro-bg0)" }}>
       <div id="vworld-simulation-map" ref={containerRef} style={{ width: "100%", height: "100%" }} />
 
       {status && (
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#93c5fd", background: "rgba(10,15,30,0.85)", zIndex: 5, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#1d4ed8", background: "rgba(248,251,255,0.78)", zIndex: 5, pointerEvents: "none" }}>
           {status}
         </div>
       )}
 
-      <div style={{ position: "absolute", top: 14, left: 14, zIndex: 10, padding: "10px 14px", borderRadius: 6, background: "rgba(18,16,10,0.88)", border: "1px solid rgba(255,255,255,0.12)", color: "#dbeafe", fontSize: 12 }}>
-        <div style={{ fontWeight: 800, color: "#60a5fa", marginBottom: 4 }}>VWorld WebGL 3D 신호 시뮬레이션</div>
+      <div style={{ position: "absolute", top: 14, left: 14, zIndex: 10, padding: "10px 14px", borderRadius: 6, background: infoPanelBg, border: "1px solid var(--syncro-line)", color: infoTextColor, fontSize: 12 }}>
+        <div style={{ fontWeight: 800, color: infoTitleColor, marginBottom: 4 }}>VWorld WebGL 3D 신호 시뮬레이션</div>
         <div>1. 출발지 마커 클릭 → 2. 목적지 마커 클릭</div>
       </div>
 
       <div style={{ position: "absolute", right: 16, bottom: 14, zIndex: 12, display: "flex", gap: 8 }}>
         <button
           onClick={() => setDriveView(false)}
-          style={{ border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "9px 14px", cursor: "pointer", color: "#fff", fontWeight: 800, background: !driveView ? "#3b82f6" : "rgba(15,23,42,0.82)", boxShadow: "0 8px 20px rgba(0,0,0,0.28)" }}
+          style={{ border: "1px solid var(--syncro-line)", borderRadius: 999, padding: "9px 14px", cursor: "pointer", color: !driveView ? "#fff" : inactiveButtonColor, fontWeight: 800, background: !driveView ? "#3b82f6" : inactiveButtonBg, boxShadow: "0 8px 20px rgba(0,0,0,0.18)" }}
         >
           3D 시뮬레이션
         </button>
         <button
           onClick={() => setDriveView(true)}
           disabled={!routePoints.length}
-          style={{ border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "9px 14px", cursor: routePoints.length ? "pointer" : "not-allowed", color: "#fff", fontWeight: 800, opacity: routePoints.length ? 1 : 0.45, background: driveView ? "#22c55e" : "rgba(15,23,42,0.82)", boxShadow: "0 8px 20px rgba(0,0,0,0.28)" }}
+          style={{ border: "1px solid var(--syncro-line)", borderRadius: 999, padding: "9px 14px", cursor: routePoints.length ? "pointer" : "not-allowed", color: driveView ? "#fff" : inactiveButtonColor, fontWeight: 800, opacity: routePoints.length ? 1 : 0.72, background: driveView ? "#16a34a" : inactiveButtonBg, boxShadow: "0 8px 20px rgba(0,0,0,0.18)" }}
         >
           주행뷰
         </button>
@@ -468,7 +477,7 @@ export default function SimulationMapView({
           <button
             onClick={restartRouteAnimation}
             disabled={!routePoints.length}
-            style={{ border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "9px 14px", cursor: routePoints.length ? "pointer" : "not-allowed", color: "#fff", fontWeight: 800, opacity: routePoints.length ? 1 : 0.45, background: simulationCompleted ? "#f59e0b" : "rgba(15,23,42,0.82)", boxShadow: "0 8px 20px rgba(0,0,0,0.28)" }}
+            style={{ border: "1px solid var(--syncro-line)", borderRadius: 999, padding: "9px 14px", cursor: routePoints.length ? "pointer" : "not-allowed", color: simulationCompleted ? "#fff" : inactiveButtonColor, fontWeight: 800, opacity: routePoints.length ? 1 : 0.72, background: simulationCompleted ? "#f59e0b" : inactiveButtonBg, boxShadow: "0 8px 20px rgba(0,0,0,0.18)" }}
           >
             다시 실행
           </button>
@@ -476,13 +485,13 @@ export default function SimulationMapView({
       </div>
 
       {start && !end && (
-        <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 10, padding: "8px 14px", borderRadius: 999, background: "rgba(34,197,94,0.16)", border: "1px solid rgba(34,197,94,0.4)", color: "#bbf7d0", fontSize: 12, fontWeight: 800 }}>
+        <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 10, padding: "8px 14px", borderRadius: 999, background: "rgba(34,197,94,0.16)", border: "1px solid rgba(34,197,94,0.4)", color: stateGreen, fontSize: 12, fontWeight: 800 }}>
           출발지 선택됨: {start.intNm} · 목적지를 클릭하세요
         </div>
       )}
 
       {start && end && (
-        <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 10, padding: "8px 14px", borderRadius: 999, background: isOptimized ? "rgba(34,197,94,0.16)" : "rgba(239,68,68,0.13)", border: `1px solid ${isOptimized ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.4)"}`, color: isOptimized ? "#bbf7d0" : "#fecaca", fontSize: 12, fontWeight: 800 }}>
+        <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 10, padding: "8px 14px", borderRadius: 999, background: isOptimized ? "rgba(34,197,94,0.16)" : "rgba(239,68,68,0.13)", border: `1px solid ${isOptimized ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.4)"}`, color: isOptimized ? stateGreen : stateRed, fontSize: 12, fontWeight: 800 }}>
           {simulationCompleted ? "시뮬레이션 완료 · 목적지 정지" : isOptimized ? "신호제어 적용 중 · 실시간 속도 재수집 기준" : "현행 운영 · 실시간 속도 기준"}
           {viaCrossroads.length > 0 ? ` · 자동 경유 ${viaCrossroads.length}개` : ""}
         </div>

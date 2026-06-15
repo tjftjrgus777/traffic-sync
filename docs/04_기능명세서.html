@@ -3,1243 +3,193 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>TrafficSync — 기능 명세서</title>
+<title>Syncro — 기능명세서</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:10pt;color:#1a202c;background:#fff;line-height:1.6;}
-@media print{body{font-size:9pt;}.page-break{page-break-before:always;}.no-break{page-break-inside:avoid;}.cover{page-break-after:always;}}
-
-/* 표지 */
-.cover{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%);color:#fff;text-align:center;padding:60px;}
-.cover-badge{background:rgba(59,130,246,0.25);border:1px solid rgba(59,130,246,0.5);border-radius:20px;padding:6px 22px;font-size:11pt;color:#93c5fd;margin-bottom:36px;letter-spacing:2px;}
-.cover h1{font-size:32pt;font-weight:900;color:#fff;margin-bottom:6px;}
-.cover h2{font-size:22pt;font-weight:700;color:#60a5fa;margin-bottom:40px;}
-.cover-divider{width:60px;height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa);margin:0 auto 40px;border-radius:2px;}
-.cover-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px 40px;font-size:10.5pt;color:#94a3b8;margin-bottom:48px;text-align:left;min-width:360px;}
-.cover-meta span{color:#cbd5e1;font-weight:600;}
-.cover-doc-id{font-size:9pt;color:#475569;letter-spacing:1px;}
-
-/* 본문 */
-.content{max-width:960px;margin:0 auto;padding:50px 40px;}
-.section-title{font-size:15pt;font-weight:800;color:#0f172a;border-left:5px solid #2563eb;padding-left:14px;margin:40px 0 16px;}
-.sub-title{font-size:12pt;font-weight:700;color:#1e3a5f;margin:28px 0 10px;padding-bottom:5px;border-bottom:1.5px solid #e2e8f0;}
-
-/* 표 */
-table{width:100%;border-collapse:collapse;font-size:9pt;margin:10px 0 18px;}
-thead th{background:#1e3a5f;color:#fff;padding:8px 10px;text-align:center;font-weight:700;border:1px solid #1e3a5f;}
-tbody td{padding:7px 10px;border:1px solid #d1d5db;vertical-align:top;line-height:1.55;}
-tbody tr:nth-child(even) td{background:#f8fafc;}
-.center{text-align:center;}
-code{font-family:'Consolas',monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:8.5pt;color:#1d4ed8;}
-
-/* 목차 */
-.toc-item{display:flex;align-items:baseline;gap:6px;padding:5px 0;font-size:10.5pt;border-bottom:1px dashed #e2e8f0;}
-.toc-item .num{color:#2563eb;font-weight:700;min-width:30px;}
-.toc-item .dots{flex:1;border-bottom:1px dotted #d1d5db;margin:0 6px;}
-.toc-item .pg{color:#64748b;font-size:9.5pt;}
-.toc-sub{padding-left:28px;font-size:9.5pt;color:#374151;border-bottom:1px dashed #f1f5f9;}
-
-/* 기능 카드 */
-.fn-card{border:1.5px solid #1a1a2e;border-radius:8px;margin:18px 0;overflow:hidden;background:#fff;}
-.fn-header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#fff;border-bottom:1.5px solid #1a1a2e;}
-.fn-id{display:none;}
-.fn-name{font-size:11pt;font-weight:700;color:#111827;}
-.fn-actor{display:none;}
-.fn-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
-
-/* 기능 내부 행 */
-.fn-row{display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:start;font-size:9pt;}
-.fn-label{font-weight:700;color:#374151;padding-top:2px;}
-.fn-value{color:#1a202c;line-height:1.6;}
-
-/* 주요 흐름 */
-.flow-list{list-style:none;display:flex;flex-direction:column;gap:5px;margin-top:2px;}
-.flow-list li{display:flex;gap:10px;align-items:flex-start;}
-.flow-list li .n{background:#fff;border:2px solid #1a1a2e;color:#1a1a2e;border-radius:50%;width:20px;height:20px;font-size:8pt;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
-.flow-list li .t{line-height:1.6;}
-.flow-list li .sub{font-size:8.5pt;color:#4b5563;margin-top:2px;}
-
-/* 예외/입출력 태그 */
-.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
-.tag{display:inline-block;padding:2px 9px;border-radius:4px;font-size:8pt;font-weight:600;}
-.tag-in,.tag-out,.tag-err,.tag-api,.tag-comp{background:#dbeafe;color:#1d4ed8;}
-
-/* 구분선 */
-hr{border:none;border-top:1px solid #e2e8f0;margin:28px 0;}
-p{margin-bottom:10px;line-height:1.7;}
-
-/* 기능 분류 헤더 */
-.category-bar{background:#fff;color:#111827;border:1.5px solid #1a1a2e;padding:10px 18px;border-radius:8px;margin:28px 0 4px;font-size:11pt;font-weight:700;letter-spacing:.5px;}
-
-/* 개정이력 */
-.hist-table td{text-align:center;}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:10pt;color:#1b1f24;background:#fff;line-height:1.7}
+.cover{max-width:210mm;margin:0 auto;min-height:97vh;padding:28mm 22mm 20mm;display:flex;flex-direction:column;justify-content:space-between}
+.cover-top{border-top:3px solid #16263e;padding-top:12px;display:flex;justify-content:space-between;font-size:9.5pt;color:#5a6472}
+.cover-docno{font-size:9.5pt;color:#5a6472;letter-spacing:3px;margin-bottom:16px}
+.cover-title{font-size:28pt;font-weight:700;color:#16263e;line-height:1.3}
+.cover-sub{font-size:12.5pt;color:#3a4656;margin-top:10px;font-weight:500}
+.cover-rule{width:100%;height:1px;background:#16263e;margin:26px 0}
+.cover-desc{font-size:10pt;color:#4a525c;max-width:560px}
+.cover-meta{width:100%;border-collapse:collapse;margin-top:34px;font-size:9.5pt}
+.cover-meta td{border:1px solid #c9ced6;padding:7px 12px}
+.cover-meta td.k{background:#f2f4f7;width:120px;font-weight:700;color:#16263e}
+.cover-bottom{border-bottom:3px solid #16263e;padding-bottom:12px;display:flex;justify-content:space-between;font-size:9pt;color:#5a6472}
+.page{max-width:210mm;margin:0 auto;padding:14mm 20mm}
+.doc-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #16263e;padding-bottom:6px;margin-bottom:24px;font-size:9pt;color:#5a6472}
+.doc-head b{font-size:10.5pt;color:#16263e}
+h1.sec{font-size:14.5pt;font-weight:700;color:#16263e;border-bottom:2px solid #16263e;padding-bottom:6px;margin:34px 0 14px}
+h2{font-size:11.5pt;font-weight:700;color:#16263e;margin:22px 0 8px}
+p{margin:0 0 8px;color:#2a3138}
+ul,ol{margin:0 0 10px 20px}
+li{margin-bottom:3px;color:#2a3138}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:9pt}
+th{background:#1f3147;color:#fff;font-weight:600;padding:7px 10px;border:1px solid #1f3147;text-align:left}
+td{padding:6px 10px;border:1px solid #c8ccd2;vertical-align:top;line-height:1.55;color:#262c33;background:#fff;word-break:keep-all}
+code{font-family:Consolas,'D2Coding',monospace;font-size:8.5pt;background:#f1f3f5;border:1px solid #e1e4e8;padding:0 4px;color:#1c3050}
+.note{border:1px solid #c8ccd2;border-left:3px solid #16263e;background:#fafbfc;padding:10px 14px;margin:12px 0;font-size:9.5pt;color:#333}
+.note b{color:#16263e}
+.footer{max-width:210mm;margin:24px auto 0;padding:10px 20mm 26px;border-top:1px solid #c9ced6;display:flex;justify-content:space-between;font-size:8.5pt;color:#7c848e}
+@media print{.page-break{page-break-before:always}}
 </style>
 </head>
 <body>
 
-<!-- 표지 -->
 <div class="cover">
-  <div class="cover-badge">분석 단계 · 기술 문서</div>
-  <h1>TrafficSync</h1>
-  <h2>기능 명세서</h2>
-  <div class="cover-divider"></div>
-  <div class="cover-meta">
-    <div>문서 번호</div><div><span>TS-AN-FS-001</span></div>
-    <div>버전</div><div><span>v1.0</span></div>
-    <div>작성일</div><div><span>2025년 5월</span></div>
-    <div>작성자</div><div><span>박희윤</span></div>
-    <div>상태</div><div><span>최종</span></div>
-    <div>분류</div><div><span>내부용</span></div>
+  <div class="cover-top"><span>Syncro | 교통 관제 시스템</span><span></span></div>
+  <div>
+    <div class="cover-docno">SYNCRO PROJECT DOCUMENTATION</div>
+    <div class="cover-title">기능명세서</div>
+    <div class="cover-sub">실시간 V2X 기반 AI 교통 관제 시스템 Syncro</div>
+    <div class="cover-rule"></div>
+    <div class="cover-desc">
+      본 문서는 Syncro의 화면별 기능을 입력·처리·출력 관점에서 명세한다.
+      각 기능은 관련 API와 함께 기술하며, 동작 세부는 구현 코드를 기준으로 한다.
+    </div>
+    <table class="cover-meta">
+      <tr><td class="k">작성 팀</td><td>Syncro</td><td class="k">작성자</td><td>kimsua · heeyoun · jinminkyeong · seokhyun</td></tr>
+      <tr><td class="k">작성일</td><td>2026. 06. 13.</td><td class="k">문서 분류</td><td>기능명세서</td></tr>
+      <tr><td class="k">시스템명</td><td>Syncro (교통 관제 시스템)</td><td class="k">작성 기준</td><td>구현 코드 기준</td></tr>
+    </table>
   </div>
-  <div class="cover-doc-id">TrafficSync · Functional Specification · FR-AUTH / DASH / MAP / CCTV / SIM / AI / EMAIL / NEWS</div>
+  <div class="cover-bottom"><span>Syncro Team</span><span></span></div>
 </div>
 
-<div class="content">
+<div class="page page-break">
+<div class="doc-head"><b>기능명세서</b><span>Syncro | 교통 관제 시스템</span></div>
 
-<!-- 개정이력 -->
-<div class="section-title">개정 이력</div>
-<table class="hist-table">
-  <thead><tr><th style="width:70px">버전</th><th style="width:100px">작성일</th><th style="width:70px">작성자</th><th>변경 내용</th></tr></thead>
-  <tbody>
-    <tr><td>v1.0</td><td>2025-05</td><td>박희윤</td><td>초안 작성 — 전체 기능 명세 수립 (FR-AUTH · FR-DASH · FR-MAP · FR-CCTV · FR-SIM · FR-AI · FR-EMAIL · FR-NEWS · FR-WS)</td></tr>
-  </tbody>
-</table>
-
-<!-- 목차 -->
-<div class="section-title">목 차</div>
-<div style="margin:16px 0 36px">
-  <div class="toc-item"><span class="num">1</span><span>문서 목적 및 기능 분류 개요</span><span class="dots"></span><span class="pg">3p</span></div>
-  <div class="toc-item"><span class="num">2</span><span>FR-AUTH — 사용자 인증 및 계정 관리</span><span class="dots"></span><span class="pg">4p</span></div>
-  <div class="toc-sub">FR-AUTH-001 로그인 · FR-AUTH-002 회원가입 · FR-AUTH-003 아이디 찾기 · FR-AUTH-004 비밀번호 재설정 · FR-AUTH-005 비밀번호 변경 · FR-AUTH-006 관리자 사용자 승인/거절</div>
-  <div class="toc-item"><span class="num">3</span><span>FR-DASH — 메인 대시보드</span><span class="dots"></span><span class="pg">6p</span></div>
-  <div class="toc-sub">FR-DASH-001 구별 교통 현황 표시 · FR-DASH-002 구 선택 및 지도 전환 · FR-DASH-003 병목 이메일 리포트</div>
-  <div class="toc-item"><span class="num">4</span><span>FR-MAP — 실시간 교차로 지도</span><span class="dots"></span><span class="pg">8p</span></div>
-  <div class="toc-sub">FR-MAP-001 교차로 마커 실시간 표시 · FR-MAP-002 교차로 선택 및 신호 패널 · FR-MAP-003 로드뷰 · FR-MAP-004 병목 현황 리스트 · FR-MAP-005 위험 교차로 리스트</div>
-  <div class="toc-item"><span class="num">5</span><span>FR-AI — AI 교통 챗봇</span><span class="dots"></span><span class="pg">10p</span></div>
-  <div class="toc-sub">FR-AI-001 자유 질의응답 · FR-AI-002 프리셋 질문 · FR-AI-003 ReAct 추론 과정 표시</div>
-  <div class="toc-item"><span class="num">6</span><span>FR-CCTV — CCTV 관제</span><span class="dots"></span><span class="pg">12p</span></div>
-  <div class="toc-sub">FR-CCTV-001 CCTV 목록 조회 · FR-CCTV-002 CCTV 영상 스트리밍 · FR-CCTV-003 지도 CCTV 마커</div>
-  <div class="toc-item"><span class="num">7</span><span>FR-SIM — 신호 시뮬레이션</span><span class="dots"></span><span class="pg">13p</span></div>
-  <div class="toc-sub">FR-SIM-001 교차로 선택 · FR-SIM-002 신호 타이밍 수동 조정 · FR-SIM-003 AI 자동 최적화 · FR-SIM-004 시뮬레이션 챗봇</div>
-  <div class="toc-item"><span class="num">8</span><span>FR-FORECAST — 교통량 예측</span><span class="dots"></span><span class="pg">15p</span></div>
-  <div class="toc-sub">FR-FORECAST-001 측정 지점 목록 조회 · FR-FORECAST-002 24시간 교통량 예측 차트</div>
-  <div class="toc-item"><span class="num">9</span><span>FR-EMAIL — 이메일 리포트</span><span class="dots"></span><span class="pg">16p</span></div>
-  <div class="toc-item"><span class="num">10</span><span>FR-NEWS — 뉴스 대시보드</span><span class="dots"></span><span class="pg">17p</span></div>
-  <div class="toc-item"><span class="num">11</span><span>FR-WS — WebSocket 실시간 연결</span><span class="dots"></span><span class="pg">17p</span></div>
-  <div class="toc-item"><span class="num">12</span><span>기능별 REST API 엔드포인트 요약</span><span class="dots"></span><span class="pg">18p</span></div>
-</div>
-
-<hr/>
-
-<!-- ─── 1. 개요 ──────────────────────────────────────── -->
-<div class="section-title">1. 문서 목적 및 기능 분류 개요</div>
-<p>본 문서는 TrafficSync 시스템의 각 기능에 대해 <strong>행위자, 사전 조건, 처리 흐름, 입출력, 예외 처리</strong>를 상세히 기술한다. 개발·테스트·발표 검토 시 기능의 동작 기준으로 활용한다.</p>
-
+<h1 class="sec">1. 화면 구성 총괄</h1>
 <table>
-  <thead><tr><th style="width:100px">분류 코드</th><th style="width:160px">기능 영역</th><th>포함 기능</th><th style="width:80px">주요 화면</th></tr></thead>
-  <tbody>
-    <tr><td class="center">FR-AUTH</td><td>사용자 인증·계정</td><td>로그인, 회원가입, 아이디/비밀번호 찾기, 비밀번호 변경, 관리자 승인/거절</td><td class="center">LoginPage</td></tr>
-    <tr><td class="center">FR-DASH</td><td>메인 대시보드</td><td>구별 교통 현황 카드, 구 선택, 병목 이메일, 차트(속도·대기·위험도)</td><td class="center">MainDashboard</td></tr>
-    <tr><td class="center">FR-MAP</td><td>실시간 교차로 지도</td><td>카카오맵 마커, 신호 패널, 로드뷰, 병목/위험 리스트, AI 챗봇 패널</td><td class="center">MapDashboard</td></tr>
-    <tr><td class="center">FR-AI</td><td>AI 교통 챗봇</td><td>자유 질의, 프리셋, SSE 스트리밍, ReAct 추론 표시, MCP 도구 9개</td><td class="center">AIChatBot</td></tr>
-    <tr><td class="center">FR-CCTV</td><td>CCTV 관제</td><td>CCTV 목록, 영상 스트리밍(UTIC iframe), 지도 마커 클릭</td><td class="center">CctvDashboard</td></tr>
-    <tr><td class="center">FR-SIM</td><td>신호 시뮬레이션</td><td>VWorld 3D 경로 선택, TOPIS 속도 기반 병목 탐지, 신호 타이밍 슬라이더, AI 자동 최적화, 도착시간 비교, 3D 차량 모델 <span style="font-size:8pt;color:#2563eb;">[v1.1 변경]</span></td><td class="center">SimulationDashboard</td></tr>
-    <tr><td class="center">FR-EMAIL</td><td>이메일 리포트</td><td>병목 HTML 리포트 이메일 발송 (AI 에이전트 + Spring SMTP)</td><td class="center">MainDashboard</td></tr>
-    <tr><td class="center">FR-NEWS</td><td>뉴스 대시보드</td><td>최신 교통 관련 뉴스 피드 표시</td><td class="center">Newsdashboard</td></tr>
-    <tr><td class="center">FR-FORECAST</td><td>교통량 예측</td><td>XGBoost 사전학습 모델 기반 24시간 상행/하행 교통량 예측 차트 (Flask :5002)</td><td class="center">MainDashboard</td></tr>
-    <tr><td class="center">FR-WS</td><td>WebSocket 실시간 연결</td><td>TrafficStatus 10초 브로드캐스트, 연결 상태 표시</td><td class="center">App.jsx</td></tr>
-    <tr><td class="center" style="color:#2563eb;">FR-VOICE</td><td>음성 어시스턴트 <span style="font-size:8pt;color:#2563eb;">[v1.1 신규]</span></td><td>박수 2번 감지(AudioContext RMS), Web Speech API STT, Google Cloud TTS 자동 읽기, 음소거 토글</td><td class="center">VoiceAssistantPanel</td></tr>
-    <tr><td class="center" style="color:#2563eb;">FR-CIVIL</td><td>시민 민원 포털 <span style="font-size:8pt;color:#2563eb;">[v1.1 신규]</span></td><td>카카오맵 위치 핀, 14개 카테고리 민원 제출, 사진 첨부, 담당 부서 자동 매핑, 날씨 자동 기록, AI 답변 이메일</td><td class="center">CivilApp/CivilDashboard</td></tr>
-    <tr><td class="center" style="color:#2563eb;">FR-ADMIN</td><td>관리자 민원 관리 <span style="font-size:8pt;color:#2563eb;">[v1.1 신규]</span></td><td>민원 목록·상태 변경(접수→처리중→완료), 사진 조회, 구별 카운트 사이드바</td><td class="center">ComplaintManagePage</td></tr>
-    <tr><td class="center" style="color:#2563eb;">FR-MGMT</td><td>관리자 사용자 승인 <span style="font-size:8pt;color:#2563eb;">[v1.1 신규]</span></td><td>사용자 목록 조회, 로그인 승인, 임시 비밀번호 발급, 계정 활성화/비활성화</td><td class="center">MyPage(관리자)</td></tr>
-  </tbody>
+  <tr><th style="width:40px">No</th><th style="width:150px">화면</th><th>주요 기능</th><th style="width:110px">접근 권한</th></tr>
+  <tr><td>1</td><td>로그인</td><td>로그인, 회원가입(승인제), 아이디/비밀번호 찾기, 관리자 승인 화면</td><td>전체</td></tr>
+  <tr><td>2</td><td>메인 대시보드</td><td>SVG 서울 지도, 구 선택·수집, KPI, 위험 순위, 교통량 예측 차트, 구 AI 리포트</td><td>관제사</td></tr>
+  <tr><td>3</td><td>실시간 지도</td><td>카카오맵 교차로·신호 패널, AI 챗봇, 멀티에이전트 시각화, CCTV/민원 마커</td><td>관제사</td></tr>
+  <tr><td>4</td><td>신호 시뮬레이션</td><td>VWorld 3D 지도, 신호계획 재현, 경로 분석, Webster 최적화, 조정 승인</td><td>관제사</td></tr>
+  <tr><td>5</td><td>CCTV 관제</td><td>CCTV 목록·영상 표시(UTIC 임베드)</td><td>관제사</td></tr>
+  <tr><td>6</td><td>교통 뉴스</td><td>뉴스 목록, 카테고리·감성 필터, 낚시성 점수 표시</td><td>관제사</td></tr>
+  <tr><td>7</td><td>민원 관리</td><td>민원 목록·상세, 상태 변경(메일 발송), 사진 조회</td><td>관제사</td></tr>
+  <tr><td>8</td><td>민원 시민 화면</td><td>민원 가입·로그인, 위치 선택, 사진 AI 분류, 접수</td><td>시민(CIVIL)</td></tr>
+  <tr><td>9</td><td>마이페이지</td><td>비밀번호 변경, 알림 메일 수신 토글</td><td>관제사</td></tr>
+  <tr><td>—</td><td>공통(전역)</td><td>음성 어시스턴트, 민원 알림 배너, 로그인 브리핑 카드</td><td>관제사</td></tr>
 </table>
+<div class="note"><b>주.</b> 화면 전환은 라우터 없이 상태 기반으로 동작한다. 시뮬레이션 화면은 3D 뷰어 특성상
+최초 진입 후 숨김 처리만 하며(언마운트 금지), 재진입 시 복구 이벤트를 발생시킨다.</div>
 
-<!-- ─── 2. FR-AUTH ──────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">2. FR-AUTH — 사용자 인증 및 계정 관리</div>
+<h1 class="sec">2. 화면별 기능 명세</h1>
 
-<!-- FR-AUTH-001 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-AUTH-001</span>
-    <span class="fn-name">로그인</span>
-    <span class="fn-actor">행위자: 사용자(일반/관리자)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">이메일·비밀번호를 입력해 JWT 토큰을 발급받고 시스템에 접근한다.</span></div>
-    <div class="fn-row"><span class="fn-label">사전 조건</span><span class="fn-value">회원가입이 완료되어 있고 관리자 승인 상태여야 한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">이메일·비밀번호 입력 후 로그인 버튼 클릭</span></li>
-        <li><span class="n">2</span><span class="t"><code>POST /api/auth/login { email, password }</code> 요청</span></li>
-        <li><span class="n">3</span><span class="t">Spring Boot: USERS 테이블에서 email로 사용자 조회 → BCrypt 패스워드 검증</span></li>
-        <li><span class="n">4</span><span class="t">검증 성공 시 JWT 토큰(유효기간 7일) 생성 후 응답</span></li>
-        <li><span class="n">5</span><span class="t">프론트엔드: <code>localStorage["ts_user"] = { token, email, name, role }</code> 저장</span></li>
-        <li><span class="n">6</span><span class="t">role에 따라 일반 사용자는 MainDashboard, 관리자는 관리 화면으로 이동</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">예외 처리</span>
-      <div class="tag-row">
-        <span class="tag tag-err">이메일 없음 → "이메일 또는 비밀번호가 올바르지 않습니다"</span>
-        <span class="tag tag-err">비밀번호 불일치 → 동일 메시지 (보안상 구분하지 않음)</span>
-        <span class="tag tag-err">미승인 계정 → "관리자 승인 대기 중입니다"</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row">
-        <span class="tag tag-api">POST /api/auth/login</span>
-        <span class="tag tag-comp">LoginPage.jsx</span>
-        <span class="tag tag-comp">UserController.java</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-AUTH-002 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-AUTH-002</span>
-    <span class="fn-name">회원가입</span>
-    <span class="fn-actor">행위자: 신규 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">이름·이메일·비밀번호를 입력해 계정을 생성한다. 관리자 승인 후 로그인 가능.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">이름·이메일·비밀번호·비밀번호 확인 입력</span></li>
-        <li><span class="n">2</span><span class="t"><code>POST /api/auth/register { name, email, password }</code> 요청</span></li>
-        <li><span class="n">3</span><span class="t">이메일 중복 확인 → BCrypt 해시 후 USERS 테이블에 INSERT (role=PENDING)</span></li>
-        <li><span class="n">4</span><span class="t">"가입 완료, 관리자 승인 대기 중" 메시지 표시 후 로그인 화면으로 이동</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">예외 처리</span>
-      <div class="tag-row">
-        <span class="tag tag-err">이메일 중복 → "이미 사용 중인 이메일입니다"</span>
-        <span class="tag tag-err">비밀번호 불일치 → "비밀번호가 일치하지 않습니다"</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row">
-        <span class="tag tag-api">POST /api/auth/register</span>
-        <span class="tag tag-comp">LoginPage.jsx</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-AUTH-003 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-AUTH-003</span>
-    <span class="fn-name">아이디(이메일) 찾기</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">가입 시 입력한 이름으로 등록된 이메일을 조회한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">이름 입력 후 찾기 클릭</span></li>
-        <li><span class="n">2</span><span class="t"><code>GET /api/auth/find-id?name={name}</code> 요청</span></li>
-        <li><span class="n">3</span><span class="t">USERS 테이블에서 name으로 이메일 조회 → 일부 마스킹 처리 후 표시</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-api">GET /api/auth/find-id</span><span class="tag tag-comp">LoginPage.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-AUTH-004 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-AUTH-004</span>
-    <span class="fn-name">임시 비밀번호 발급 (비밀번호 찾기)</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">이름과 이메일이 일치하면 임시 비밀번호를 생성해 해당 이메일로 발송한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">이름·이메일 입력 후 발송 클릭</span></li>
-        <li><span class="n">2</span><span class="t"><code>POST /api/auth/find-pw { name, email }</code> 요청</span></li>
-        <li><span class="n">3</span><span class="t">이름·이메일 일치 확인 → 임시 비밀번호 생성 → BCrypt 해시 후 DB 갱신</span></li>
-        <li><span class="n">4</span><span class="t">Naver SMTP로 임시 비밀번호 이메일 발송</span></li>
-        <li><span class="n">5</span><span class="t">"임시 비밀번호를 이메일로 발송했습니다" 안내</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-api">POST /api/auth/find-pw</span><span class="tag tag-comp">EmailService.java</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-AUTH-005 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-AUTH-005</span>
-    <span class="fn-name">비밀번호 변경</span>
-    <span class="fn-actor">행위자: 로그인된 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">현재 비밀번호를 확인한 후 새 비밀번호로 변경한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">현재 비밀번호·새 비밀번호·새 비밀번호 확인 입력</span></li>
-        <li><span class="n">2</span><span class="t"><code>POST /api/auth/change-pw</code> — Authorization 헤더에 JWT 포함</span></li>
-        <li><span class="n">3</span><span class="t">현재 비밀번호 BCrypt 검증 → 새 비밀번호 해시 후 DB 갱신</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-api">POST /api/auth/change-pw</span><span class="tag tag-comp">MyPage.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-AUTH-006 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-AUTH-006</span>
-    <span class="fn-name">관리자 사용자 승인 / 거절</span>
-    <span class="fn-actor">행위자: 관리자(ADMIN)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">대기 중인 신규 가입자를 관리자가 승인하거나 거절한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t"><code>GET /api/auth/admin/users</code> — PENDING 상태 사용자 목록 조회</span></li>
-        <li><span class="n">2</span><span class="t">승인: <code>POST /api/auth/admin/approve/{userId}</code> → role=ACTIVE 변경</span></li>
-        <li><span class="n">3</span><span class="t">거절: <code>POST /api/auth/admin/reject/{userId}</code> → 계정 삭제 또는 role=REJECTED</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row">
-        <span class="tag tag-api">GET /api/auth/admin/users</span>
-        <span class="tag tag-api">POST /api/auth/admin/approve/{userId}</span>
-        <span class="tag tag-api">POST /api/auth/admin/reject/{userId}</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 3. FR-DASH ──────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">3. FR-DASH — 메인 대시보드</div>
-
-<!-- FR-DASH-001 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-DASH-001</span>
-    <span class="fn-name">구별 교통 현황 카드 표시</span>
-    <span class="fn-actor">행위자: 시스템 (WebSocket 수신)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">서울 25개 구별 교통 현황(평균 속도, 혼잡도, 위험 교차로 수)을 카드 형태로 표시한다. WebSocket으로 수신된 wsData를 구별로 집계한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">App.jsx에서 WebSocket(<code>ws://localhost:8080/ws/traffic</code>) 연결 유지</span></li>
-        <li><span class="n">2</span><span class="t">10초마다 TrafficStatus[] JSON 수신 → wsData 상태 갱신</span></li>
-        <li><span class="n">3</span><span class="t">wsData를 구이름(guName)으로 그룹화 → 구별 평균 속도·혼잡 교차로 수 계산</span></li>
-        <li><span class="n">4</span><span class="t">SeoulSvgMap(서울 지도 SVG)에 구별 색상 오버레이 렌더링</span></li>
-        <li><span class="n">5</span><span class="t">우측 GU_LIST 카드에 구별 속도 · 위험도 점수 표시</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">출력</span>
-      <div class="tag-row">
-        <span class="tag tag-out">구별 평균 속도 (km/h)</span>
-        <span class="tag tag-out">위험 교차로 수</span>
-        <span class="tag tag-out">혼잡 상태 색상 오버레이</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">MainDashboard.jsx</span><span class="tag tag-comp">SeoulSvgMap.jsx</span><span class="tag tag-comp">SpeedChart.jsx</span><span class="tag tag-comp">WaitChart.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-DASH-002 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-DASH-002</span>
-    <span class="fn-name">구 선택 및 지도 화면 전환</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">구 카드 또는 SVG 지도에서 특정 구를 클릭하면 해당 구의 교차로 데이터를 수집하고 실시간 지도 화면으로 전환한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">구 카드 클릭</span></li>
-        <li><span class="n">2</span><span class="t"><code>POST /api/fetch-area { guName }</code> 요청 → 서버: 해당 구 교차로 전체 데이터 수집 시작 (시나리오 A)</span></li>
-        <li><span class="n">3</span><span class="t">서버: 중심 좌표를 해당 구 중심으로 업데이트, V2X·TOPIS·위험도 수집 → WebSocket 브로드캐스트</span></li>
-        <li><span class="n">4</span><span class="t">프론트: MapDashboard로 라우팅 (initialCenter = 해당 구 중심 좌표)</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-api">POST /api/fetch-area</span><span class="tag tag-comp">MainDashboard.jsx</span><span class="tag tag-comp">MapController.java</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-DASH-003 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-DASH-003</span>
-    <span class="fn-name">병목 이메일 리포트 발송</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">구 카드의 "병목 메일" 버튼을 클릭하면 AI 에이전트가 해당 구의 병목 현황을 분석하여 로그인 이메일로 HTML 리포트를 발송한다. 처리 중 ReAct 추론 과정을 토스트로 표시한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">구 카드의 "📧 병목 메일" 버튼 클릭</span></li>
-        <li><span class="n">2</span><span class="t">Python AI 서버: <code>POST /api/agent/bottleneck-email/stream { district, userEmail }</code> SSE 요청</span></li>
-        <li><span class="n">3</span><span class="t">AI 에이전트: MCP <code>get_district_traffic</code> 도구로 병목 교차로 조회 → <code>send_email_report</code> 도구로 HTML 리포트 이메일 발송</span></li>
-        <li><span class="n">4</span><span class="t">ReActToast: thought/action/observation 단계를 실시간으로 토스트 팝업에 표시</span></li>
-        <li><span class="n">5</span><span class="t">발송 완료 시 버튼 "✓ 메일 전송됨"으로 변경 (3초 후 원복)</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row">
-        <span class="tag tag-api">POST /api/agent/bottleneck-email/stream (Python)</span>
-        <span class="tag tag-comp">BottleneckEmailBtn (MainDashboard.jsx)</span>
-        <span class="tag tag-comp">ReActToast.jsx</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 4. FR-MAP ──────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">4. FR-MAP — 실시간 교차로 지도</div>
-
-<!-- FR-MAP-001 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-MAP-001</span>
-    <span class="fn-name">교차로 마커 실시간 표시</span>
-    <span class="fn-actor">행위자: 시스템 (WebSocket 수신)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">카카오맵 위에 교차로 위치에 마커를 표시하고, 신호 상태(색상)·혼잡도·위험도에 따라 마커 색상을 10초마다 자동 갱신한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">WebSocket에서 TrafficStatus[] 수신 → wsData 갱신</span></li>
-        <li><span class="n">2</span><span class="t">KakaoMapView: wsData 변경 시 기존 마커 제거 후 재생성</span></li>
-        <li><span class="n">3</span><span class="t">마커 색상 결정 기준:<br/>
-          · 현재 신호 Green → 초록 / Red → 빨강 / Yellow → 노랑<br/>
-          · 위험도 높음(riskGrade ≥ 3) → 주황 테두리 추가<br/>
-          · 혼잡(congestion="혼잡") → 마커 크기 확대</span></li>
-        <li><span class="n">4</span><span class="t">CCTV 카메라 위치도 별도 아이콘(📷)으로 오버레이</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">KakaoMapView.jsx</span><span class="tag tag-comp">MapDashboard.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-MAP-002 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-MAP-002</span>
-    <span class="fn-name">교차로 선택 및 신호 현황 패널</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">지도 마커 클릭 시 해당 교차로의 실시간 신호 현황(현시별 신호색·잔여시간)을 지도 좌측 하단 오버레이 패널로 표시한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">지도 마커 클릭 → <code>selected</code> 상태 갱신</span></li>
-        <li><span class="n">2</span><span class="t">SignalPanel: selected.phases[]를 방향(북/남/동/서)별로 렌더링</span></li>
-        <li><span class="n">3</span><span class="t">각 현시: 신호색 아이콘(🔴🟢🟡) + 잔여시간(remainTimeTenthSec ÷ 10초) 표시</span></li>
-        <li><span class="n">4</span><span class="t">WebSocket 갱신 시 selected 교차로 데이터 자동 업데이트 (10초 주기)</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">SignalPanel.jsx</span><span class="tag tag-comp">MapDashboard.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-MAP-003 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-MAP-003</span>
-    <span class="fn-name">로드뷰</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">선택된 교차로의 위경도를 카카오 로드뷰 API에 전달해 해당 위치의 360° 파노라마 영상을 모달로 표시한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">신호 패널의 "🛣️ 로드뷰" 버튼 클릭</span></li>
-        <li><span class="n">2</span><span class="t">RoadViewModal 렌더링 — <code>kakao.maps.Roadview</code> SDK 초기화</span></li>
-        <li><span class="n">3</span><span class="t">selected.lat / selected.lon을 기준으로 가장 가까운 로드뷰 파노라마 로드</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">RoadViewModal.jsx</span><span class="tag tag-comp">카카오맵 Roadview SDK</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-MAP-004 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-MAP-004</span>
-    <span class="fn-name">병목 현황 리스트</span>
-    <span class="fn-actor">행위자: 시스템 (자동 갱신)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">사이드바에 현재 혼잡·서행 상태 교차로를 속도 오름차순으로 정렬해 표시한다.</span></div>
-    <div class="fn-row"><span class="fn-label">필터 조건</span><span class="fn-value"><code>congestion === "혼잡" || congestion === "서행"</code> → 속도(speed) 오름차순 정렬</span></div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">BottleneckList.jsx</span><span class="tag tag-comp">MapDashboard.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-MAP-005 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-MAP-005</span>
-    <span class="fn-name">위험 교차로 리스트</span>
-    <span class="fn-actor">행위자: 시스템 (자동 갱신)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">사이드바에 riskGrade 3 이상(높음·매우높음·위험)인 교차로를 위험 점수 내림차순으로 표시한다.</span></div>
-    <div class="fn-row"><span class="fn-label">필터 조건</span><span class="fn-value"><code>riskGradeValue(riskGrade) &gt;= 3</code> → grade * 100000 + riskScore 내림차순 정렬</span></div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">RiskList.jsx</span><span class="tag tag-comp">signalUtils.js</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 5. FR-AI ──────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">5. FR-AI — AI 교통 챗봇</div>
-
-<!-- FR-AI-001 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-AI-001</span>
-    <span class="fn-name">자유 질의응답 (SSE 스트리밍)</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">교통 관련 자유 질문을 입력하면 AI 에이전트(LangGraph ReAct + Ollama)가 실시간 교통 데이터를 조회하여 SSE 스트리밍으로 답변한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">지도 우하단 "AI" 원형 버튼 클릭 → 우측 챗봇 패널 열림 (그리드 3열로 확장)</span></li>
-        <li><span class="n">2</span><span class="t">질문 입력 후 Enter 또는 전송 버튼 클릭</span></li>
-        <li><span class="n">3</span><span class="t"><code>POST http://localhost:8001/api/agent/chat/stream { question, crsrdId?, userEmail? }</code></span></li>
-        <li><span class="n">4</span><span class="t">SSE 스트림 구독: thought → action → observation 단계별 수신 → ThinkingBlock 렌더링</span></li>
-        <li><span class="n">5</span><span class="t">answer 수신 → 메시지 목록에 AI 말풍선 추가, ThinkingBlock 제거</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">입력</span>
-      <div class="tag-row">
-        <span class="tag tag-in">question (string)</span>
-        <span class="tag tag-in">crsrdId (optional) — 선택된 교차로 ID</span>
-        <span class="tag tag-in">userEmail (optional) — 이메일 발송 시 수신자</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">출력</span>
-      <div class="tag-row">
-        <span class="tag tag-out">SSE: { type:"thought"|"action"|"observation"|"answer", content }</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">예외 처리</span>
-      <div class="tag-row">
-        <span class="tag tag-err">Python 서버 미응답 → "오류: Failed to fetch" 메시지 표시</span>
-        <span class="tag tag-err">Ollama 미실행 → "오류: LLM 연결 실패" 메시지 표시</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row">
-        <span class="tag tag-api">POST /api/agent/chat/stream (Python :8001)</span>
-        <span class="tag tag-comp">AIChatBot.jsx</span>
-        <span class="tag tag-comp">MapDashboard.jsx</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-AI-002 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-AI-002</span>
-    <span class="fn-name">프리셋 질문</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">챗봇 상단에 자주 쓰는 질문 버튼 3개를 제공해 클릭 한 번으로 질의한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">프리셋 목록</span>
-      <div style="margin-top:4px;font-size:9pt">
-        <div>① <strong>병목 TOP3</strong> → "지금 가장 막히는 교차로 3곳 알려줘"</div>
-        <div>② <strong>신호 최적화</strong> → "현재 가장 정체가 심한 교차로의 신호 조정 방법을 알려줘"</div>
-        <div>③ <strong>날씨 현황</strong> → "현재 날씨 상황이 교통에 어떤 영향을 미치고 있어?"</div>
-      </div>
-    </div>
-    <div class="fn-row"><span class="fn-label">동작</span><span class="fn-value">버튼 클릭 시 해당 질문 문자열을 <code>sendChat(preset)</code>에 직접 전달 — FR-AI-001과 동일한 SSE 흐름 실행</span></div>
-    <div class="fn-row"><span class="fn-label">관련</span><div class="tag-row"><span class="tag tag-comp">AIChatBot.jsx — PRESETS 배열</span></div></div>
-  </div>
-</div>
-
-<!-- FR-AI-003 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-AI-003</span>
-    <span class="fn-name">ReAct 추론 과정 표시</span>
-    <span class="fn-actor">행위자: 시스템 (자동)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">AI가 답변하는 동안 내부 추론 단계(생각→도구 사용→결과 확인)를 채팅창 안에 실시간으로 표시하여 AI 동작을 투명하게 보여준다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">표시 규칙</span>
-      <div style="font-size:9pt;margin-top:4px;line-height:1.8">
-        · 응답 중(loading=true): <strong>ThinkingBlock</strong> — "추론 중 · N단계" + 진행바 애니메이션<br/>
-        · 응답 완료 후: <strong>InlineSteps</strong> — "추론 과정 · N단계" 접기/펼치기 버튼으로 표시<br/>
-        · 각 단계 라벨: thought→"생각" / action→"도구 사용" / observation→"결과 확인"<br/>
-        · action 단계: <code>도구명(인수)</code> 형식으로 표시, 내용 140자 초과 시 말줄임
-      </div>
-    </div>
-    <div class="fn-row"><span class="fn-label">관련</span><div class="tag-row"><span class="tag tag-comp">AIChatBot.jsx — ThinkingBlock, InlineSteps, StepRows</span></div></div>
-  </div>
-</div>
-
-<!-- ─── 6. FR-CCTV ──────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">6. FR-CCTV — CCTV 관제</div>
-
-<!-- FR-CCTV-001 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-CCTV-001</span>
-    <span class="fn-name">CCTV 목록 조회 및 필터링</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">DB에 저장된 CCTV 목록을 조회하고 지역·이름으로 필터링해 표시한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">CctvDashboard 진입 시 <code>GET /api/cctv</code> 호출 → CCTV_CAMERAS 테이블 전체 조회</span></li>
-        <li><span class="n">2</span><span class="t">검색창 입력 시 cctv_nm 또는 지역명으로 클라이언트 사이드 필터링</span></li>
-        <li><span class="n">3</span><span class="t">구역 필터: <code>GET /api/cctv/area?lat=&lon=&radius=</code>로 반경 내 CCTV만 조회 가능</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-api">GET /api/cctv</span><span class="tag tag-api">GET /api/cctv/area</span><span class="tag tag-comp">CctvDashboard.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-CCTV-002 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-CCTV-002</span>
-    <span class="fn-name">CCTV 영상 스트리밍</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">CCTV 선택 시 UTIC API URL을 조립해 iframe으로 실시간 영상 스트리밍을 표시한다. Spring Boot 서버를 경유하지 않고 브라우저에서 UTIC에 직접 연결한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">CCTV 카드 클릭 → CctvModal 또는 CctvDashboard 내 뷰어 열림</span></li>
-        <li><span class="n">2</span><span class="t">UTIC URL 조립: <code>https://utic.go.kr/…?cctvId={id}&apiKey={VITE_UTIC_KEY}</code></span></li>
-        <li><span class="n">3</span><span class="t">iframe src에 URL 설정 → UTIC 서버가 브라우저 IP를 화이트리스트로 인증 후 스트리밍 제공</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">예외 처리</span>
-      <div class="tag-row">
-        <span class="tag tag-err">IP 미등록 → UTIC "등록된 IP 대역대가 아닙니다" 오류 — UTIC 포털에서 새 API 키 발급 필요</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">CctvModal.jsx</span><span class="tag tag-comp">CctvDashboard.jsx</span><span class="tag tag-api">UTIC API (외부)</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-CCTV-003 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-CCTV-003</span>
-    <span class="fn-name">지도 위 CCTV 마커 클릭</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">MapDashboard의 카카오맵에서 CCTV 아이콘 클릭 시 해당 CCTV 영상 모달을 바로 표시한다.</span></div>
-    <div class="fn-row"><span class="fn-label">동작</span><span class="fn-value">마커 클릭 → <code>setSelectedCctv(cctvObj)</code> → <code>CctvModal</code> 렌더링</span></div>
-    <div class="fn-row"><span class="fn-label">관련</span><div class="tag-row"><span class="tag tag-comp">KakaoMapView.jsx</span><span class="tag tag-comp">CctvModal.jsx</span></div></div>
-  </div>
-</div>
-
-<!-- ─── 7. FR-SIM ──────────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">7. FR-SIM — 신호 시뮬레이션 <span style="font-size:9pt;color:#2563eb;">[v1.1: VWorld 3D + TOPIS 속도 기반으로 변경. T Data 미사용.]</span></div>
-
-<!-- FR-SIM-001 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-SIM-001</span>
-    <span class="fn-name">VWorld 3D 경로 선택 및 병목 탐지</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">VWorld 3D WebGL 지도에서 출발지·목적지 교차로를 순서대로 클릭하면 두 점 간 경로를 자동 탐색하고, TOPIS 실시간 도로 소통 정보(상행/하행 속도)로 병목 경유지를 자동 선정한다. <span style="color:#2563eb;font-size:8.5pt;">[v1.1 신규]</span></span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">SimulationMapView(VWorld 3D)에서 첫 번째 마커 클릭 → 출발지(start) 설정</span></li>
-        <li><span class="n">2</span><span class="t">두 번째 마커 클릭 → 목적지(end) 설정, 경로 자동 탐색 시작</span></li>
-        <li><span class="n">3</span><span class="t">경로상 교차로의 TOPIS 링크 속도 조회 → 20 km/h 미만 구간을 병목으로 탐지, 자동 경유지 배열(autoWaypoints) 생성</span></li>
-        <li><span class="n">4</span><span class="t">3D 지도에 경로 선, 병목 마커(주황), 출발/목적지 마커 표시</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">SimulationDashboard.jsx</span><span class="tag tag-comp">SimulationMapView.jsx (VWorld)</span><span class="tag tag-api">TOPIS TrafficInfo</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-SIM-001b -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-SIM-001b</span>
-    <span class="fn-name">시뮬레이션 교차로 신호 현시 로드</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">출발지·목적지·병목 경유지 선택 시 각 교차로의 신호 현시(phase) 데이터를 DB에서 조회하여 슬라이더 패널에 로드한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">교차로 선택 → <code>GET /api/signal/simulation/context/{intNo}</code> 호출</span></li>
-        <li><span class="n">2</span><span class="t">응답: <code>{ phases: [{ no, dirs[], sec }], cycleVal }</code></span></li>
-        <li><span class="n">3</span><span class="t">출발지/경유지/목적지/병목지 탭으로 구분하여 각각 VehicleAwareSignalSimPanel + SimSliderPanel 렌더링</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-api">GET /api/signal/simulation/context/{intNo}</span><span class="tag tag-comp">SimulationDashboard.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-SIM-002 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-SIM-002</span>
-    <span class="fn-name">신호 타이밍 수동 조정</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">각 현시(phase)의 신호 시간을 슬라이더로 직접 조정하고 저장한다. 총 주기 합계가 실시간으로 표시된다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">현시별 슬라이더 조작 → 각 현시의 sec 값 실시간 변경</span></li>
-        <li><span class="n">2</span><span class="t">총 주기 합계 = Σ(모든 현시 sec) 실시간 계산 표시</span></li>
-        <li><span class="n">3</span><span class="t">"저장" 클릭 → <code>POST /api/signal/crossroads/{intNo}</code> 로 변경된 현시 시간 전송</span></li>
-        <li><span class="n">4</span><span class="t">SignalSimPanel에서 변경된 신호 타이밍으로 애니메이션 프리뷰 갱신</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">SimSliderPanel (SimulationDashboard.jsx)</span><span class="tag tag-comp">SignalSimPanel.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-SIM-003 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-SIM-003</span>
-    <span class="fn-name">AI 자동 신호 최적화</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">"자동 최적화" 버튼 클릭 시 AI가 현재 교통 상황을 분석하여 현시별 최적 신호 시간을 자동으로 슬라이더에 적용한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">시뮬레이션 챗봇에 자동 최적화 질문 전송 (<code>autoTrigger</code> prop)</span></li>
-        <li><span class="n">2</span><span class="t">AI: MCP <code>get_simulation_context</code> 도구로 해당 교차로 현황 조회 → 최적 타이밍 계산</span></li>
-        <li><span class="n">3</span><span class="t">클라이언트 측: <code>buildOptimizedSliderValues()</code> — 직진/좌회전 방향에 주기의 8% 추가 배분, 나머지 방향에서 감산</span></li>
-        <li><span class="n">4</span><span class="t">슬라이더 값 애니메이션으로 자동 이동 → 사용자가 확인 후 저장</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">SimSliderPanel (buildOptimizedSliderValues)</span><span class="tag tag-api">MCP get_simulation_context</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-SIM-004 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-SIM-004</span>
-    <span class="fn-name">시뮬레이션 챗봇</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">시뮬레이션 페이지 전용 AI 챗봇. 선택된 교차로(intNo)와 현재 시뮬레이션 설정값을 컨텍스트로 포함하여 신호 최적화 조언을 제공한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">질문 입력 → <code>POST /api/simulation-chat { question, intNo, userEmail }</code> (Spring Boot 경유)</span></li>
-        <li><span class="n">2</span><span class="t">Spring Boot → Python AI 서버 프록시 또는 직접 처리</span></li>
-        <li><span class="n">3</span><span class="t">응답 수신 → 채팅창에 표시</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-api">POST /api/simulation-chat</span><span class="tag tag-comp">SimulationChatBot (SimulationDashboard.jsx)</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 8. FR-VOICE ──────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">8. FR-VOICE — 음성 어시스턴트 <span style="font-size:9pt;color:#2563eb;">[v1.1 신규]</span></div>
-
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-VOICE-001</span>
-    <span class="fn-name">박수 2번 감지 활성화</span>
-    <span class="fn-actor">행위자: 사용자 (마이크 환경)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">useClapDetection 훅이 마이크 오디오 스트림을 분석하여 700ms 이내 박수 2번(RMS > 0.22 AND delta > 0.15)을 감지하면 음성 어시스턴트 팝업을 자동으로 열고 인사 TTS를 재생한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">AudioContext + createAnalyser(fftSize=256)로 마이크 스트림 분석 (requestAnimationFrame 루프)</span></li>
-        <li><span class="n">2</span><span class="t">RMS > 0.22 AND delta(현재-이전 RMS) > 0.15 시 박수 1회 카운트</span></li>
-        <li><span class="n">3</span><span class="t">700ms 이내 2회 감지 → onDoubleClap() 실행 → 3초 쿨다운</span></li>
-        <li><span class="n">4</span><span class="t">VoiceAssistantPanel 팝업 활성화 → speakAsync("안녕하세요...") 인사 TTS 재생</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">hooks/useClapDetection.js</span><span class="tag tag-comp">lib/tts.js (speakAsync)</span><span class="tag tag-comp">VoiceAssistantPanel.jsx</span></div>
-    </div>
-  </div>
-</div>
-
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-VOICE-002</span>
-    <span class="fn-name">STT 음성 질의 및 TTS 응답</span>
-    <span class="fn-actor">행위자: 사용자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">마이크 버튼으로 Web Speech API STT를 활성화하여 음성 질의를 텍스트로 변환한 뒤 AI 에이전트에 전달하고, 응답을 Google Cloud TTS(ko-KR-Neural2-C)로 자동 읽는다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">마이크 버튼 클릭 → SpeechRecognition 시작 (lang='ko-KR', continuous=false)</span></li>
-        <li><span class="n">2</span><span class="t">음성 인식 완료 → result.transcript를 AI 에이전트 API로 전송</span></li>
-        <li><span class="n">3</span><span class="t">AI 응답 텍스트 수신 → speakAsync(text) 호출 → Google Cloud TTS API (ko-KR-Neural2-C, MP3)</span></li>
-        <li><span class="n">4</span><span class="t">전역 단일 큐(_ttsChain)로 발화 순서 보장. 음소거 상태면 speakAsync 즉시 반환.</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">hooks/useAssistant.js</span><span class="tag tag-comp">lib/tts.js</span><span class="tag tag-api">Google Cloud TTS API</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 9. FR-CIVIL ──────────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">9. FR-CIVIL — 시민 민원 포털 <span style="font-size:9pt;color:#2563eb;">[v1.1 신규]</span></div>
-
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-CIVIL-001</span>
-    <span class="fn-name">시민 민원 제출</span>
-    <span class="fn-actor">행위자: 시민 (별도 진입 경로)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">로그인 페이지의 "민원 신고" 버튼으로 진입. 카카오맵 위치 핀 + 14개 카테고리 선택 + 사진 첨부로 민원을 제출하면 civil_flask_server(:8002)가 Google GenAI로 민원을 분류하고 자동 답변 이메일을 발송한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">카카오맵에서 위치 핀 설정 → 위경도 추출</span></li>
-        <li><span class="n">2</span><span class="t">카테고리 선택 → DEPT_MAP으로 담당 부서 자동 매핑 (도로과/교통과/주차과 등)</span></li>
-        <li><span class="n">3</span><span class="t">사진 파일 선택 → <code>POST {CIVIL_API}/complaints/upload</code> 로 사전 업로드</span></li>
-        <li><span class="n">4</span><span class="t">제출 → <code>POST {CIVIL_API}/complaints</code> (민원 정보 + 사진 URL + 날씨 데이터)</span></li>
-        <li><span class="n">5</span><span class="t">civil_flask_server: Google GenAI로 민원 내용 분류 → 자동 답변 이메일 발송</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">CivilDashboard.jsx</span><span class="tag tag-api">POST civil_flask_server/complaints</span><span class="tag tag-api">카카오맵 SDK</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 10. FR-ADMIN + FR-MGMT ──────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">10. FR-ADMIN / FR-MGMT — 관리자 페이지 <span style="font-size:9pt;color:#2563eb;">[v1.1 신규]</span></div>
-
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-ADMIN-001</span>
-    <span class="fn-name">민원 목록 조회 및 상태 변경</span>
-    <span class="fn-actor">행위자: 관제 담당자</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">ComplaintManagePage에서 접수된 민원 전체를 테이블로 표시. 자치구·상태·카테고리 필터 및 키워드 검색 가능. 상태 변경 버튼으로 접수 → 처리중 → 완료 순으로 진행.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t"><code>GET /api/complaints</code> → 전체 민원 목록 조회</span></li>
-        <li><span class="n">2</span><span class="t">자치구 사이드바 클릭 → 해당 구 민원만 필터. 상태/카테고리 드롭다운 필터 복합 적용.</span></li>
-        <li><span class="n">3</span><span class="t">상태 변경 버튼 클릭 → <code>PATCH /api/complaints/{id}/status</code> → DB 업데이트 → 목록 즉시 갱신</span></li>
-        <li><span class="n">4</span><span class="t">사진 버튼 클릭 → PhotoModal 슬라이드쇼로 첨부 사진 표시</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">ComplaintManagePage.jsx</span><span class="tag tag-api">GET /api/complaints</span><span class="tag tag-api">PATCH /api/complaints/{id}/status</span></div>
-    </div>
-  </div>
-</div>
-
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-MGMT-001</span>
-    <span class="fn-name">사용자 승인 및 임시 비밀번호 발급</span>
-    <span class="fn-actor">행위자: 시스템 관리자(admin)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">admin 계정 전용 사용자 관리 페이지. 승인 대기 사용자를 승인하거나, 임시 비밀번호를 발급하고(isTempPw=true), 계정을 활성화/비활성화한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t"><code>GET /api/admin/users</code> → 전체 사용자 목록(이메일·이름·역할·상태) 조회</span></li>
-        <li><span class="n">2</span><span class="t">승인 버튼 → <code>POST /api/admin/users/{email}/approve</code> → USERS 테이블 status=ACTIVE</span></li>
-        <li><span class="n">3</span><span class="t">임시 비밀번호 발급 → <code>POST /api/admin/users/{email}/temp-password</code> → BCrypt 해시 저장 + isTempPw=true</span></li>
-        <li><span class="n">4</span><span class="t">해당 사용자 다음 로그인 시 isTempPw=true 감지 → 마이페이지로 강제 이동</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">MyPage.jsx (관리자 뷰)</span><span class="tag tag-api">GET /api/admin/users</span><span class="tag tag-api">POST /api/admin/users/{email}/approve</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 11. FR-FORECAST ──────────────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">11. FR-FORECAST — 교통량 예측</div>
-
-<!-- FR-FORECAST-001 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-FORECAST-001</span>
-    <span class="fn-name">교통량 측정 지점 목록 조회</span>
-    <span class="fn-actor">행위자: 시스템 (페이지 진입 시)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">대시보드 진입 시 Oracle DB의 TRAFFIC_STATION 테이블에서 전체 측정 지점 목록을 조회하고, 구 선택 상태에 따라 해당 구 내 지점만 드롭다운에 표시한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">MainDashboard 마운트 시 <code>GET /api/stations</code> 요청</span></li>
-        <li><span class="n">2</span><span class="t">Spring Boot: TRAFFIC_STATION 테이블 전체 조회 → <code>[{ stationId, stationName, latitude, longitude }]</code> 반환</span></li>
-        <li><span class="n">3</span><span class="t">구 선택 상태이면 <code>filteredStations</code> — 해당 구 내 지점만 필터링 (클라이언트 사이드)</span></li>
-        <li><span class="n">4</span><span class="t">필터된 목록의 첫 번째 지점을 기본 선택으로 자동 설정</span></li>
-        <li><span class="n">5</span><span class="t">StationPredictDropdown에 지점 목록 표시</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">출력</span>
-      <div class="tag-row">
-        <span class="tag tag-out">stationId, stationName 드롭다운 목록</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row">
-        <span class="tag tag-api">GET /api/stations</span>
-        <span class="tag tag-comp">StationPredictDropdown (MainDashboard.jsx)</span>
-        <span class="tag tag-comp">ForecastController.java</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- FR-FORECAST-002 -->
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-FORECAST-002</span>
-    <span class="fn-name">24시간 교통량 예측 차트</span>
-    <span class="fn-actor">행위자: 사용자 (지점 선택)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">드롭다운에서 교통량 측정 지점을 선택하면, 사전 학습된 XGBoost 모델이 오늘 0시~23시의 상행·하행 교통량을 예측하여 꺾은선 차트로 표시한다. 실시간 수집 데이터가 아닌 모델 추론 결과이다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">드롭다운에서 지점 선택 → <code>predictStationId</code> 상태 변경</span></li>
-        <li><span class="n">2</span><span class="t"><code>GET /api/forecast/station/{stationId}</code> 요청</span></li>
-        <li><span class="n">3</span><span class="t">Spring Boot <code>ForecastService</code>: Flask 서버(<code>POST http://127.0.0.1:5002/predict_traffic</code>)에 <code>{ Station_Number: stationId }</code> 전달</span></li>
-        <li><span class="n">4</span><span class="t">Flask: Oracle DB에서 지점 위경도 조회 → XGBoost 모델로 00~23시 × 상행/하행 = 48회 예측 수행</span></li>
-        <li><span class="n">5</span><span class="t">Flask 응답: <code>{ forecast: [{ time, direction_0, direction_1 }] }</code> (24개)</span></li>
-        <li><span class="n">6</span><span class="t">Spring Boot: 상행 <code>int[24]</code> / 하행 <code>int[24]</code>로 파싱 후 <code>ForecastResult</code> 반환</span></li>
-        <li><span class="n">7</span><span class="t"><code>ForecastChart</code>: 시간(x축) × 교통량 대/시(y축) 꺾은선 차트 렌더링 — 상행(파란선) / 하행(주황선)</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">모델 입력 피처</span>
-      <div style="font-size:9pt;margin-top:3px;font-family:'Consolas',monospace;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:8px 12px;line-height:1.9">
-        Station_Number (지점 ID) · Direction (0=상행, 1=하행) · Latitude · Longitude<br/>
-        Hour (1~24) · Weekday_Weekend (1=평일, 0=주말) · Year · Month · Day_of_Week_Num
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">출력</span>
-      <div class="tag-row">
-        <span class="tag tag-out">상행 예측 int[24] — 시간당 예측 교통량(대/시)</span>
-        <span class="tag tag-out">하행 예측 int[24]</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">예외 처리</span>
-      <div class="tag-row">
-        <span class="tag tag-err">Flask 서버 미실행 → Spring Boot 예외 catch → null 반환 → 프론트 더미 데이터로 대체 표시</span>
-        <span class="tag tag-err">stationId DB 없음 → Flask 404 → "예측 실패" 처리</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row">
-        <span class="tag tag-api">GET /api/forecast/station/{stationId}</span>
-        <span class="tag tag-api">POST /predict_traffic (Flask :5002)</span>
-        <span class="tag tag-comp">ForecastChart (MainDashboard.jsx)</span>
-        <span class="tag tag-comp">ForecastService.java</span>
-        <span class="tag tag-comp">flask_server/app.py</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 9. FR-EMAIL ──────────────────────────────── -->
-<div class="section-title">9. FR-EMAIL — 이메일 리포트</div>
-
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-EMAIL-001</span>
-    <span class="fn-name">교통 리포트 이메일 발송</span>
-    <span class="fn-actor">행위자: 사용자 / AI 에이전트</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">두 경로로 이메일 발송이 가능하다. ① 대시보드 "병목 메일" 버튼 → AI 에이전트가 분석 후 발송, ② AI 챗봇에서 "이메일 보내줘" 요청 → MCP send_email_report 도구로 발송.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">발송 경로 A</span>
-      <div style="font-size:9pt;margin-top:3px">MainDashboard "병목 메일" 버튼 → Python AI SSE → AI 에이전트(MCP <code>send_email_report</code>) → Spring Boot <code>POST /api/email/send</code> → Naver SMTP</div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">발송 경로 B</span>
-      <div style="font-size:9pt;margin-top:3px">AI 챗봇 질의("○○구 교통 리포트 이메일 보내줘") → MCP <code>send_email_report</code> 도구 → Spring Boot <code>POST /api/email/send</code> → Naver SMTP</div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">이메일 내용</span>
-      <div style="font-size:9pt;margin-top:3px">HTML 형식 — 병목 교차로 TOP N 목록, 평균 속도, 위험 교차로, 기상 현황, 발송 시각</div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">수신자</span>
-      <span class="fn-value">로그인 사용자의 이메일 (<code>localStorage["ts_user"].email</code>)</span>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">예외 처리</span>
-      <div class="tag-row"><span class="tag tag-err">SMTP 인증 실패 → 에러 로그, UI에 "전송 실패" 표시</span></div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-api">POST /api/email/send</span><span class="tag tag-comp">EmailController.java</span><span class="tag tag-comp">EmailService.java</span><span class="tag tag-api">MCP send_email_report</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 10. FR-NEWS ──────────────────────────────── -->
-<div class="section-title">10. FR-NEWS — 뉴스 대시보드</div>
-
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-NEWS-001</span>
-    <span class="fn-name">교통 관련 최신 뉴스 표시</span>
-    <span class="fn-actor">행위자: 시스템 (페이지 로드 시)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">교통·도로 관련 최신 뉴스 기사를 조회하여 카드 형태로 나열한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">Newsdashboard 진입 시 <code>GET /api/news/latest</code> 요청</span></li>
-        <li><span class="n">2</span><span class="t">Spring Boot: Oracle DB(<code>TRAFFIC_NEWS</code> 테이블)에서 최신 기사 조회 — News Flask 서버(:5001)가 사전 수집·저장한 데이터</span></li>
-        <li><span class="n">3</span><span class="t">기사 목록(제목·요약·출처·링크) 카드로 표시</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">아키텍처 참고</span>
-      <div style="font-size:9pt;margin-top:3px">
-        뉴스 수집·분류는 <strong>News Flask 서버(:5001)</strong>가 담당한다.<br/>
-        <code>POST /news/fetch (:5001)</code> → RSS 크롤링 + BERT 분류 + Groq 요약 → Oracle DB(<code>TRAFFIC_NEWS</code>) 저장<br/>
-        Spring Boot <code>/api/news/latest</code>는 해당 DB 테이블을 직접 조회하여 반환한다.
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row">
-        <span class="tag tag-api">GET /api/news/latest</span>
-        <span class="tag tag-api">POST /news/fetch (:5001)</span>
-        <span class="tag tag-api">GET /news/latest (:5001)</span>
-        <span class="tag tag-comp">Newsdashboard.jsx</span>
-        <span class="tag tag-comp">NewsController.java</span>
-        <span class="tag tag-comp">News_flask_server/app.py</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 11. FR-WS ──────────────────────────────── -->
-<div class="section-title">11. FR-WS — WebSocket 실시간 연결</div>
-
-<div class="fn-card no-break">
-  <div class="fn-header">
-    <span class="fn-id">FR-WS-001</span>
-    <span class="fn-name">실시간 TrafficStatus 수신 및 연결 상태 표시</span>
-    <span class="fn-actor">행위자: 시스템 (App.jsx 마운트 시)</span>
-  </div>
-  <div class="fn-body">
-    <div class="fn-row"><span class="fn-label">설명</span><span class="fn-value">앱 최상위 컴포넌트에서 WebSocket 연결을 유지하며 10초마다 TrafficStatus 배열을 수신해 전체 앱에 공유한다.</span></div>
-    <div class="fn-row">
-      <span class="fn-label">주요 흐름</span>
-      <ul class="flow-list">
-        <li><span class="n">1</span><span class="t">App.jsx 마운트 시 <code>ws://localhost:8080/ws/traffic</code> 연결</span></li>
-        <li><span class="n">2</span><span class="t">onmessage: JSON.parse → <code>setWsData(parsed)</code> 상태 갱신</span></li>
-        <li><span class="n">3</span><span class="t">wsData를 MainDashboard / MapDashboard에 props로 전달</span></li>
-        <li><span class="n">4</span><span class="t">연결 상태: onopen→"연결됨"(초록), onclose→"연결 끊김"(빨강) — wsStatus 헤더 표시</span></li>
-        <li><span class="n">5</span><span class="t">연결 끊김 시 3초 후 자동 재연결 시도</span></li>
-      </ul>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">예외 처리</span>
-      <div class="tag-row">
-        <span class="tag tag-err">Spring Boot 미실행 → wsStatus="연결 끊김", 지도에 "V2X 데이터 수신 대기 중…" 오버레이</span>
-      </div>
-    </div>
-    <div class="fn-row">
-      <span class="fn-label">관련</span>
-      <div class="tag-row"><span class="tag tag-comp">App.jsx</span><span class="tag tag-comp">TrafficWebSocketHandler.java</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ─── 11. API 엔드포인트 요약 ──────────────────── -->
-<div class="page-break"></div>
-<div class="section-title">12. 기능별 REST API 엔드포인트 요약</div>
-
+<h2>2.1 로그인 (FN-LOGIN)</h2>
 <table>
-  <thead>
-    <tr><th style="width:55px">분류</th><th style="width:60px">메서드</th><th style="width:250px">경로</th><th>설명</th><th style="width:65px">인증</th></tr>
-  </thead>
-  <tbody>
-    <tr><td class="center">AUTH</td><td class="center">POST</td><td><code>/api/auth/login</code></td><td>로그인 — JWT 토큰 발급</td><td class="center">없음</td></tr>
-    <tr><td class="center">AUTH</td><td class="center">POST</td><td><code>/api/auth/register</code></td><td>회원가입</td><td class="center">없음</td></tr>
-    <tr><td class="center">AUTH</td><td class="center">GET</td><td><code>/api/auth/find-id?name=</code></td><td>아이디(이메일) 찾기</td><td class="center">없음</td></tr>
-    <tr><td class="center">AUTH</td><td class="center">POST</td><td><code>/api/auth/find-pw</code></td><td>임시 비밀번호 발급 및 이메일 발송</td><td class="center">없음</td></tr>
-    <tr><td class="center">AUTH</td><td class="center">POST</td><td><code>/api/auth/change-pw</code></td><td>비밀번호 변경</td><td class="center">JWT</td></tr>
-    <tr><td class="center">AUTH</td><td class="center">GET</td><td><code>/api/auth/admin/users</code></td><td>가입 대기 사용자 목록 (관리자)</td><td class="center">JWT+ADMIN</td></tr>
-    <tr><td class="center">AUTH</td><td class="center">POST</td><td><code>/api/auth/admin/approve/{userId}</code></td><td>사용자 승인</td><td class="center">JWT+ADMIN</td></tr>
-    <tr><td class="center">AUTH</td><td class="center">POST</td><td><code>/api/auth/admin/reject/{userId}</code></td><td>사용자 거절</td><td class="center">JWT+ADMIN</td></tr>
-    <tr><td class="center">AUTH</td><td class="center">POST</td><td><code>/api/auth/alert</code></td><td>경보 알림 설정</td><td class="center">JWT</td></tr>
-    <tr><td class="center">AUTH</td><td class="center">GET</td><td><code>/api/auth/alert-emails</code></td><td>경보 수신 이메일 목록</td><td class="center">JWT</td></tr>
-    <tr><td class="center">MAP</td><td class="center">GET</td><td><code>/api/signals</code></td><td>현재 캐시된 전체 TrafficStatus 반환</td><td class="center">JWT</td></tr>
-    <tr><td class="center">MAP</td><td class="center">POST</td><td><code>/api/fetch-area</code></td><td>구 선택 — 해당 구 전체 데이터 수집 트리거</td><td class="center">JWT</td></tr>
-    <tr><td class="center">MAP</td><td class="center">POST</td><td><code>/api/district/report</code></td><td>구 단위 교통 리포트 생성</td><td class="center">JWT</td></tr>
-    <tr><td class="center">CCTV</td><td class="center">GET</td><td><code>/api/cctv</code></td><td>전체 CCTV 목록 조회</td><td class="center">JWT</td></tr>
-    <tr><td class="center">CCTV</td><td class="center">GET</td><td><code>/api/cctv/area</code></td><td>반경 내 CCTV 목록 조회</td><td class="center">JWT</td></tr>
-    <tr><td class="center">SIM</td><td class="center">GET</td><td><code>/api/signal/crossroads</code></td><td>시뮬레이션용 교차로 목록</td><td class="center">JWT</td></tr>
-    <tr><td class="center">SIM</td><td class="center">GET</td><td><code>/api/signal/crossroads/{intNo}</code></td><td>교차로 신호 현시 상세 조회</td><td class="center">JWT</td></tr>
-    <tr><td class="center">SIM</td><td class="center">GET</td><td><code>/api/signal/simulation/context/{intNo}</code></td><td>시뮬레이션 컨텍스트 조회</td><td class="center">JWT</td></tr>
-    <tr><td class="center">CHAT</td><td class="center">GET</td><td><code>/api/context/{crsrdId}</code></td><td>교차로 AI 컨텍스트 조회</td><td class="center">JWT</td></tr>
-    <tr><td class="center">CHAT</td><td class="center">POST</td><td><code>/api/chat</code></td><td>일반 챗봇 질의</td><td class="center">JWT</td></tr>
-    <tr><td class="center">CHAT</td><td class="center">POST</td><td><code>/api/bottleneck-email</code></td><td>병목 이메일 리포트 발송</td><td class="center">JWT</td></tr>
-    <tr><td class="center">CHAT</td><td class="center">POST</td><td><code>/api/simulation-chat</code></td><td>시뮬레이션 챗봇 질의</td><td class="center">JWT</td></tr>
-    <tr><td class="center">EMAIL</td><td class="center">POST</td><td><code>/api/email/send</code></td><td>이메일 직접 발송</td><td class="center">JWT</td></tr>
-    <tr><td class="center">FORECAST</td><td class="center">GET</td><td><code>/api/stations</code></td><td>교통량 측정 지점 전체 목록 조회</td><td class="center">JWT</td></tr>
-    <tr><td class="center">FORECAST</td><td class="center">GET</td><td><code>/api/forecast/station/{stationId}</code></td><td>XGBoost 24시간 교통량 예측 (Flask :5002 프록시)</td><td class="center">JWT</td></tr>
-    <tr><td class="center">Flask</td><td class="center">POST</td><td><code>/predict_traffic</code> (:5002)</td><td>XGBoost 모델 추론 — Spring Boot에서만 호출</td><td class="center">없음(내부)</td></tr>
-    <tr><td class="center">NEWS</td><td class="center">GET</td><td><code>/api/news/latest</code></td><td>최신 교통 뉴스 조회</td><td class="center">JWT</td></tr>
-    <tr><td class="center">AI(Python)</td><td class="center">POST</td><td><code>/api/agent/chat</code></td><td>AI 챗봇 질의 — 비스트리밍 (Python :8001)</td><td class="center">없음</td></tr>
-    <tr><td class="center">AI(Python)</td><td class="center">POST</td><td><code>/api/agent/chat/stream</code></td><td>AI 챗봇 SSE 스트리밍 (Python :8001)</td><td class="center">없음</td></tr>
-    <tr><td class="center">AI(Python)</td><td class="center">POST</td><td><code>/api/agent/simulation-chat</code></td><td>시뮬레이션 챗봇 질의 — 비스트리밍 (Python :8001)</td><td class="center">없음</td></tr>
-    <tr><td class="center">AI(Python)</td><td class="center">POST</td><td><code>/api/agent/bottleneck-email</code></td><td>병목 이메일 리포트 텍스트 생성 — 비스트리밍 (Python :8001)</td><td class="center">없음</td></tr>
-    <tr><td class="center">AI(Python)</td><td class="center">POST</td><td><code>/api/agent/bottleneck-email/stream</code></td><td>병목 이메일 SSE 스트리밍 (Python :8001)</td><td class="center">없음</td></tr>
-    <tr><td class="center">AI(Python)</td><td class="center">POST</td><td><code>/api/agent/district-report</code></td><td>구 단위 리포트 생성 — 비스트리밍 (Python :8001)</td><td class="center">없음</td></tr>
-    <tr><td class="center">AI(Python)</td><td class="center">POST</td><td><code>/api/agent/district-report/stream</code></td><td>구 단위 리포트 SSE 스트리밍 (Python :8001)</td><td class="center">없음</td></tr>
-    <tr><td class="center">AI(Python)</td><td class="center">GET</td><td><code>/health</code></td><td>AI 에이전트 서버 상태 확인 (Python :8001)</td><td class="center">없음(내부)</td></tr>
-    <tr><td class="center">NEWS Flask</td><td class="center">POST</td><td><code>/news/fetch</code> (:5001)</td><td>교통 뉴스 수집 및 Oracle DB 저장 (백그라운드)</td><td class="center">없음(내부)</td></tr>
-    <tr><td class="center">NEWS Flask</td><td class="center">GET</td><td><code>/news/latest</code> (:5001)</td><td>Oracle DB에서 최신 교통 뉴스 조회</td><td class="center">없음(내부)</td></tr>
-    <tr><td class="center">NEWS Flask</td><td class="center">GET</td><td><code>/health</code> (:5001)</td><td>뉴스 Flask 서버 상태 확인</td><td class="center">없음(내부)</td></tr>
-    <tr><td class="center">WS</td><td class="center">WS</td><td><code>ws://…:8080/ws/traffic</code></td><td>TrafficStatus 실시간 브로드캐스트 (10초 주기)</td><td class="center">없음</td></tr>
-  </tbody>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-LOGIN-01</td><td>로그인</td><td>아이디·비밀번호 검증. CIVIL 계정·승인대기(PENDING)·거절(REJECTED)은 각각 별도 메시지로 차단. 성공 시 사용자 정보를 로컬 저장</td></tr>
+  <tr><td>FN-LOGIN-02</td><td>회원가입</td><td>아이디 중복 확인 후 PENDING 상태로 생성. 승인 전 로그인 불가 안내</td></tr>
+  <tr><td>FN-LOGIN-03</td><td>아이디 찾기</td><td>이름+전화번호 일치 시 아이디 뒤 3자리 마스킹하여 반환</td></tr>
+  <tr><td>FN-LOGIN-04</td><td>비밀번호 찾기</td><td>아이디+이메일 일치 시 임시 비밀번호(8자리) 발급·메일 발송. 임시 비밀번호 로그인 시 마이페이지로 강제 이동</td></tr>
+  <tr><td>FN-LOGIN-05</td><td>관리자 승인</td><td>관리자 로그인 시 유저 목록 조회, 승인/거절 처리</td></tr>
+  <tr><td>FN-LOGIN-06</td><td>로그인 브리핑</td><td>성공 직후 현재 위치 날씨와 미처리 민원 건수를 병렬 조회하여 브리핑 카드+음성 안내</td></tr>
 </table>
 
-<hr style="margin-top:40px"/>
-<div style="text-align:center;font-size:8.5pt;color:#9ca3af;padding-bottom:20px">
-  TrafficSync · 기능 명세서 · TS-AN-FS-001 · v1.0 · 2025-05<br/>
-  본 문서는 내부 분석·설계 용도로 작성되었습니다.
-</div>
+<h2>2.2 메인 대시보드 (FN-MAIN)</h2>
+<table>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-MAIN-01</td><td>구 선택·수집</td><td>SVG 지도에서 구 클릭 → <code>/api/fetch-area</code>(반경 2.5km) 호출 → 수집 완료 시 교차로 수 표시. 수집 중 중복 요청은 차단 메시지</td></tr>
+  <tr><td>FN-MAIN-02</td><td>실시간 KPI</td><td>WebSocket 수신 데이터 기준 평균 속도·혼잡 분포·평균 대기 등 카드 표시</td></tr>
+  <tr><td>FN-MAIN-03</td><td>위험 순위</td><td>위험지수·등급 기준 정렬 목록, 관심 교차로 워치리스트</td></tr>
+  <tr><td>FN-MAIN-04</td><td>교통량 예측 차트</td><td>지점 선택 → <code>/api/forecast/station/{id}</code> → 상행/하행 24시간 예측 차트</td></tr>
+  <tr><td>FN-MAIN-05</td><td>구 AI 리포트</td><td>구 브리핑 수락 시 <code>/api/agent/district-report/stream</code> SSE로 단계·결과 표시 및 음성 안내</td></tr>
+  <tr><td>FN-MAIN-06</td><td>병목 경보 메일</td><td>버튼 클릭 시 현재 구의 병목 리포트 생성 후 로그인 사용자 메일로 발송</td></tr>
+</table>
+
+<h2>2.3 실시간 지도 (FN-MAP)</h2>
+<table>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-MAP-01</td><td>교차로 표시</td><td>줌 레벨에 따라 개별 오버레이/클러스터 전환. 혼잡도 색상 규칙: 15km/h 미만 적색, 25km/h 미만 황색, 이상 녹색</td></tr>
+  <tr><td>FN-MAP-02</td><td>신호 패널</td><td>선택 교차로의 방향별(북·동·남·서) 직진/좌회전/보행 신호와 잔여시간 표시. 잔여시간은 수신 시점 이후 경과를 0.1초 단위로 차감하여 보간</td></tr>
+  <tr><td>FN-MAP-03</td><td>AI 챗봇</td><td>SSE 기반 질의응답. 도구 호출 단계 시각화, 120초 타임아웃 시 최대 2회 자동 재시도, 정지 버튼으로 생성 중단</td></tr>
+  <tr><td>FN-MAP-04</td><td>멀티에이전트 시각화</td><td>주변 분석 시 중심-워커 교차로를 지도에 연결선·파동으로 표시하고, 채팅창에 워커 분석·토론 3라운드·종합을 실시간 렌더링</td></tr>
+  <tr><td>FN-MAP-05</td><td>CCTV·민원 마커</td><td>CCTV 마커 클릭 시 영상 모달, 민원 마커 클릭 시 민원 팝업 표시</td></tr>
+  <tr><td>FN-MAP-06</td><td>로드뷰</td><td>교차로 위치 카카오 로드뷰 모달 제공</td></tr>
+</table>
+
+<h2>2.4 신호 시뮬레이션 (FN-SIM)</h2>
+<table>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-SIM-01</td><td>3D 지도</td><td>VWorld(Cesium) 3D 지도에 신호 교차로 표시. 구 중심으로 카메라 이동(고도 1200m, 피치 −45도)</td></tr>
+  <tr><td>FN-SIM-02</td><td>신호계획 재현</td><td>교차로 선택 시 현재 시각 기준 활성 운영계획·현시·경과 시간을 계산해 현시 진행 바·방향 표시</td></tr>
+  <tr><td>FN-SIM-03</td><td>경로 지정·차량 애니메이션</td><td>출발·경유·도착 지정 → 구간별 링크 매칭 → 차량 이동 애니메이션과 구간 속도 표시</td></tr>
+  <tr><td>FN-SIM-04</td><td>병목 자동 분석</td><td>경로 확정 시 15km/h 미만 구간 추출 → 신호계획 동봉하여 AI 분석 요청 → Webster 조정안 수신</td></tr>
+  <tr><td>FN-SIM-05</td><td>조정안 적용</td><td>교차로별 조정안을 슬라이더에 반영, 관제사 승인 시 시뮬레이션에 적용. 조정 사유 설명문 표시</td></tr>
+  <tr><td>FN-SIM-06</td><td>시뮬레이션 챗봇</td><td>수동 질문 지원. 관제사 수동 조정값과 원계획 비교 분석, Webster 상세 리포트 메일 요청 가능</td></tr>
+  <tr><td>FN-SIM-07</td><td>진입 가드</td><td>선택 구의 데이터 수집(fetch-area)이 완료되기 전에는 진입을 차단하고 안내 문구 표시</td></tr>
+</table>
+
+<h2>2.5 CCTV 관제 (FN-CCTV)</h2>
+<table>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-CCTV-01</td><td>CCTV 목록</td><td>전체/반경 조회(<code>/api/cctv</code>, <code>/api/cctv/area</code>). 스트림 매핑 여부 표시</td></tr>
+  <tr><td>FN-CCTV-02</td><td>영상 표시</td><td>UTIC 공개 스트림 페이지를 임베드하여 채널별 영상 표시</td></tr>
+</table>
+
+<h2>2.6 교통 뉴스 (FN-NEWS)</h2>
+<table>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-NEWS-01</td><td>뉴스 목록</td><td><code>/api/news/latest?limit=200</code> 1회 조회 후 클라이언트에서 카테고리·검색어 필터링</td></tr>
+  <tr><td>FN-NEWS-02</td><td>감성 표시</td><td>기사별 감성(혼잡악화/교통개선/중립) 라벨과 집계 표시</td></tr>
+  <tr><td>FN-NEWS-03</td><td>신뢰도 표시</td><td>낚시성 확률(clickbait_prob)·기사 유형(article_type) 표시</td></tr>
+</table>
+
+<h2>2.7 민원 관리 (FN-CMP)</h2>
+<table>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-CMP-01</td><td>목록·필터</td><td>전체 또는 구 단위(<code>guName</code>) 민원 목록 조회</td></tr>
+  <tr><td>FN-CMP-02</td><td>상태 변경</td><td>접수/처리중/완료 변경 시 신고자 이메일로 처리 상태 자동 발송</td></tr>
+  <tr><td>FN-CMP-03</td><td>사진 조회</td><td>DB BLOB로 저장된 사진을 <code>/api/complaints/photos/{id}</code>로 표시</td></tr>
+  <tr><td>FN-CMP-04</td><td>삭제</td><td>민원 삭제 시 연관 사진 일괄 삭제</td></tr>
+  <tr><td>FN-CMP-05</td><td>실시간 알림</td><td>신규 민원 감지 시 관제 화면 상단 배너 알림(음성 음소거 연동)</td></tr>
+</table>
+
+<h2>2.8 민원 시민 화면 (FN-CIV)</h2>
+<table>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-CIV-01</td><td>민원 가입·로그인</td><td>CIVIL 역할로 즉시 승인 가입. 일반 계정과 분리된 로그인</td></tr>
+  <tr><td>FN-CIV-02</td><td>위치 선택</td><td>현재 위치(geolocation) 또는 지도 클릭으로 민원 위치·주소 지정</td></tr>
+  <tr><td>FN-CIV-03</td><td>사진 AI 분류</td><td>사진 업로드 시 분류 서버(:8002) 호출 → 카테고리·담당과·사유 표시. HEIC는 JPEG 변환본 미리보기</td></tr>
+  <tr><td>FN-CIV-04</td><td>접수</td><td>분류 결과를 포함해 multipart로 접수. 접수증(카테고리·담당과) 표시</td></tr>
+  <tr><td>FN-CIV-05</td><td>날씨 브리핑</td><td>위치 기반 현재 기온·상태(맑음/흐림/비) 표시</td></tr>
+</table>
+
+<h2>2.9 마이페이지 (FN-MY)</h2>
+<table>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-MY-01</td><td>비밀번호 변경</td><td>현재 비밀번호 확인 후 변경. 임시 비밀번호 플래그 해제</td></tr>
+  <tr><td>FN-MY-02</td><td>알림 수신 토글</td><td>병목 경보 메일 수신 여부(alertEmail) 설정</td></tr>
+</table>
+
+<h2>2.10 공통 — 음성 어시스턴트 (FN-VOICE)</h2>
+<table>
+  <tr><th style="width:95px">ID</th><th style="width:150px">기능</th><th>명세</th></tr>
+  <tr><td>FN-VOICE-01</td><td>호출</td><td>더블 클랩(700ms 내 2회, 볼륨 0.22·급등량 0.15 이중 조건) 또는 플로팅 버튼</td></tr>
+  <tr><td>FN-VOICE-02</td><td>명령 처리</td><td>STT → 의도 분류(<code>/api/nav/intent</code>) → 페이지 이동·구 선택·마이페이지·로그아웃. 미해당 시 챗봇 스트리밍으로 폴백</td></tr>
+  <tr><td>FN-VOICE-03</td><td>음성 출력</td><td>Google Cloud TTS(ko-KR-Neural2-C). 도구 호출 시 진행 안내 음성 포함</td></tr>
+  <tr><td>FN-VOICE-04</td><td>이동 차단</td><td>AI 분석 진행 중 페이지 이동 시도 시 차단 토스트 표시</td></tr>
+  <tr><td>FN-VOICE-05</td><td>구 브리핑 제안</td><td>구 선택 시 브리핑 시작 확인 팝업 → 수락 시 구 리포트 스트리밍+음성</td></tr>
+</table>
+
+<h1 class="sec">3. 공통 처리 규칙</h1>
+<table>
+  <tr><th style="width:190px">항목</th><th>규칙</th></tr>
+  <tr><td>혼잡도 기준</td><td>속도 15km/h 미만 정체, 25km/h 미만 서행, 이상 원활. 속도 부재 시 적색 평균 잔여시간으로 보조 판정(60초 초과 혼잡, 30초 초과 서행)</td></tr>
+  <tr><td>병목 기준</td><td>15km/h 이하. 화면 표시·AI 분석·메일 경보 전 영역 동일 적용</td></tr>
+  <tr><td>데이터 부재 표기</td><td>더미 값을 생성하지 않고 "미수집(stale)"으로 명시</td></tr>
+  <tr><td>AI 수치 처리</td><td>신호 조정 수치는 코드 계산값만 사용. LLM 응답의 수치 변경 금지 지시 및 JSON 검증·수리 적용</td></tr>
+  <tr><td>메일 발송</td><td>전 기능 공통으로 Spring 단일 창구(<code>/api/email/send</code>) 사용</td></tr>
+  <tr><td>WebSocket 재연결</td><td>연결 종료 시 3초 후 자동 재연결, 연결 직후 REST로 현재 캐시 선로딩</td></tr>
+</table>
 
 </div>
+<div class="footer"><span>Syncro | 교통 관제 시스템 — 기능명세서</span><span>2026. 06. 13.</span></div>
 </body>
 </html>

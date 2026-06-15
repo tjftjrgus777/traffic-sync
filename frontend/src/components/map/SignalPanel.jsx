@@ -182,14 +182,14 @@ function DirCard({ dir, label, arrow, signals, speeds, elapsed }) {
 
   return (
     <div style={{
-      background: "rgba(18,16,10,0.75)",
-      border: "1px solid rgba(42,36,24,0.8)",
+      background: "var(--syncro-bg2)",
+      border: "1px solid var(--syncro-line)",
       borderRadius: 8, padding: "10px 8px",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
       flex: 1, minWidth: 0, overflow: "hidden", // 같은 행의 카드들이 균등한 너비 차지
     }}>
       {/* 방향 라벨: 화살표 + 방향명 */}
-      <div style={{ fontSize: 15, fontWeight: 800, color: "#4ea6ff", lineHeight: 1.1 }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: "#2563eb", lineHeight: 1.1 }}>
         {arrow} {label}
       </div>
 
@@ -206,7 +206,7 @@ function DirCard({ dir, label, arrow, signals, speeds, elapsed }) {
                 elapsed={elapsed}     // 경과 시간 (실시간 차감용)
               />
               {/* 신호 종류 라벨 (직진 / 좌회전 / 보행) */}
-              <div style={{ fontSize: 13, color: "#9ca3af", whiteSpace: "nowrap" }}>{sLabel}</div>
+              <div style={{ fontSize: 13, color: "var(--syncro-ink2)", whiteSpace: "nowrap" }}>{sLabel}</div>
             </div>
           );
         })}
@@ -215,17 +215,17 @@ function DirCard({ dir, label, arrow, signals, speeds, elapsed }) {
       {/* 이 방향 진입 속도 (TOPIS 진입 링크 기준) */}
       <div style={{
         display: "flex", alignItems: "baseline", gap: 3,
-        borderTop: "1px solid rgba(42,36,24,0.8)", paddingTop: 6, marginTop: 2,
+        borderTop: "1px solid var(--syncro-line)", paddingTop: 6, marginTop: 2,
       }}>
         {hasSpeed ? (
           <>
             <span style={{ fontSize: 16, fontWeight: 800, fontFamily: "monospace", color: speedColor(speed) }}>
               {speed}
             </span>
-            <span style={{ fontSize: 11, color: "#9ca3af" }}>km/h 진입</span>
+            <span style={{ fontSize: 11, color: "var(--syncro-ink2)" }}>km/h 진입</span>
           </>
         ) : (
-          <span style={{ fontSize: 11, color: "#4b5563" }}>속도 수집 중</span>
+          <span style={{ fontSize: 11, color: "var(--syncro-ink3)" }}>속도 수집 중</span>
         )}
       </div>
     </div>
@@ -288,7 +288,7 @@ export default function SignalPanel({ cr }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", overflow: "hidden" }}>
 
       {/* API 수집 시각 표시 */}
-      <div style={{ fontSize: 13, color: "#64748b" }}>API 수집: {ts}</div>
+      <div style={{ fontSize: 13, color: "var(--syncro-ink2)" }}>API 수집: {ts}</div>
 
       {/* ── 북쪽 행: 북서 / 북 / 북동 ──────────────────────────────────────── */}
       {/* 셋 중 하나라도 데이터 있을 때만 행 전체 렌더 */}
@@ -307,15 +307,15 @@ export default function SignalPanel({ cr }) {
         {/* 중앙 박스: 교차로 이름 + 위험도 도넛 차트 */}
         <div style={{
           width: 82, minWidth: 82, height: 94, flexShrink: 0,
-          background: "rgba(18,16,10,0.75)",
-          border: "1px solid rgba(42,36,24,0.8)",
+          background: "var(--syncro-bg2)",
+          border: "1px solid var(--syncro-line)",
           borderRadius: 8,
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
           gap: 6, padding: 6,
         }}>
           {/* 교차로 이름 (줄바꿈 허용, 한글 단어 단위 유지) */}
-          <div style={{ fontSize: 13, color: "#60a5fa", fontWeight: 700, textAlign: "center", wordBreak: "keep-all", lineHeight: 1.3 }}>
+          <div style={{ fontSize: 13, color: "#2563eb", fontWeight: 700, textAlign: "center", wordBreak: "keep-all", lineHeight: 1.3 }}>
             {cr.crsrdNm}
           </div>
 
@@ -325,13 +325,13 @@ export default function SignalPanel({ cr }) {
               색상은 위험도 API 등급(anals_grd), 숫자는 점수(anals_value)를 그대로 사용 */}
           <div style={{
             width: 36, height: 36, borderRadius: "50%",
-            background: `conic-gradient(${riskGradeColor} ${riskPct}%, #1f2937 0)`,
+            background: `conic-gradient(${riskGradeColor} ${riskPct}%, var(--syncro-grid-line) 0)`,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             {/* 안쪽 원 (도넛 구멍 역할) + 점수 텍스트 */}
             <div style={{
               width: 27, height: 27, borderRadius: "50%",
-              background: "rgba(0,0,0,0.82)",
+              background: "var(--syncro-bg1)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: riskText.length > 4 ? 11 : 15, fontWeight: 700,
               color: riskGradeColor,

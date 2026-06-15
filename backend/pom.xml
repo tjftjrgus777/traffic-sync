@@ -11,7 +11,7 @@
 	<groupId>com.example</groupId>
 	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>traffic-sync</name>
+	<name>Syncro</name>
 	<description>실시간 AI 교통 관제 플랫폼 PoC</description>
 
 	<properties>
