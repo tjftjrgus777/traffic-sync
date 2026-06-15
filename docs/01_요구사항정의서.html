@@ -56,8 +56,8 @@ code{font-family:Consolas,'D2Coding',monospace;font-size:8.5pt;background:#f1f3f
       모든 요구사항은 실제 구현 코드를 기준으로 작성되었으며, 구현 상태(구현·계획)를 함께 명시한다.
     </div>
     <table class="cover-meta">
-      <tr><td class="k">작성 팀</td><td>Syncro</td><td class="k">작성자</td><td>kimsua · heeyoun · jinminkyeong · seokhyun</td></tr>
-      <tr><td class="k">작성일</td><td>2026. 06. 13.</td><td class="k">문서 분류</td><td>요구사항정의서</td></tr>
+      <tr><td class="k">작성 팀</td><td>Syncro</td><td class="k">작성자</td><td>김수아 · 박희윤 · 진민경 · 설석현</td></tr>
+      <tr><td class="k">작성일</td><td>2026. 06. 09.</td><td class="k">문서 분류</td><td>요구사항정의서</td></tr>
       <tr><td class="k">시스템명</td><td>Syncro (교통 관제 시스템)</td><td class="k">작성 기준</td><td>구현 코드 기준</td></tr>
     </table>
   </div>
@@ -127,112 +127,103 @@ Syncro는 서울시 교차로의 V2X 신호 데이터를 실시간 수집하고,
 </table>
 
 <h1 class="sec">3. 기능 요구사항</h1>
-<p>식별자 체계: <code>[담당자]-[순번]</code> — 각 요구사항 ID는 담당 팀원 이름과 담당자별 일련번호의 조합이다(영역 구분은 절 제목을 따른다).
-구현 상태는 코드 기준이며 "계획"은 인터페이스만 존재하는 항목이다.</p>
-<table>
-  <tr><th style="width:130px">담당자</th><th>주요 담당 영역</th><th style="width:90px">담당 건수</th></tr>
-  <tr><td>heeyoun</td><td>실시간 신호 수집, AI 챗봇·에이전트, 메일 리포트</td><td>11</td></tr>
-  <tr><td>kimsua</td><td>지도·구역, 음성 어시스턴트, 민원 접수·알림</td><td>11</td></tr>
-  <tr><td>jinminkyeong</td><td>데이터 품질·예측, 뉴스 분석, 계정 관리</td><td>11</td></tr>
-  <tr><td>seokhyun</td><td>신호 시뮬레이션, CCTV, 인증 보안</td><td>10</td></tr>
-</table>
 
 <h2>3.1 실시간 신호 수집 (SIG)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>heeyoun-01</td><td>V2X 주기 폴링</td><td>선택 구역 반경 내 교차로의 신호 상태를 30초 주기로 수집한다(<code>traffic.poll.interval-ms</code>)</td><td>구현</td></tr>
-  <tr><td>heeyoun-02</td><td>방향·신호유형 파싱</td><td>방향 8종(nt/et/st/wt/ne/se/sw/nw) × 신호 6종(직진·좌회전·보행·유턴·버스·자전거)을 계층 구조로 파싱한다</td><td>구현</td></tr>
-  <tr><td>jinminkyeong-01</td><td>이상값 처리</td><td>잔여시간 36000 이상(센티넬)은 폐기하고, API 빈 응답 시 기존 캐시를 유지한다</td><td>구현</td></tr>
-  <tr><td>heeyoun-03</td><td>데이터 통합</td><td>TOPIS 속도·기상·도로위험도를 교차로 상태에 병합하여 화면과 AI가 동일 데이터를 참조한다</td><td>구현</td></tr>
-  <tr><td>kimsua-01</td><td>실시간 전파</td><td>통합 데이터를 WebSocket(<code>/ws/traffic</code>)으로 전 클라이언트에 브로드캐스트한다</td><td>구현</td></tr>
+  <tr><td>syncro-01</td><td>V2X 주기 폴링</td><td>선택 구역 반경 내 교차로의 신호 상태를 30초 주기로 수집한다(<code>traffic.poll.interval-ms</code>)</td><td>구현</td></tr>
+  <tr><td>syncro-02</td><td>방향·신호유형 파싱</td><td>방향 8종(nt/et/st/wt/ne/se/sw/nw) × 신호 6종(직진·좌회전·보행·유턴·버스·자전거)을 계층 구조로 파싱한다</td><td>구현</td></tr>
+  <tr><td>syncro-03</td><td>이상값 처리</td><td>잔여시간 36000 이상(센티넬)은 폐기하고, API 빈 응답 시 기존 캐시를 유지한다</td><td>구현</td></tr>
+  <tr><td>syncro-04</td><td>데이터 통합</td><td>TOPIS 속도·기상·도로위험도를 교차로 상태에 병합하여 화면과 AI가 동일 데이터를 참조한다</td><td>구현</td></tr>
+  <tr><td>syncro-05</td><td>실시간 전파</td><td>통합 데이터를 WebSocket(<code>/ws/traffic</code>)으로 전 클라이언트에 브로드캐스트한다</td><td>구현</td></tr>
 </table>
 
 <h2>3.2 지도·구역 (MAP)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>kimsua-02</td><td>구 단위 수집 전환</td><td>서울 25개 자치구 선택 시 해당 구 중심 반경 2.5km 교차로로 수집 대상을 전환한다. 동시 요청은 409로 차단</td><td>구현</td></tr>
-  <tr><td>kimsua-03</td><td>카카오맵 시각화</td><td>교차로 오버레이·CCTV·예측 지점·민원 마커를 표시하고 줌아웃 시 클러스터링한다</td><td>구현</td></tr>
-  <tr><td>jinminkyeong-02</td><td>신호 패널</td><td>교차로 선택 시 방향별 신호등·잔여시간을 표시한다. 폴링 사이 구간은 클라이언트 0.1초 타이머로 보간한다</td><td>구현</td></tr>
-  <tr><td>seokhyun-01</td><td>SVG 서울 지도</td><td>메인 대시보드에서 25개 구 클릭 인터랙션을 제공한다</td><td>구현</td></tr>
+  <tr><td>syncro-06</td><td>구 단위 수집 전환</td><td>서울 25개 자치구 선택 시 해당 구 중심 반경 2.5km 교차로로 수집 대상을 전환한다. 동시 요청은 409로 차단</td><td>구현</td></tr>
+  <tr><td>syncro-07</td><td>카카오맵 시각화</td><td>교차로 오버레이·CCTV·예측 지점·민원 마커를 표시하고 줌아웃 시 클러스터링한다</td><td>구현</td></tr>
+  <tr><td>syncro-08</td><td>신호 패널</td><td>교차로 선택 시 방향별 신호등·잔여시간을 표시한다. 폴링 사이 구간은 클라이언트 0.1초 타이머로 보간한다</td><td>구현</td></tr>
+  <tr><td>syncro-09</td><td>SVG 서울 지도</td><td>메인 대시보드에서 25개 구 클릭 인터랙션을 제공한다</td><td>구현</td></tr>
 </table>
 
 <h2>3.3 AI 챗봇 (AI)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>heeyoun-04</td><td>자연어 질의응답</td><td>로컬 LLM(qwen2.5:14b) ReAct 에이전트가 MCP 도구 9종으로 데이터를 조회해 한국어로 답변한다</td><td>구현</td></tr>
-  <tr><td>kimsua-04</td><td>과정 시각화</td><td>도구 호출·관찰·사고 과정을 SSE 이벤트로 스트리밍하여 화면에 단계 표시한다</td><td>구현</td></tr>
-  <tr><td>heeyoun-05</td><td>멀티에이전트 주변 분석</td><td>주변 분석 의도 감지 시 방향별 워커 4기(exaone3.5:2.4b)가 병렬 분석 후 3라운드 토론하고 오케스트레이터가 종합한다</td><td>구현</td></tr>
-  <tr><td>jinminkyeong-03</td><td>수치 계산 분리</td><td>신호 조정 수치는 LLM이 아닌 코드가 계산한다(고정 권고 테이블·Webster 공식). LLM은 설명만 담당</td><td>구현</td></tr>
-  <tr><td>heeyoun-06</td><td>생성 중단</td><td>사용자 중단·연결 종료 시 LLM 생성을 즉시 중단한다(연결 소켓 강제 종료)</td><td>구현</td></tr>
-  <tr><td>jinminkyeong-04</td><td>출력 신뢰성</td><td>LLM 출력의 JSON 오류 자동 수리, 중국어 혼입 제거, 출력 형식 강제를 적용한다</td><td>구현</td></tr>
-  <tr><td>seokhyun-02</td><td>문서 지식 검색</td><td>AnythingLLM RAG(청크 1,000자/겹침 20자)로 도메인 지식을 검색한다</td><td>구현</td></tr>
+  <tr><td>syncro-10</td><td>자연어 질의응답</td><td>로컬 LLM(qwen2.5:14b) ReAct 에이전트가 MCP 도구 9종으로 데이터를 조회해 한국어로 답변한다</td><td>구현</td></tr>
+  <tr><td>syncro-11</td><td>과정 시각화</td><td>도구 호출·관찰·사고 과정을 SSE 이벤트로 스트리밍하여 화면에 단계 표시한다</td><td>구현</td></tr>
+  <tr><td>syncro-12</td><td>멀티에이전트 주변 분석</td><td>주변 분석 의도 감지 시 방향별 워커 4기(exaone3.5:2.4b)가 병렬 분석 후 3라운드 토론하고 오케스트레이터가 종합한다</td><td>구현</td></tr>
+  <tr><td>syncro-13</td><td>수치 계산 분리</td><td>신호 조정 수치는 LLM이 아닌 코드가 계산한다(고정 권고 테이블·Webster 공식). LLM은 설명만 담당</td><td>구현</td></tr>
+  <tr><td>syncro-14</td><td>생성 중단</td><td>사용자 중단·연결 종료 시 LLM 생성을 즉시 중단한다(연결 소켓 강제 종료)</td><td>구현</td></tr>
+  <tr><td>syncro-15</td><td>출력 신뢰성</td><td>LLM 출력의 JSON 오류 자동 수리, 중국어 혼입 제거, 출력 형식 강제를 적용한다</td><td>구현</td></tr>
+  <tr><td>syncro-16</td><td>문서 지식 검색</td><td>AnythingLLM RAG(청크 1,000자/겹침 20자)로 도메인 지식을 검색한다</td><td>구현</td></tr>
 </table>
 
 <h2>3.4 신호 시뮬레이션 (SIM)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>seokhyun-03</td><td>신호계획 재현</td><td>경찰청 운영계획 데이터로 현재 시각의 활성 현시·경과 시간을 계산해 3D 지도에 재현한다</td><td>구현</td></tr>
-  <tr><td>seokhyun-04</td><td>경로 속도 분석</td><td>경로 구간별 TOPIS 실측 속도를 매칭하고 15km/h 이하 구간을 병목으로 식별한다</td><td>구현</td></tr>
-  <tr><td>heeyoun-07</td><td>Webster 최적화</td><td>병목 교차로의 최적 주기를 Webster 공식으로 산출한다. 현행 ±15% 클램핑, 현시 ±5초, 보행 고정, 최소 녹색 15초</td><td>구현</td></tr>
-  <tr><td>kimsua-05</td><td>관제사 승인 적용</td><td>AI 조정안은 슬라이더 제안으로만 반영되고 관제사 승인 절차를 거친다(Human-in-the-loop)</td><td>구현</td></tr>
-  <tr><td>seokhyun-05</td><td>실신호 제어 연동</td><td>신호제어기 연동 API(<code>/api/signal/adjust</code>)는 의도적으로 미구현(404)이며 향후 기관 협의 대상</td><td>계획</td></tr>
+  <tr><td>syncro-17</td><td>신호계획 재현</td><td>경찰청 운영계획 데이터로 현재 시각의 활성 현시·경과 시간을 계산해 3D 지도에 재현한다</td><td>구현</td></tr>
+  <tr><td>syncro-18</td><td>경로 속도 분석</td><td>경로 구간별 TOPIS 실측 속도를 매칭하고 15km/h 이하 구간을 병목으로 식별한다</td><td>구현</td></tr>
+  <tr><td>syncro-19</td><td>Webster 최적화</td><td>병목 교차로의 최적 주기를 Webster 공식으로 산출한다. 현행 ±15% 클램핑, 현시 ±5초, 보행 고정, 최소 녹색 15초</td><td>구현</td></tr>
+  <tr><td>syncro-20</td><td>관제사 승인 적용</td><td>AI 조정안은 슬라이더 제안으로만 반영되고 관제사 승인 절차를 거친다(Human-in-the-loop)</td><td>구현</td></tr>
+  <tr><td>syncro-21</td><td>실신호 제어 연동</td><td>신호제어기 연동 API(<code>/api/signal/adjust</code>)는 의도적으로 미구현(404)이며 향후 기관 협의 대상</td><td>계획</td></tr>
 </table>
 
 <h2>3.5 교통량 예측 (FCST)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>jinminkyeong-05</td><td>24시간 예측</td><td>XGBoost 모델로 지점별 당일 0~23시 상행/하행 교통량을 예측한다(피처 9종). 평가 성능 MAE 187.38, R² 0.9486</td><td>구현</td></tr>
-  <tr><td>kimsua-06</td><td>대시보드 차트</td><td>예측 결과를 메인 대시보드 차트로 제공하고 지점을 선택할 수 있다</td><td>구현</td></tr>
+  <tr><td>syncro-22</td><td>24시간 예측</td><td>XGBoost 모델로 지점별 당일 0~23시 상행/하행 교통량을 예측한다(피처 9종). 평가 성능 MAE 187.38, R² 0.9486</td><td>구현</td></tr>
+  <tr><td>syncro-23</td><td>대시보드 차트</td><td>예측 결과를 메인 대시보드 차트로 제공하고 지점을 선택할 수 있다</td><td>구현</td></tr>
 </table>
 
 <h2>3.6 교통 뉴스 (NEWS)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>jinminkyeong-06</td><td>뉴스 수집</td><td>네이버 뉴스 API로 4개 섹터(서울교통·교통사고·대중교통·날씨교통)를 수집하고 키워드로 관련도를 검증한다</td><td>구현</td></tr>
-  <tr><td>jinminkyeong-07</td><td>신뢰도 분석</td><td>BERT로 기사 유형(Accuracy 0.8436)을, TF-IDF+로지스틱 회귀로 낚시성 확률(Accuracy 0.7725)을 산출한다</td><td>구현</td></tr>
-  <tr><td>seokhyun-06</td><td>감성 분석</td><td>요약 1문장과 감성(혼잡악화/교통개선/중립)을 산출한다. API 키 3개 로테이션으로 한도 대응</td><td>구현</td></tr>
+  <tr><td>syncro-24</td><td>뉴스 수집</td><td>네이버 뉴스 API로 4개 섹터(서울교통·교통사고·대중교통·날씨교통)를 수집하고 키워드로 관련도를 검증한다</td><td>구현</td></tr>
+  <tr><td>syncro-25</td><td>신뢰도 분석</td><td>BERT로 기사 유형(Accuracy 0.8436)을, TF-IDF+로지스틱 회귀로 낚시성 확률(Accuracy 0.7725)을 산출한다</td><td>구현</td></tr>
+  <tr><td>syncro-26</td><td>감성 분석</td><td>요약 1문장과 감성(혼잡악화/교통개선/중립)을 산출한다. API 키 3개 로테이션으로 한도 대응</td><td>구현</td></tr>
 </table>
 
 <h2>3.7 민원 (CIVIL)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>kimsua-07</td><td>민원 접수</td><td>시민이 위치(지도 선택)·제목·내용·사진으로 민원을 접수한다. HEIC 사진은 JPEG로 자동 변환</td><td>구현</td></tr>
-  <tr><td>jinminkyeong-08</td><td>AI 자동 분류</td><td>사진·제목 기반으로 15개 카테고리와 담당과를 자동 분류한다. 모델 과부하 시 4단 폴백</td><td>구현</td></tr>
-  <tr><td>seokhyun-07</td><td>처리 상태 관리</td><td>관제사가 상태(접수·처리중·완료)를 변경하면 신고자에게 자동 메일을 발송한다</td><td>구현</td></tr>
-  <tr><td>kimsua-08</td><td>실시간 알림</td><td>신규 민원 발생 시 관제 화면에 알림 배너를 표시한다</td><td>구현</td></tr>
+  <tr><td>syncro-27</td><td>민원 접수</td><td>시민이 위치(지도 선택)·제목·내용·사진으로 민원을 접수한다. HEIC 사진은 JPEG로 자동 변환</td><td>구현</td></tr>
+  <tr><td>syncro-28</td><td>AI 자동 분류</td><td>사진·제목 기반으로 15개 카테고리와 담당과를 자동 분류한다. 모델 과부하 시 4단 폴백</td><td>구현</td></tr>
+  <tr><td>syncro-29</td><td>처리 상태 관리</td><td>관제사가 상태(접수·처리중·완료)를 변경하면 신고자에게 자동 메일을 발송한다</td><td>구현</td></tr>
+  <tr><td>syncro-30</td><td>실시간 알림</td><td>신규 민원 발생 시 관제 화면에 알림 배너를 표시한다</td><td>구현</td></tr>
 </table>
 
 <h2>3.8 인증·계정 (AUTH)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>seokhyun-08</td><td>승인제 가입</td><td>관제사 가입은 PENDING으로 생성되고 관리자 승인 후 로그인 가능하다</td><td>구현</td></tr>
-  <tr><td>jinminkyeong-09</td><td>계정 찾기</td><td>아이디 찾기(뒤 3자리 마스킹 반환)·임시 비밀번호 메일 발송을 제공한다</td><td>구현</td></tr>
-  <tr><td>seokhyun-09</td><td>임시 비밀번호 강제 변경</td><td>임시 비밀번호 로그인 시 마이페이지로 강제 이동하여 변경을 유도한다</td><td>구현</td></tr>
-  <tr><td>heeyoun-08</td><td>비밀번호 해시 저장</td><td>BCrypt 등 단방향 해시 적용(현재 평문 저장 — 5.2 한계 참조)</td><td>계획</td></tr>
+  <tr><td>syncro-31</td><td>승인제 가입</td><td>관제사 가입은 PENDING으로 생성되고 관리자 승인 후 로그인 가능하다</td><td>구현</td></tr>
+  <tr><td>syncro-32</td><td>계정 찾기</td><td>아이디 찾기(뒤 3자리 마스킹 반환)·임시 비밀번호 메일 발송을 제공한다</td><td>구현</td></tr>
+  <tr><td>syncro-33</td><td>임시 비밀번호 강제 변경</td><td>임시 비밀번호 로그인 시 마이페이지로 강제 이동하여 변경을 유도한다</td><td>구현</td></tr>
+  <tr><td>syncro-34</td><td>비밀번호 해시 저장</td><td>BCrypt 등 단방향 해시 적용(현재 평문 저장 — 5.2 한계 참조)</td><td>계획</td></tr>
 </table>
 
 <h2>3.9 음성 어시스턴트 (VOICE)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>kimsua-09</td><td>박수 호출</td><td>더블 클랩(700ms 내 2회, 볼륨·급등량 이중 조건)으로 어시스턴트를 호출한다</td><td>구현</td></tr>
-  <tr><td>heeyoun-09</td><td>음성 명령 분류</td><td>STT 텍스트를 LLM이 의도 분류(페이지 이동·구 선택·마이페이지·로그아웃)하고, 미해당 시 챗봇으로 폴백한다</td><td>구현</td></tr>
-  <tr><td>kimsua-10</td><td>음성 응답</td><td>Google Cloud TTS(ko-KR-Neural2-C)로 분석 결과·안내를 음성 출력한다</td><td>구현</td></tr>
-  <tr><td>jinminkyeong-10</td><td>로그인 브리핑</td><td>로그인 직후 위치 기반 날씨·미처리 민원 건수를 음성 브리핑한다</td><td>구현</td></tr>
+  <tr><td>syncro-35</td><td>박수 호출</td><td>더블 클랩(700ms 내 2회, 볼륨·급등량 이중 조건)으로 어시스턴트를 호출한다</td><td>구현</td></tr>
+  <tr><td>syncro-36</td><td>음성 명령 분류</td><td>STT 텍스트를 LLM이 의도 분류(페이지 이동·구 선택·마이페이지·로그아웃)하고, 미해당 시 챗봇으로 폴백한다</td><td>구현</td></tr>
+  <tr><td>syncro-37</td><td>음성 응답</td><td>Google Cloud TTS(ko-KR-Neural2-C)로 분석 결과·안내를 음성 출력한다</td><td>구현</td></tr>
+  <tr><td>syncro-38</td><td>로그인 브리핑</td><td>로그인 직후 위치 기반 날씨·미처리 민원 건수를 음성 브리핑한다</td><td>구현</td></tr>
 </table>
 
 <h2>3.10 CCTV (CCTV)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>seokhyun-10</td><td>CCTV 메타 적재</td><td>엑셀 메타데이터를 파싱하고 UTIC API로 스트림 ID/채널을 매핑하여 DB에 적재한다</td><td>구현</td></tr>
-  <tr><td>kimsua-11</td><td>영상 표시</td><td>UTIC 공개 스트림 페이지를 임베드하여 CCTV 영상을 표시한다(직접 HLS 재생은 향후 과제)</td><td>구현</td></tr>
+  <tr><td>syncro-39</td><td>CCTV 메타 적재</td><td>엑셀 메타데이터를 파싱하고 UTIC API로 스트림 ID/채널을 매핑하여 DB에 적재한다</td><td>구현</td></tr>
+  <tr><td>syncro-40</td><td>영상 표시</td><td>UTIC 공개 스트림 페이지를 임베드하여 CCTV 영상을 표시한다(직접 HLS 재생은 향후 과제)</td><td>구현</td></tr>
 </table>
 
 <h2>3.11 알림·메일 (MAIL)</h2>
 <table>
   <tr><th style="width:95px">ID</th><th style="width:170px">요구사항</th><th>상세</th><th style="width:56px">상태</th></tr>
-  <tr><td>heeyoun-10</td><td>분석 리포트 메일</td><td>질문에 메일 발송 의사가 명시된 경우에만 리포트를 발송한다. 발송 주체는 Spring 단일 창구</td><td>구현</td></tr>
-  <tr><td>jinminkyeong-11</td><td>병목 경보 메일</td><td>구 단위 15km/h 이하 병목 현황 리포트를 생성·발송한다. 수신 대상은 수신 동의+승인 유저</td><td>구현</td></tr>
-  <tr><td>heeyoun-11</td><td>Webster 상세 보고</td><td>시뮬레이션 조정 시 Webster 계산 과정이 포함된 상세 보고서를 코드가 직접 생성하여 발송한다(LLM 미사용)</td><td>구현</td></tr>
+  <tr><td>syncro-41</td><td>분석 리포트 메일</td><td>질문에 메일 발송 의사가 명시된 경우에만 리포트를 발송한다. 발송 주체는 Spring 단일 창구</td><td>구현</td></tr>
+  <tr><td>syncro-42</td><td>병목 경보 메일</td><td>구 단위 15km/h 이하 병목 현황 리포트를 생성·발송한다. 수신 대상은 수신 동의+승인 유저</td><td>구현</td></tr>
+  <tr><td>syncro-43</td><td>Webster 상세 보고</td><td>시뮬레이션 조정 시 Webster 계산 과정이 포함된 상세 보고서를 코드가 직접 생성하여 발송한다(LLM 미사용)</td><td>구현</td></tr>
 </table>
 
 <h1 class="sec">4. 비기능 요구사항</h1>
@@ -268,6 +259,6 @@ Syncro는 서울시 교차로의 V2X 신호 데이터를 실시간 수집하고,
 <div class="note"><b>주.</b> 위 한계는 PoC 단계에서 기능 검증을 우선한 결과로, 운영 전환 시 보안 항목부터 순차 적용한다.</div>
 
 </div>
-<div class="footer"><span>Syncro | 교통 관제 시스템 — 요구사항정의서</span><span>2026. 06. 13.</span></div>
+<div class="footer"><span>Syncro | 교통 관제 시스템 — 요구사항정의서</span><span>2026. 06. 09.</span></div>
 </body>
 </html>

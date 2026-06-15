@@ -111,25 +111,22 @@ public class SupplementalDataScheduler {
     @Scheduled(initialDelay = 10000)
     public void refreshRoadLinkMappings() {
         long startedAtMs = System.currentTimeMillis();
-        List<CrossroadInfo> crossroads = trafficCacheService.getCrossroads();
+        List<CrossroadInfo> crossroads = crossroadRepository.findWithinRadius(
+                trafficCacheService.getCenterLat(),
+                trafficCacheService.getCenterLon(),
+                trafficCacheService.getCenterRadius()
+        ).stream()
+                .filter(e -> e.getLat() != null && e.getLon() != null)
+                .map(e -> {
+                    CrossroadInfo info = new CrossroadInfo();
+                    info.setCrsrdId(e.getCrsrdId());
+                    info.setCrsrdNm(e.getCrsrdNm());
+                    info.setLat(e.getLat());
+                    info.setLon(e.getLon());
+                    return info;
+                }).toList();
         if (crossroads.isEmpty()) {
-            crossroads = crossroadRepository.findWithinRadius(
-                    trafficCacheService.getCenterLat(),
-                    trafficCacheService.getCenterLon(),
-                    trafficCacheService.getCenterRadius()
-            ).stream()
-                    .filter(e -> e.getLat() != null && e.getLon() != null)
-                    .map(e -> {
-                        CrossroadInfo info = new CrossroadInfo();
-                        info.setCrsrdId(e.getCrsrdId());
-                        info.setCrsrdNm(e.getCrsrdNm());
-                        info.setLat(e.getLat());
-                        info.setLon(e.getLon());
-                        return info;
-                    }).toList();
-        }
-        if (crossroads.isEmpty()) {
-            log.debug("Crossroad cache and DB both empty; road link mapping skipped");
+            log.debug("Crossroad DB empty for current area; road link mapping skipped");
             return;
         }
 
@@ -230,7 +227,7 @@ public class SupplementalDataScheduler {
         return targets;
     }
 
-    @Scheduled(initialDelay = 20000, fixedRateString = "${road-risk.poll.interval-ms:300000}")
+    @Scheduled(initialDelay = 30000, fixedRateString = "${road-risk.poll.interval-ms:300000}")
     public void refreshRoadRisks() {
         long startedAtMs = System.currentTimeMillis();
         if (!roadRiskApiService.isConfigured()) {
