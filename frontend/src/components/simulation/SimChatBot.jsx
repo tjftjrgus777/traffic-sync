@@ -129,14 +129,14 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
       {isOpen && (
         <div style={{
           width: 340, maxHeight: "calc(100vh - 310px)", minHeight: 360,
-          background: "rgba(18,16,10,0.94)", border: "1px solid rgba(42,36,24,0.8)",
+          background: "var(--syncro-bg1)", border: "1px solid var(--syncro-line)",
           borderRadius: 8, padding: "16px 18px", backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)", display: "flex", flexDirection: "column",
           gap: 10, boxShadow: "0 14px 38px rgba(0,0,0,0.45)", overflow: "hidden",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 16, fontWeight: 700, color: "#4ea6ff" }}>AI 신호 분석</span>
-            {intNm && <span style={{ marginLeft: "auto", fontSize: 11, color: "#64748b", fontFamily: "monospace" }}>● {intNm}</span>}
+            {intNm && <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--syncro-ink2)", fontFamily: "monospace" }}>● {intNm}</span>}
           </div>
 
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
@@ -150,7 +150,7 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
           <div style={{ flex: 1, minHeight: 150, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
             {messages.map((m, i) => (
               <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: m.role === "user" ? "flex-end" : "flex-start", gap: 4 }}>
-                <div style={{ maxWidth: "92%", padding: "9px 13px", borderRadius: 2, background: m.role === "user" ? "rgba(78,166,255,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${m.role === "user" ? "#2a3a5a" : "#1a1a1a"}`, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-line", color: "#e7ecf5" }}>
+                <div style={{ maxWidth: "92%", padding: "9px 13px", borderRadius: 2, background: m.role === "user" ? "rgba(78,166,255,0.15)" : "var(--syncro-bg2)", border: `1px solid ${m.role === "user" ? "#2a3a5a" : "var(--syncro-line)"}`, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-line", color: "var(--syncro-ink0)" }}>
                   {m.role === "ai" && <div style={{ fontSize: 11, color: "#4ea6ff", marginBottom: 3 }}>Qwen3 분석</div>}
                   {m.role === "ai" ? renderBold(formatSimAnswer(m.text)) : m.text}
                 </div>
@@ -209,7 +209,7 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
               </div>
             ))}
             {loading && (
-              <div style={{ padding: "9px 13px", borderRadius: 2, background: "rgba(255,255,255,0.04)", border: "1px solid #1a1a1a", fontSize: 12, color: "#4ea6ff" }}>
+              <div style={{ padding: "9px 13px", borderRadius: 2, background: "var(--syncro-bg2)", border: "1px solid var(--syncro-line)", fontSize: 12, color: "#4ea6ff" }}>
                 신호계획 분석 중...
               </div>
             )}
@@ -222,7 +222,7 @@ export default function SimChatBot({ intNo, intNm, simulation, routeTraffic, aut
               onKeyDown={e => e.key === "Enter" && !loading && send()}
               placeholder={intNo ? "신호 최적화, 현시 구성 등 질문..." : "교차로를 먼저 선택하세요"}
               disabled={loading}
-              style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid #1a1a1a", borderRadius: 2, padding: "9px 13px", color: "#e7ecf5", fontSize: 13, outline: "none", fontFamily: "inherit", opacity: loading ? 0.6 : 1 }}
+              style={{ flex: 1, background: "var(--syncro-bg2)", border: "1px solid var(--syncro-line)", borderRadius: 2, padding: "9px 13px", color: "var(--syncro-ink0)", fontSize: 13, outline: "none", fontFamily: "inherit", opacity: loading ? 0.6 : 1 }}
             />
             <button onClick={() => send()} disabled={loading} style={{ ...btnBase, padding: "9px 18px", background: loading ? "#1a1a1a" : "#4ea6ff", color: loading ? "#3a3a3a" : "#000", fontSize: 14, fontWeight: 700 }}>
               전송

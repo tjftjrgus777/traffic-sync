@@ -23,9 +23,27 @@ const SEOUL_OUTLINE = "64,52 158,52 204,52 220,20 292,20 350,20 390,42 424,76 44
 
 const HANGANG = "M0,170 C80,156 150,196 220,178 C300,156 360,196 460,176 L460,198 C360,220 300,178 220,200 C150,220 80,178 0,190 Z";
 
-export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading }) {
+export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading, themeMode = "dark" }) {
   const [hoveredGu, setHoveredGu] = useState(null);
   const [pulse, setPulse] = useState(0);
+  const isLight = themeMode === "light";
+  const map = {
+    bg: isLight ? "#f8fbff" : "#000",
+    loadingBg: isLight ? "rgba(248,251,255,0.78)" : "rgba(0,0,0,0.7)",
+    spinnerTrack: isLight ? "#c7d6ea" : "#333",
+    fill0: isLight ? "#dbeafe" : "#1a3a6a",
+    fill1: isLight ? "#eff6ff" : "#0a1a3a",
+    fill0Opacity: isLight ? "0.9" : "0.35",
+    fill1Opacity: isLight ? "0.72" : "0.10",
+    outlineGlow: isLight ? "rgba(37,99,235,0.18)" : "rgba(78,166,255,0.25)",
+    outline: isLight ? "rgba(37,99,235,0.62)" : "rgba(78,166,255,0.75)",
+    river: isLight ? "#bfdbfe" : "#1a4f7a",
+    riverHi: isLight ? "#60a5fa" : "#2a7fba",
+    riverText: isLight ? "#2563eb" : "#9bd0ec",
+    label: isLight ? "#334155" : "#aab4c8",
+    labelHover: isLight ? "#0f172a" : "#e2e8f0",
+    dotStroke: isLight ? "#ffffff" : "#fff",
+  };
 
   useEffect(() => {
     const t = setInterval(() => setPulse(p => (p + 1) % 60), 60);
@@ -39,8 +57,8 @@ export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading }
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", userSelect: "none" }}>
       {loading && (
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <div style={{ width: 16, height: 16, border: "2px solid #333", borderTop: "2px solid #4ea6ff", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+        <div style={{ position: "absolute", inset: 0, background: map.loadingBg, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <div style={{ width: 16, height: 16, border: `2px solid ${map.spinnerTrack}`, borderTop: "2px solid #4ea6ff", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
           <span style={{ fontSize: 12, color: "#4ea6ff", fontFamily: "monospace" }}>수집 중...</span>
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
@@ -51,8 +69,8 @@ export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading }
         <defs>
           {/* 서울 내부 배경 그라데이션 */}
           <radialGradient id="seoulFill" cx="50%" cy="45%" r="60%">
-            <stop offset="0%" stopColor="#1a3a6a" stopOpacity="0.35"/>
-            <stop offset="100%" stopColor="#0a1a3a" stopOpacity="0.10"/>
+            <stop offset="0%" stopColor={map.fill0} stopOpacity={map.fill0Opacity}/>
+            <stop offset="100%" stopColor={map.fill1} stopOpacity={map.fill1Opacity}/>
           </radialGradient>
           {/* 외곽선 글로우 */}
           <filter id="outlineGlow" x="-8%" y="-8%" width="116%" height="116%">
@@ -67,7 +85,7 @@ export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading }
         </defs>
 
         {/* 배경 */}
-        <rect width="460" height="320" fill="#000"/>
+        <rect width="460" height="320" fill={map.bg}/>
 
         {/* 서울 전체 면 채우기 */}
         <polygon
@@ -80,7 +98,7 @@ export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading }
         <polygon
           points={SEOUL_OUTLINE}
           fill="none"
-          stroke="rgba(78,166,255,0.25)"
+          stroke={map.outlineGlow}
           strokeWidth="6"
           strokeLinejoin="round"
           filter="url(#outlineGlow)"
@@ -90,18 +108,18 @@ export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading }
         <polygon
           points={SEOUL_OUTLINE}
           fill="none"
-          stroke="rgba(78,166,255,0.75)"
+          stroke={map.outline}
           strokeWidth="1.5"
           strokeLinejoin="round"
         />
 
         {/* 한강 */}
-        <path d={HANGANG} fill="#1a4f7a" opacity="0.65"/>
+        <path d={HANGANG} fill={map.river} opacity={isLight ? "0.86" : "0.65"}/>
         <path d="M0,170 C80,156 150,196 220,178 C300,156 360,196 460,176 L460,182 C360,202 300,162 220,184 C150,202 80,162 0,176 Z"
-          fill="#2a7fba" opacity="0.3"/>
+          fill={map.riverHi} opacity={isLight ? "0.28" : "0.3"}/>
         <text x="232" y="192" textAnchor="middle"
           fontFamily="Pretendard,'Malgun Gothic',sans-serif"
-          fontSize="9" fill="#9bd0ec" letterSpacing="2">한 강</text>
+          fontSize="9" fill={map.riverText} letterSpacing="2">한 강</text>
 
         {/* 구 이름 + 점 */}
         <g fontFamily="Pretendard,'Malgun Gothic',sans-serif">
@@ -150,13 +168,13 @@ export default function SeoulSvgMap({ onGoMap, selectedGu, onSelectGu, loading }
                 <circle cx={cx} cy={cy}
                   r={isSel ? 5.5 : isHov ? 4 : 3}
                   fill={isSel ? "#ffaa33" : "#4ea6ff"}
-                  stroke={isSel ? "#fff" : isHov ? "#fff" : "none"}
+                  stroke={isSel ? map.dotStroke : isHov ? map.dotStroke : "none"}
                   strokeWidth={isSel ? "1.5" : "0.8"}
                   opacity="0.95"/>
 
                 {/* 라벨 */}
                 <text x={cx} y={textY} textAnchor="middle"
-                  fill={isSel ? "#ffaa33" : isHov ? "#e2e8f0" : "#aab4c8"}
+                  fill={isSel ? "#ffaa33" : isHov ? map.labelHover : map.label}
                   fontSize={isSel ? "10.5" : "9"}
                   fontWeight={isSel ? "700" : "400"}
                   opacity={isSel ? 1 : isHov ? 1 : 0.88}>

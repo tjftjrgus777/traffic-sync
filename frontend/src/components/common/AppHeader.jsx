@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 const V = {
-  bg0: "#000", line: "#1a1a1a", ink0: "#e7ecf5", ink1: "#aab4c8", ink2: "#7a7a7a", ink3: "#3a3a3a",
+  bg0: "var(--syncro-bg0)", line: "var(--syncro-line)", ink0: "var(--syncro-ink0)", ink1: "var(--syncro-ink1)", ink2: "var(--syncro-ink2)", ink3: "var(--syncro-ink3)",
   grn: "#2ee07a", org: "#ffaa33", blu: "#4ea6ff", red: "#ff5566",
   mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
   sans: "'Pretendard','Noto Sans KR','Malgun Gothic',system-ui,sans-serif",
@@ -31,10 +31,13 @@ export default function AppHeader({
   onGoMyPage,
   onLogout,
   rightExtra,
+  wrapRightExtra = true,
   fetchMsg,
   complaintCount = 0,
   notifQueue = [],
   onDismissNotif,
+  themeMode,
+  onToggleTheme,
 }) {
   const [time, setTime] = useState(new Date());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -107,6 +110,16 @@ export default function AppHeader({
         {/* rightExtra (음소거 버튼 등) */}
         {rightExtra && <div style={{ flexShrink: 0 }}>{rightExtra}</div>}
 
+        {onToggleTheme && (
+          <button
+            onClick={onToggleTheme}
+            aria-label={themeMode === "light" ? "다크 모드로 전환" : "라이트 모드로 전환"}
+            style={{ background: "var(--syncro-icon-button-bg)", border: "1px solid var(--syncro-icon-button-bd)", borderRadius: 999, width: 34, height: 34, color: "var(--syncro-icon-button-fg)", fontSize: 17, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+          >
+            {themeMode === "light" ? "☀️" : "🌙"}
+          </button>
+        )}
+
         {/* 로그아웃 버튼 */}
         {onLogout && (
           <button
@@ -132,7 +145,7 @@ export default function AppHeader({
         {menuOpen && (
           <div
             data-mobile-menu
-            style={{ position: "fixed", top: 52, right: 0, left: 0, background: "#0d0d0d", borderBottom: `1px solid ${V.line}`, zIndex: 200, padding: "8px 0" }}
+            style={{ position: "fixed", top: 52, right: 0, left: 0, background: V.bg0, borderBottom: `1px solid ${V.line}`, zIndex: 200, padding: "8px 0" }}
           >
             {tabs.map(([label, tab]) => {
               const isActive = tab === activePage;
@@ -141,7 +154,7 @@ export default function AppHeader({
                 <button
                   key={tab}
                   onClick={() => go(tab)}
-                  style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "13px 20px", background: isActive ? "#111" : "transparent", border: 0, color: isActive ? V.blu : "#fff", fontSize: 15, fontWeight: isActive ? 700 : 400, cursor: "pointer", textAlign: "left", fontFamily: V.sans, position: "relative" }}
+                  style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "13px 20px", background: isActive ? "var(--syncro-selected-bg)" : "transparent", border: 0, color: isActive ? V.blu : V.ink0, fontSize: 15, fontWeight: isActive ? 700 : 400, cursor: "pointer", textAlign: "left", fontFamily: V.sans, position: "relative" }}
                 >
                   <span style={{ width: 7, height: 7, borderRadius: "50%", background: isActive ? V.blu : isCivil ? V.org : V.ink3, display: "inline-block", flexShrink: 0 }} />
                   {label}
@@ -185,7 +198,7 @@ export default function AppHeader({
           return (
             <div key={tab} style={{ position: "relative" }}>
               <button onClick={() => go(tab)}
-                style={{ appearance: "none", border: 0, background: isActive ? "#141414" : "transparent", color: isActive ? V.blu : "#fff", padding: "8px 12px", borderRadius: 999, fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: isActive ? "inset 0 0 0 1px #2a2a2a" : "none", fontFamily: V.sans, position: "relative", whiteSpace: "nowrap", flexShrink: 0, lineHeight: 1.15 }}>
+                style={{ appearance: "none", border: 0, background: isActive ? "var(--syncro-selected-bg)" : "transparent", color: isActive ? V.blu : V.ink0, padding: "8px 12px", borderRadius: 999, fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: isActive ? `inset 0 0 0 1px ${V.line}` : "none", fontFamily: V.sans, position: "relative", whiteSpace: "nowrap", flexShrink: 0, lineHeight: 1.15 }}>
                 <span style={{ width: 7, height: 7, borderRadius: "50%", background: isCivil && notifQueue.length > 0 ? V.org : dotColor, display: "inline-block" }} />
                 {label}
                 {isCivil && notifQueue.length > 0 && (
@@ -199,7 +212,7 @@ export default function AppHeader({
         })}
       </div>
 
-      {rightExtra && (
+      {rightExtra && wrapRightExtra && (
         <div
           style={{
             display: "flex",
@@ -210,7 +223,7 @@ export default function AppHeader({
             padding: "3px 5px",
             border: `1px solid ${V.line}`,
             borderRadius: 999,
-            background: "rgba(255,255,255,0.025)",
+            background: "var(--syncro-icon-button-bg)",
             flexShrink: 0,
           }}
         >
@@ -218,17 +231,38 @@ export default function AppHeader({
         </div>
       )}
 
+      {rightExtra && !wrapRightExtra && rightExtra}
+
+      {onToggleTheme && (
+        <button
+          onClick={onToggleTheme}
+          title={themeMode === "light" ? "다크 모드로 전환" : "라이트 모드로 전환"}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 7,
+            padding: "6px 11px", borderRadius: 999,
+            background: "var(--syncro-icon-button-bg)",
+            border: "1px solid var(--syncro-icon-button-bd)",
+            color: "var(--syncro-icon-button-fg)",
+            fontSize: 13, fontWeight: 800, cursor: "pointer",
+            fontFamily: V.sans, flexShrink: 0,
+          }}
+        >
+          <span style={{ fontSize: 16, lineHeight: 1 }}>{themeMode === "light" ? "☀️" : "🌙"}</span>
+          {themeMode === "light" ? "Light" : "Dark"}
+        </button>
+      )}
+
       {selectedGu && (
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 9px", borderRadius: 2, background: "#1a1206", border: "1px solid #3a2a14", color: V.org, fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: V.org, display: "inline-block" }} />
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 9px", borderRadius: 2, background: "var(--syncro-warning-bg)", border: "1px solid var(--syncro-warning-bd)", color: "var(--syncro-warning-text)", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--syncro-warning-text)", display: "inline-block" }} />
           {selectedGu.name} 선택됨
         </div>
       )}
       {fetchMsg && (
         <div
           style={{
-            display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 10px", borderRadius: 2, background: "#0c1a12",
-            border: "1px solid #1a3a24", color: V.grn, fontSize: 11, fontWeight: 600, fontFamily: V.mono, whiteSpace: "nowrap", flexShrink: 0,
+            display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 10px", borderRadius: 2, background: "var(--syncro-success-bg)",
+            border: "1px solid var(--syncro-success-bd)", color: "var(--syncro-success-text)", fontSize: 11, fontWeight: 700, fontFamily: V.mono, whiteSpace: "nowrap", flexShrink: 0,
           }}
         >
           ✓ {fetchMsg}
@@ -285,7 +319,7 @@ export default function AppHeader({
           >
             <img src="/icons/user.png" alt=""
               style={{
-                width: 20, height: 20, objectFit: "contain", filter: "invert(1)", opacity: 0.95,
+                width: 20, height: 20, objectFit: "contain", filter: "var(--syncro-icon-filter)", opacity: 0.95,
               }}
             />
           </button>
@@ -306,7 +340,7 @@ export default function AppHeader({
           >
             <img src="/icons/logout.png" alt=""
               style={{
-                width: 20, height: 20, objectFit: "contain", filter: "invert(1)", opacity: 0.95,
+                width: 20, height: 20, objectFit: "contain", filter: "var(--syncro-icon-filter)", opacity: 0.95,
               }}
             />
           </button>

@@ -9,6 +9,8 @@ const DEFAULT_LON = 127.1002;
 // 스프링 REST API 주소 — CCTV 목록 조회용
 const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 const CLUSTER_LEVEL = 5; // 카카오맵 level 값이 클수록 줌아웃 상태
+const DARK_MAP_FILTER = "invert(90%) hue-rotate(180deg) brightness(0.85) saturate(0.9)";
+const DARK_MARKER_FILTER = "invert(1) hue-rotate(180deg) brightness(1.18) saturate(1.11)";
 
 function toNum(v) {
   const n = Number(v);
@@ -44,9 +46,10 @@ function isWithinSelectedGu(item, selectedGu, radiusKm = 2.5) {
  * @param {Object}   initialCenter - 최초 지도 중심 좌표 { lat, lon } (구 클릭 시 전달)
  * @param {Function} onCctvClick   - CCTV 마커 클릭 시 CCTV 객체 전달 콜백 → CctvModal 열기
  */
-export default function KakaoMapView({ crossroads, selected, onSelect, initialCenter, selectedGu, onCctvClick, stations = [], onStationSelect, complaints = [], onComplaintClick, complaintCenter }) {
+export default function KakaoMapView({ crossroads, selected, onSelect, initialCenter, selectedGu, onCctvClick, stations = [], onStationSelect, complaints = [], onComplaintClick, complaintCenter, themeMode }) {
 
   // ── Ref: 재렌더링 없이 값 유지 ──────────────────────────────────────────────
+  const isLight = themeMode === "light";
   const mapRef            = useRef(null); // 카카오맵이 실제로 렌더링될 DOM div 요소
   const mapObj            = useRef(null); // kakao.maps.Map 인스턴스 (지도 객체)
   const complaintOverlays = useRef([]);   // 민원 마커 오버레이 배열
@@ -206,7 +209,7 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
     // 다크 모드 필터: 카카오맵 기본 밝은 배경을 어둡게 변환
     // invert(90%): 명암 반전, hue-rotate(180deg): 색상 반전 보정
     // brightness(0.85) saturate(0.9): 채도/밝기 미세 조정
-    mapRef.current.style.filter = "invert(90%) hue-rotate(180deg) brightness(0.85) saturate(0.9)";
+    mapRef.current.style.filter = isLight ? "none" : DARK_MAP_FILTER;
 
     // 줌 변경 이벤트 → zoom state 업데이트 → 마커/클러스터 전환 트리거
     kakao.maps.event.addListener(map, "zoom_changed", () => setZoom(map.getLevel()));
@@ -268,6 +271,11 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
       }],
     });
   }, [ready]); // ready가 true로 바뀔 때 1회 실행
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    mapRef.current.style.filter = isLight ? "none" : DARK_MAP_FILTER;
+  }, [isLight, ready]);
 
   // ── useEffect 3: 교차로 마커 업데이트 ──────────────────────────────────────
   // crossroads(새 신호 데이터), selected(선택 교차로), zoom(줌 레벨) 변경 시마다 실행
@@ -332,7 +340,7 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
         el.title = cr.crsrdNm;
         el.innerHTML = `
           ${isSel ? `
-            <div style="padding:3px 8px;background:rgba(18,14,10,0.94);border:1px solid rgba(78,166,255,0.65);border-radius:5px;color:#4ea6ff;font-size:11px;font-weight:800;white-space:nowrap;font-family:Malgun Gothic,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.45);">
+            <div style="padding:3px 8px;background:${isLight ? "rgba(248,251,255,0.94)" : "rgba(18,14,10,0.94)"};border:1px solid ${isLight ? "rgba(59,130,246,0.35)" : "rgba(78,166,255,0.65)"};border-radius:5px;color:#4ea6ff;font-size:11px;font-weight:800;white-space:nowrap;font-family:Malgun Gothic,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.18);">
               ${cr.crsrdNm}
             </div>
           ` : ""}
@@ -533,7 +541,7 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
       const el = document.createElement("div");
       el.style.cssText = "cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;";
       el.innerHTML = `
-        <div style="padding:3px 7px;background:rgba(18,14,10,0.92);border:1px solid rgba(139,90,43,0.8);border-radius:5px;color:#d8b48a;font-size:11px;font-weight:800;white-space:nowrap;font-family:Malgun Gothic,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.45);">
+        <div style="padding:3px 7px;background:${isLight ? "rgba(255,251,235,0.94)" : "rgba(18,14,10,0.92)"};border:1px solid ${isLight ? "rgba(180,83,9,0.28)" : "rgba(139,90,43,0.8)"};border-radius:5px;color:${isLight ? "#92400e" : "#d8b48a"};font-size:11px;font-weight:800;white-space:nowrap;font-family:Malgun Gothic,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.18);">
           ${st.stationName}
         </div>
         <div style="width:34px;height:46px;display:flex;align-items:center;justify-content:center;">
@@ -603,28 +611,55 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
         
         // 2. 현재 시간 이후의 데이터만 필터링
         const futureData = predictionList.filter(item => item.hour >= currentHour);
+        const forecastTheme = isLight ? {
+          bg: "rgba(255,255,255,0.97)",
+          border: "rgba(251,191,36,0.72)",
+          title: "#0f172a",
+          text: "#334155",
+          muted: "#64748b",
+          closeBg: "rgba(241,245,249,0.92)",
+          closeBorder: "rgba(148,163,184,0.34)",
+          closeColor: "#475569",
+          inactiveBorder: "rgba(148,163,184,0.35)",
+          inactiveBg: "rgba(248,250,252,0.92)",
+          inactiveColor: "#64748b",
+          shadow: "0 10px 28px rgba(15,23,42,0.18), 0 0 0 1px rgba(255,255,255,0.72)",
+        } : {
+          bg: "rgba(10, 20, 35, 0.96)",
+          border: "#ffca28",
+          title: "#ffffff",
+          text: "#ffffff",
+          muted: "#aab4c8",
+          closeBg: "rgba(255,255,255,0.08)",
+          closeBorder: "rgba(255,255,255,0.18)",
+          closeColor: "#fff",
+          inactiveBorder: "rgba(255,255,255,0.12)",
+          inactiveBg: "rgba(255,255,255,0.04)",
+          inactiveColor: "#aab4c8",
+          shadow: "0 6px 22px rgba(0,0,0,0.62), 0 0 16px rgba(255,202,40,0.25)",
+        };
       
         const pos = new window.kakao.maps.LatLng(st.latitude, st.longitude);
         const content = document.createElement("div");
         content.style.cssText = `
-          position: relative; bottom: 54px; background: rgba(10, 20, 35, 0.96);
-          border: 2px solid #ffca28; border-radius: 12px; padding: 13px;
-          width: 210px; color: #fff; box-shadow: 0 6px 22px rgba(0,0,0,0.62), 0 0 16px rgba(255,202,40,0.25);
+          position: relative; bottom: 54px; background: ${forecastTheme.bg};
+          border: 2px solid ${forecastTheme.border}; border-radius: 12px; padding: 13px;
+          width: 210px; color: ${forecastTheme.text}; box-shadow: ${forecastTheme.shadow};
           backdrop-filter: blur(8px); z-index: 100;
         `;
 
         content.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,202,40,0.3); padding-bottom:5px; margin-bottom:8px;">
-            <span style="font-size:14px; font-weight:bold; color:#ffffff;">${st.stationName}</span>
-            <button type="button" class="traffic-close-ov" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:#fff; cursor:pointer; font-size:18px;line-height:20px;display:flex;align-items:center;justify-content:center;">&times;</button>
+            <span style="font-size:14px; font-weight:bold; color:${forecastTheme.title};">${st.stationName}</span>
+            <button type="button" class="traffic-close-ov" style="width:26px;height:26px;border-radius:50%;background:${forecastTheme.closeBg}; border:1px solid ${forecastTheme.closeBorder}; color:${forecastTheme.closeColor}; cursor:pointer; font-size:18px;line-height:20px;display:flex;align-items:center;justify-content:center;">&times;</button>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;">
             <button type="button" class="forecast-dir-btn" data-dir="up"
-              style="padding:5px 0; border-radius:6px; border:1px solid ${forecastDir === "up" ? "rgba(78,166,255,0.85)" : "rgba(255,255,255,0.12)"}; background:${forecastDir === "up" ? "rgba(78,166,255,0.22)" : "rgba(255,255,255,0.04)"}; color:${forecastDir === "up" ? "#93c5fd" : "#aab4c8"}; font-size:12px; font-weight:800; cursor:pointer;">
+              style="padding:5px 0; border-radius:6px; border:1px solid ${forecastDir === "up" ? "rgba(78,166,255,0.85)" : forecastTheme.inactiveBorder}; background:${forecastDir === "up" ? "rgba(78,166,255,0.18)" : forecastTheme.inactiveBg}; color:${forecastDir === "up" ? "#2563eb" : forecastTheme.inactiveColor}; font-size:12px; font-weight:800; cursor:pointer;">
               상행
             </button>
             <button type="button" class="forecast-dir-btn" data-dir="down"
-              style="padding:5px 0; border-radius:6px; border:1px solid ${forecastDir === "down" ? "rgba(255,142,85,0.85)" : "rgba(255,255,255,0.12)"}; background:${forecastDir === "down" ? "rgba(255,142,85,0.22)" : "rgba(255,255,255,0.04)"}; color:${forecastDir === "down" ? "#ffb084" : "#aab4c8"}; font-size:12px; font-weight:800; cursor:pointer;">
+              style="padding:5px 0; border-radius:6px; border:1px solid ${forecastDir === "down" ? "rgba(255,142,85,0.85)" : forecastTheme.inactiveBorder}; background:${forecastDir === "down" ? "rgba(255,142,85,0.18)" : forecastTheme.inactiveBg}; color:${forecastDir === "down" ? "#ea580c" : forecastTheme.inactiveColor}; font-size:12px; font-weight:800; cursor:pointer;">
               하행
             </button>
           </div>
@@ -632,14 +667,14 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
             ${futureData.length > 0 
               ? futureData.map(d => `
                   <div style="display:flex; justify-content:space-between; font-size:13px; padding:5px 0;">
-                    <span style="color:#aab4c8;">${d.hour}시</span>
-                    <span style="color:#fff; font-weight:700;">${Number(d.count ?? 0).toLocaleString()}대</span>
+                    <span style="color:${forecastTheme.muted};">${d.hour}시</span>
+                    <span style="color:${forecastTheme.text}; font-weight:700;">${Number(d.count ?? 0).toLocaleString()}대</span>
                   </div>
                 `).join('')
               : '<div style="font-size:11px; color:#666; text-align:center; padding:10px;">이후 예측 데이터 없음</div>'
             }
           </div>
-          <div style="position:absolute; bottom:-10px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-top:10px solid #ffca28;"></div>
+          <div style="position:absolute; bottom:-10px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-top:10px solid ${forecastTheme.border};"></div>
         `;
 
         const closeButton = content.querySelector(".traffic-close-ov");
@@ -715,7 +750,7 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
 
       const el = document.createElement("div");
       // 맵 컨테이너의 CSS filter(invert+hue-rotate)를 상쇄하는 역-필터 적용
-      el.style.cssText = "cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;filter:invert(1) hue-rotate(180deg) brightness(1.18) saturate(1.11);";
+      el.style.cssText = `cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;filter:${isLight ? "drop-shadow(0 2px 6px rgba(0,0,0,0.28))" : DARK_MARKER_FILTER};`;
       el.innerHTML = `
         <div title="${(c.title || '민원').replace(/"/g, '&quot;')}" style="
           background:${statusColor};
@@ -757,7 +792,7 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
 
   // ── SDK 미로드 시 로딩 화면 ─────────────────────────────────────────────────
   if (!ready) return (
-    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0a1020", gap: 8 }}>
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--syncro-bg1)", gap: 8 }}>
       <div style={{ width: 28, height: 28, border: "3px solid rgba(59,130,246,0.3)", borderTop: "3px solid #3b82f6", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
       <div style={{ fontSize: 12, color: "#6b7280" }}>카카오맵 로딩 중...</div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes complaint-pulse{0%,100%{box-shadow:0 0 14px 4px rgba(255,180,0,0.7),0 2px 8px rgba(0,0,0,0.6)}50%{box-shadow:0 0 22px 8px rgba(255,180,0,0.95),0 2px 8px rgba(0,0,0,0.6)}}`}</style>
@@ -771,15 +806,15 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <style>{`@keyframes complaint-pulse{0%,100%{box-shadow:0 0 14px 4px rgba(255,180,0,0.7),0 2px 8px rgba(0,0,0,0.6)}50%{box-shadow:0 0 22px 8px rgba(255,180,0,0.95),0 2px 8px rgba(0,0,0,0.6)}}`}</style>
       {/* 카카오맵이 실제로 렌더링되는 div (ref로 참조) */}
-      <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
+      <div ref={mapRef} style={{ width: "100%", height: "100%", filter: isLight ? "none" : DARK_MAP_FILTER }} />
 
       {/* 우상단: 교통 상태 범례 (pointerEvents:none → 지도 클릭 방해 안 함) */}
-      <div style={{ position: "absolute", top: 10, right: 10, background: "rgba(18,14,10,0.88)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 4, padding: "8px 11px", zIndex: 10, pointerEvents: "none", backdropFilter: "blur(4px)" }}>
-        <div style={{ fontSize: 11, color: "#aab4c8", fontWeight: 700, marginBottom: 8 }}>교통 상태</div>
+      <div style={{ position: "absolute", top: 10, right: 10, background: isLight ? "rgba(248,251,255,0.9)" : "rgba(18,14,10,0.88)", border: isLight ? "1px solid var(--syncro-line)" : "1px solid rgba(255,255,255,0.08)", borderRadius: 4, padding: "8px 11px", zIndex: 10, pointerEvents: "none", backdropFilter: "blur(4px)" }}>
+        <div style={{ fontSize: 11, color: "var(--syncro-ink1)", fontWeight: 700, marginBottom: 8 }}>교통 상태</div>
         {[["#2ee07a", "원활 (25km/h+)"], ["#ffaa33", "서행 (15~25km/h)"], ["#ff5566", "정체 (~15km/h)"]].map(([c, l]) => (
           <div key={l} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5 }}>
             <div style={{ width: 9, height: 9, borderRadius: "50%", background: c }} />
-            <span style={{ fontSize: 11, color: "#aab4c8" }}>{l}</span>
+            <span style={{ fontSize: 11, color: "var(--syncro-ink1)" }}>{l}</span>
           </div>
         ))}
       </div>
@@ -787,17 +822,17 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
       {/* 좌상단: 교차로 수 안내 + CCTV 마커 토글 버튼 */}
       <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: 7, zIndex: 10 }}>
         {/* 교차로 수 안내 (pointerEvents:none) */}
-        <div style={{ background: "rgba(18,14,10,0.88)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 11px", fontSize: 12, fontWeight: 700, color: "#aab4c8", pointerEvents: "none", backdropFilter: "blur(4px)" }}>
+        <div style={{ background: isLight ? "rgba(248,251,255,0.9)" : "rgba(18,14,10,0.88)", border: isLight ? "1px solid var(--syncro-line)" : "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 11px", fontSize: 12, fontWeight: 700, color: "var(--syncro-ink1)", pointerEvents: "none", backdropFilter: "blur(4px)" }}>
           {selectedAreaName} 반경 2.5km
         </div>
         {/* 신호등 마커 토글 버튼 */}
         <button
           onClick={() => setShowSignal(v => !v)}
           style={{
-            background: showSignal ? "rgba(78,166,255,0.15)" : "rgba(18,14,10,0.88)",
-            border: `1px solid ${showSignal ? "rgba(78,166,255,0.55)" : "rgba(255,255,255,0.08)"}`,
+            background: showSignal ? "rgba(78,166,255,0.15)" : isLight ? "rgba(248,251,255,0.9)" : "rgba(18,14,10,0.88)",
+            border: `1px solid ${showSignal ? "rgba(78,166,255,0.55)" : isLight ? "var(--syncro-line)" : "rgba(255,255,255,0.08)"}`,
             borderRadius: 8, padding: "6px 11px", fontSize: 12, fontWeight: 700,
-            color: showSignal ? "#4ea6ff" : "#aab4c8",
+            color: showSignal ? "#4ea6ff" : "var(--syncro-ink1)",
             cursor: "pointer", fontFamily: "inherit", backdropFilter: "blur(4px)",
           }}>
           신호등 {crossroads.length}개
@@ -807,10 +842,10 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
         <button
           onClick={() => setShowCctv(v => !v)}
           style={{
-            background: showCctv ? "rgba(34,197,94,0.15)" : "rgba(18,14,10,0.88)",
-            border: `1px solid ${showCctv ? "rgba(34,197,94,0.55)" : "rgba(255,255,255,0.08)"}`,
+            background: showCctv ? "rgba(34,197,94,0.15)" : isLight ? "rgba(248,251,255,0.9)" : "rgba(18,14,10,0.88)",
+            border: `1px solid ${showCctv ? "rgba(34,197,94,0.55)" : isLight ? "var(--syncro-line)" : "rgba(255,255,255,0.08)"}`,
             borderRadius: 8, padding: "6px 11px", fontSize: 12, fontWeight: 700,
-            color: showCctv ? "#22c55e" : "#aab4c8",
+            color: showCctv ? "#22c55e" : "var(--syncro-ink1)",
             cursor: "pointer", fontFamily: "inherit", backdropFilter: "blur(4px)",
           }}>
           CCTV {areaCctvList.length > 0 ? `${areaCctvList.length}개` : ""}
@@ -820,10 +855,10 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
         <button
           onClick={() => setShowTraffic(v => !v)}
           style={{
-            background: showTraffic ? "rgba(139,90,43,0.18)" : "rgba(18,14,10,0.88)",
-            border: `1px solid ${showTraffic ? "rgba(216,180,138,0.65)" : "rgba(255,255,255,0.08)"}`,
+            background: showTraffic ? "rgba(139,90,43,0.18)" : isLight ? "rgba(248,251,255,0.9)" : "rgba(18,14,10,0.88)",
+            border: `1px solid ${showTraffic ? "rgba(216,180,138,0.65)" : isLight ? "var(--syncro-line)" : "rgba(255,255,255,0.08)"}`,
             borderRadius: 8, padding: "6px 11px", fontSize: 12, fontWeight: 700,
-            color: showTraffic ? "#d8b48a" : "#aab4c8",
+            color: showTraffic ? "#d8b48a" : "var(--syncro-ink1)",
             cursor: "pointer", backdropFilter: "blur(4px)",
           }}>
           교통량 지점 {areaStations.length}개
@@ -832,7 +867,7 @@ export default function KakaoMapView({ crossroads, selected, onSelect, initialCe
 
       {/* 하단 중앙: 클러스터 모드 안내 (zoom < 5일 때만 표시) */}
       {zoom >= CLUSTER_LEVEL && (
-        <div style={{ position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: "rgba(18,14,10,0.88)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, padding: "4px 10px", fontSize: 11, color: "#aab4c8", zIndex: 10, pointerEvents: "none", backdropFilter: "blur(4px)" }}>
+        <div style={{ position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: isLight ? "rgba(248,251,255,0.9)" : "rgba(18,14,10,0.88)", border: isLight ? "1px solid var(--syncro-line)" : "1px solid rgba(255,255,255,0.1)", borderRadius: 4, padding: "4px 10px", fontSize: 11, color: "var(--syncro-ink1)", zIndex: 10, pointerEvents: "none", backdropFilter: "blur(4px)" }}>
           클러스터 모드 · 확대하면 마커별 위치 표시
         </div>
       )}

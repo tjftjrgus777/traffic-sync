@@ -23,6 +23,7 @@ db_config = {
      "password": os.getenv("ORACLE_PASSWORD"),
      "dsn": os.getenv("ORACLE_DSN", "koreapoint_medium"),
      "wallet_location": os.getenv("ORACLE_WALLET_PATH", os.path.join(BASE_DIR, "../src/main/resources/wallet")),
+
 }
 
 # 3. 모델 입력 컬럼 순서 (학습 시와 동일해야 함)

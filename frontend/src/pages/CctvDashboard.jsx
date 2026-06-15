@@ -102,9 +102,6 @@ function CctvModal({ cctv, onClose }) {
             </div>
           )}
           {/* 좌상단: CCTV 이름 오버레이 (pointerEvents none으로 클릭 방해 안 함) */}
-          <div style={{ position: "absolute", top: 10, left: 10, background: "rgba(0,0,0,0.75)", border: `1px solid ${V.line}`, borderRadius: 2, padding: "4px 10px", fontSize: 13, color: V.ink1, pointerEvents: "none" }}>
-            {cctv.cctvNm}
-          </div>
           {/* 우상단: LIVE 배지 (streamId 있을 때만 표시) */}
           {cctv.streamId && (
             <div style={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.75)", border: `1px solid ${V.line}`, borderRadius: 2, padding: "4px 10px", pointerEvents: "none" }}>
@@ -145,7 +142,7 @@ function CctvModal({ cctv, onClose }) {
  *   onGoMain - "← 대시보드" 버튼 콜백
  *   onGoMap  - "🗺️ 지도 보기" 버튼 콜백
  */
-export default function CctvDashboard({ onGoMain, onGoMap, onGoNews, onGoSimulation, onGoComplaints, onGoMyPage, onLogout, selectedGu, notifQueue = [], onDismissNotif }) {
+export default function CctvDashboard({ onGoMain, onGoMap, onGoNews, onGoSimulation, onGoComplaints, onGoMyPage, onLogout, selectedGu, notifQueue = [], onDismissNotif, themeMode, onToggleTheme }) {
   const [time,     setTime]     = useState(new Date());
   // 스프링에서 받아온 전체 CCTV 배열 (CctvInfo DTO 배열)
   const [cctvList, setCctvList] = useState([]);
@@ -225,6 +222,8 @@ export default function CctvDashboard({ onGoMain, onGoMap, onGoNews, onGoSimulat
         onLogout={onLogout}
         notifQueue={notifQueue}
         onDismissNotif={onDismissNotif}
+        themeMode={themeMode}
+        onToggleTheme={onToggleTheme}
       />
 {/* ── 메인 (2컬럼) ── */}
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
@@ -237,8 +236,8 @@ export default function CctvDashboard({ onGoMain, onGoMap, onGoNews, onGoSimulat
           {/* openGu === null이면 파란 좌측 테두리 + 진한 배경으로 선택 표시 */}
           <div
             onClick={() => setOpenGu(null)}
-            style={{ padding: "9px 16px", cursor: "pointer", background: !openGu ? "#0d0d0d" : "transparent", borderLeft: !openGu ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-            onMouseEnter={e => { if (openGu) e.currentTarget.style.background = "#080808"; }}
+            style={{ padding: "9px 16px", cursor: "pointer", background: !openGu ? "var(--syncro-selected-bg)" : "transparent", borderLeft: !openGu ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            onMouseEnter={e => { if (openGu) e.currentTarget.style.background = "var(--syncro-selected-bg)"; }}
             onMouseLeave={e => { if (openGu) e.currentTarget.style.background = "transparent"; }}
           >
             <span style={{ fontSize: 14, fontWeight: !openGu ? 700 : 400, color: !openGu ? V.ink0 : V.ink1 }}>전체 보기</span>
@@ -249,8 +248,8 @@ export default function CctvDashboard({ onGoMain, onGoMap, onGoNews, onGoSimulat
           {guGroups.map(gu => (
             <div key={gu.name}
               onClick={() => setOpenGu(gu.name)}
-              style={{ padding: "9px 16px", cursor: "pointer", background: openGu === gu.name ? "#0d0d0d" : "transparent", borderLeft: openGu === gu.name ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-              onMouseEnter={e => { if (openGu !== gu.name) e.currentTarget.style.background = "#080808"; }}
+              style={{ padding: "9px 16px", cursor: "pointer", background: openGu === gu.name ? "var(--syncro-selected-bg)" : "transparent", borderLeft: openGu === gu.name ? `2px solid ${V.blu}` : "2px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              onMouseEnter={e => { if (openGu !== gu.name) e.currentTarget.style.background = "var(--syncro-selected-bg)"; }}
               onMouseLeave={e => { if (openGu !== gu.name) e.currentTarget.style.background = "transparent"; }}
             >
               <span style={{ fontSize: 14, fontWeight: openGu === gu.name ? 700 : 400, color: openGu === gu.name ? V.ink0 : V.ink1 }}>{gu.name}</span>
@@ -310,31 +309,31 @@ export default function CctvDashboard({ onGoMain, onGoMap, onGoNews, onGoSimulat
                   padding: "12px 20px",
                   borderBottom: `1px solid ${V.line}`,
                   cursor: "pointer",
-                  background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)",
+                  background: i % 2 === 0 ? "transparent" : "rgba(59,130,246,0.04)",
                   transition: "background .1s",
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(78,166,255,0.06)"}
-                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)"}
+                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "transparent" : "rgba(59,130,246,0.04)"}
               >
                 {/* CCTV 이름 */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 14, color: V.ink0, fontWeight: 500 }}>{cctv.cctvNm}</span>
                 </div>
                 {/* ID (L010xxx 형식) */}
-                <div style={{ fontSize: 13, color: V.ink2, fontFamily: V.mono, alignSelf: "center" }}>{cctv.cctvId}</div>
+                <div style={{ fontSize: 13, color: V.ink2, fontFamily: V.sans, alignSelf: "center" }}>{cctv.cctvId}</div>
                 {/* 채널 번호 (없으면 —) */}
-                <div style={{ fontSize: 13, color: V.ink2, fontFamily: V.mono, alignSelf: "center" }}>
+                <div style={{ fontSize: 13, color: V.ink2, fontFamily: V.sans, alignSelf: "center" }}>
                   {cctv.cctvCh ? `CH ${cctv.cctvCh}` : "—"}
                 </div>
                 {/* 좌표 (소수점 4자리) */}
-                <div style={{ fontSize: 12, color: V.ink3, fontFamily: V.mono, alignSelf: "center" }}>
+                <div style={{ fontSize: 12.5, color: V.ink3, fontFamily: V.sans, alignSelf: "center" }}>
                   {cctv.lat?.toFixed(4)}, {cctv.lon?.toFixed(4)}
                 </div>
                 {/* 상태: streamId 있으면 초록 LIVE / 없으면 회색 NO SRC */}
                 {/* boxShadow로 초록 glow 효과 (LIVE 강조) */}
                 <div style={{ display: "flex", alignItems: "center", gap: 5, alignSelf: "center" }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: cctv.streamId ? V.grn : V.ink3, display: "inline-block", flexShrink: 0, boxShadow: cctv.streamId ? `0 0 4px ${V.grn}` : "none" }} />
-                  <span style={{ fontSize: 13, color: cctv.streamId ? V.grn : V.ink3, fontFamily: V.mono }}>
+                  <span style={{ fontSize: 13, color: cctv.streamId ? V.grn : V.ink3, fontFamily: V.sans, fontWeight: 600 }}>
                     {cctv.streamId ? "LIVE" : "NO SRC"}
                   </span>
                 </div>

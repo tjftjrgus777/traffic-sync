@@ -7,8 +7,8 @@ const STATUS_META = {
 };
 
 const V = {
-  bg0: "#000", bg1: "#1a1710", line: "#2a2418",
-  ink0: "#e7ecf5", ink1: "#aab4c8", ink2: "#7a7a7a", ink3: "#3a3a3a",
+  bg0: "var(--syncro-bg0)", bg1: "var(--syncro-bg1)", line: "var(--syncro-line)",
+  ink0: "var(--syncro-ink0)", ink1: "var(--syncro-ink1)", ink2: "var(--syncro-ink2)", ink3: "var(--syncro-ink3)",
   org: "#ffaa33", blu: "#4ea6ff", grn: "#2ee07a", red: "#ff5566",
   mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
   sans: "'Pretendard','Noto Sans KR',system-ui,sans-serif",
@@ -40,7 +40,7 @@ export default function ComplaintList({ complaints, onSelect, selected, onStatus
     : "—";
 
   return (
-    <div style={{ background: V.bg1, border: `1px solid ${V.line}`, borderRadius: 2, padding: "14px 16px", fontFamily: V.sans }}>
+    <div style={{ background: V.bg1, border: `1px solid ${V.line}`, borderRadius: 2, padding: "14px 16px", fontFamily: V.sans, boxShadow: "var(--syncro-inner-shadow)" }}>
 
       {/* 헤더 */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -72,7 +72,7 @@ export default function ComplaintList({ complaints, onSelect, selected, onStatus
                 border: `1px solid ${isSel ? meta.bd : V.line}`,
                 cursor: "pointer",
               }}
-              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "#1f1c14"; }}
+              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "var(--syncro-selected-bg)"; }}
               onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
             >
               {/* 상태 점 */}

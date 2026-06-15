@@ -4,13 +4,13 @@ import AppHeader from "../components/common/AppHeader";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const V = {
-  bg0: "#000", bg1: "#0a0a0a", bg2: "#0d0d0d", line: "#1a1a1a", line2: "#242424",
-  ink0: "#fff", ink1: "#d8dde8", ink2: "#aab4c8", ink3: "#7a7a7a", ink4: "#5a5a5a", ink5: "#3a3a3a",
-  grn: "#2ee07a", grnBg: "#0d1f14", grnBd: "#1a3a24",
-  red: "#ff5566", redBg: "#1a0a10", redBd: "#3a1820",
-  org: "#ffaa33", orgBg: "#1a1206", orgBd: "#3a2a14",
-  blu: "#4ea6ff", bluBg: "#08182a", bluBd: "#1a3358",
-  pur: "#9b7bff",
+  bg0: "var(--syncro-bg0)", bg1: "var(--syncro-bg1)", bg2: "var(--syncro-bg2)", line: "var(--syncro-line)", line2: "var(--syncro-line2)",
+  ink0: "var(--syncro-ink0)", ink1: "var(--syncro-ink1)", ink2: "var(--syncro-ink2)", ink3: "var(--syncro-ink2)", ink4: "var(--syncro-ink3)", ink5: "var(--syncro-ink3)",
+  grn: "var(--syncro-success-text)", grnBg: "var(--syncro-success-bg)", grnBd: "var(--syncro-success-bd)",
+  red: "var(--syncro-danger-text)", redBg: "var(--syncro-danger-bg)", redBd: "var(--syncro-danger-bd)",
+  org: "var(--syncro-warning-text)", orgBg: "var(--syncro-warning-bg)", orgBd: "var(--syncro-warning-bd)",
+  blu: "#4ea6ff", bluBg: "color-mix(in srgb, #4ea6ff 14%, var(--syncro-bg1))", bluBd: "color-mix(in srgb, #4ea6ff 42%, var(--syncro-line))",
+  pur: "#7c3aed", purBg: "color-mix(in srgb, #8b5cf6 14%, var(--syncro-bg1))", purBd: "color-mix(in srgb, #8b5cf6 42%, var(--syncro-line))",
   mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
   sans: "'Pretendard','Noto Sans KR','Malgun Gothic',system-ui,sans-serif",
 };
@@ -28,7 +28,7 @@ const menuNameOf = (id) => MENU_ITEMS.find(m => m.id === id)?.name || id || "기
 function sentStyle(s) {
   if (s === "혼잡악화") return { color: V.red, borderColor: V.redBd, background: V.redBg };
   if (s === "교통개선") return { color: V.grn, borderColor: V.grnBd, background: V.grnBg };
-  return { color: "#cfcfcf", borderColor: "#2a2a2a", background: "#1a1a1a" };
+  return { color: V.ink2, borderColor: V.line, background: V.bg2 };
 }
 
 function sentDot(s) {
@@ -45,14 +45,14 @@ function Donut({ pct, color, label, valueStr }) {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
       <div style={{ width: 62, height: 62, position: "relative", flexShrink: 0 }}>
         <svg viewBox="0 0 96 96" style={{ width: "100%", height: "100%", display: "block" }}>
-          <circle cx="48" cy="48" r={R} fill="none" stroke="#1a1a1a" strokeWidth="9" />
+          <circle cx="48" cy="48" r={R} fill="none" stroke="var(--syncro-grid-line)" strokeWidth="9" />
           <circle cx="48" cy="48" r={R} fill="none" stroke={color} strokeWidth="9"
             strokeLinecap="butt"
             strokeDasharray={`${dash} ${C}`}
             transform="rotate(-90 48 48)" />
         </svg>
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: V.mono }}>
-          <b style={{ fontSize: 12, color: "#fff", fontWeight: 800, lineHeight: 1 }}>{valueStr}</b>
+          <b style={{ fontSize: 12, color: V.ink0, fontWeight: 800, lineHeight: 1 }}>{valueStr}</b>
         </div>
       </div>
       <div style={{ fontSize: 12.5, fontWeight: 700, color: V.ink2, letterSpacing: 0.1, whiteSpace: "nowrap" }}>{label}</div>
@@ -82,7 +82,7 @@ function NewsCard({ item }) {
           </span>
           {/* 유형 */}
           {item.articleType && (
-            <span style={{ display: "inline-flex", alignItems: "center", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 999, color: V.pur, border: "1px solid #2a1f5c", background: "#0f0a1f" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 999, color: V.pur, border: `1px solid ${V.purBd}`, background: V.purBg }}>
               기사유형 · {item.articleType} · {(+parseFloat(item.typeProb || 0)).toFixed(0)}%
             </span>
           )}
@@ -91,7 +91,7 @@ function NewsCard({ item }) {
       </div>
 
       {/* 제목 */}
-      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#fff", letterSpacing: 0.1, lineHeight: 1.4 }}>{item.title}</h3>
+      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: V.ink0, letterSpacing: 0.1, lineHeight: 1.4 }}>{item.title}</h3>
 
       {/* 요약 */}
       {item.summary && (
@@ -107,9 +107,9 @@ function NewsCard({ item }) {
           <div key={m.label} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: V.mono, fontSize: 12, color: V.ink3 }}>
               <span style={{ color: V.ink2, fontWeight: 500, fontSize: 12 }}>{m.label}</span>
-              <span style={{ marginLeft: "auto", fontSize: 12, fontWeight: 800, color: "#fff" }}>{m.val}%</span>
+              <span style={{ marginLeft: "auto", fontSize: 12, fontWeight: 800, color: V.ink0 }}>{m.val}%</span>
             </div>
-            <div style={{ height: 6, background: "#0d0d0d", border: `1px solid ${V.line}`, borderRadius: 999, overflow: "hidden" }}>
+            <div style={{ height: 6, background: "var(--syncro-grid-line)", border: `1px solid ${V.line}`, borderRadius: 999, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${m.val}%`, background: m.color }} />
             </div>
           </div>
@@ -119,7 +119,7 @@ function NewsCard({ item }) {
       {/* 원문 링크 */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4, paddingTop: 10, borderTop: `1px solid ${V.line}` }}>
         <a href={item.link} target="_blank" rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", background: "#000", border: `1px solid ${V.line}`, borderRadius: 999, color: "#fff", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", background: "var(--syncro-bg1)", border: `1px solid ${V.line}`, borderRadius: 999, color: V.ink0, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
           원문 보기 →
         </a>
         <span style={{ marginLeft: "auto", fontFamily: V.mono, fontSize: 14, color: V.ink4 }}>
@@ -130,7 +130,7 @@ function NewsCard({ item }) {
   );
 }
 
-export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulation, onGoComplaints, onGoMyPage, onLogout, selectedGu, notifQueue = [], onDismissNotif }) {
+export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulation, onGoComplaints, onGoMyPage, onLogout, selectedGu, notifQueue = [], onDismissNotif, themeMode, onToggleTheme }) {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMenu, setSelectedMenu] = useState("all");
@@ -211,31 +211,33 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
         onLogout={onLogout}
         notifQueue={notifQueue}
         onDismissNotif={onDismissNotif}
+        themeMode={themeMode}
+        onToggleTheme={onToggleTheme}
       />
 {/* ── 검색바 ── */}
-      <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "10px 16px", borderBottom: `1px solid ${V.line}`, background: "#050505", flexShrink: 0 }}>
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, background: "#000", border: `1px solid ${V.line}`, borderRadius: 2, padding: "0 14px", height: 38 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "10px 16px", borderBottom: `1px solid ${V.line}`, background: "var(--syncro-panel-header)", flexShrink: 0 }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, background: "var(--syncro-bg1)", border: `1px solid ${V.line}`, borderRadius: 2, padding: "0 14px", height: 38 }}>
           <span style={{ fontFamily: V.mono, fontSize: 14, color: V.ink4, letterSpacing: 0.6, textTransform: "uppercase", whiteSpace: "nowrap" }}>키워드 검색</span>
           <input
             value={inputVal}
             onChange={e => setInputVal(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleSearch()}
             placeholder="예) 강남 교차로, 폭우, 지하철 2호선"
-            style={{ flex: 1, background: "transparent", border: 0, outline: 0, color: "#fff", fontSize: 14, fontWeight: 500, fontFamily: V.sans }}
+            style={{ flex: 1, background: "transparent", border: 0, outline: 0, color: V.ink0, fontSize: 14, fontWeight: 500, fontFamily: V.sans }}
           />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontFamily: V.mono, fontSize: 14, color: V.ink4, letterSpacing: 0.6, textTransform: "uppercase" }}>정렬</span>
-          <div style={{ display: "flex", background: "#000", border: `1px solid ${V.line}`, borderRadius: 2, padding: 3, gap: 2 }}>
+          <div style={{ display: "flex", background: "var(--syncro-bg1)", border: `1px solid ${V.line}`, borderRadius: 2, padding: 3, gap: 2 }}>
             {[["recent","최신순"],["trust","신뢰도 높은 순"],["bait","제목 과장도 높은 순"]].map(([id, label]) => (
               <button key={id} onClick={() => changeSort(id)}
-                style={{ appearance: "none", border: 0, background: sort === id ? "#141414" : "transparent", color: sort === id ? "#fff" : V.ink3, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 2, cursor: "pointer", boxShadow: sort === id ? "inset 0 0 0 1px #2a2a2a" : "none", fontFamily: V.sans }}>
+                style={{ appearance: "none", border: 0, background: sort === id ? "var(--syncro-selected-bg)" : "transparent", color: sort === id ? V.ink0 : V.ink3, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 2, cursor: "pointer", boxShadow: sort === id ? `inset 0 0 0 1px ${V.line2}` : "none", fontFamily: V.sans }}>
                 {label}
               </button>
             ))}
           </div>
           <button onClick={handleSearch}
-            style={{ height: 38, padding: "0 18px", border: `1px solid ${V.line}`, background: "#141414", color: "#fff", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, borderRadius: 2, cursor: "pointer", fontFamily: V.sans }}>
+            style={{ height: 38, padding: "0 18px", border: `1px solid ${V.line}`, background: "var(--syncro-selected-bg)", color: V.ink0, fontSize: 14, fontWeight: 700, letterSpacing: 0.5, borderRadius: 2, cursor: "pointer", fontFamily: V.sans }}>
             검색
           </button>
         </div>
@@ -249,12 +251,12 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
 
           {/* 종합 분석 카드 */}
           <div style={{ background: V.bg1, border: `1px solid ${V.line}`, borderRadius: 2 }}>
-            <div style={{ padding: "12px 14px", borderBottom: `1px solid ${V.line}`, background: "#080808", display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 16, fontWeight: 800, color: "#fff", display: "inline-flex", alignItems: "center" }}>
+            <div style={{ padding: "12px 14px", borderBottom: `1px solid ${V.line}`, background: "var(--syncro-panel-header)", display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: V.ink0, display: "inline-flex", alignItems: "center" }}>
                 <span style={{ color: V.ink5, marginRight: 8, fontSize: 11 }}>▪</span>
                 교통 뉴스 분석 · {menuNameOf(selectedMenu)}
               </span>
-              <span style={{ marginLeft: "auto", fontFamily: V.mono, fontSize: 12, color: V.ink2, padding: "4px 9px", border: `1px solid ${V.line}`, borderRadius: 2, background: "#000" }}>
+              <span style={{ marginLeft: "auto", fontFamily: V.mono, fontSize: 12, color: V.ink2, padding: "4px 9px", border: `1px solid ${V.line}`, borderRadius: 2, background: "var(--syncro-bg1)" }}>
                 총 {total}건
               </span>
             </div>
@@ -267,12 +269,12 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
               </div>
 
               {/* 감성 분포 바 */}
-              <div style={{ background: "#000", border: `1px solid ${V.line}`, borderRadius: 2, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ background: "var(--syncro-bg1)", border: `1px solid ${V.line}`, borderRadius: 2, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: V.ink3, fontFamily: V.mono }}>
-                  <b style={{ color: "#fff", fontWeight: 600, fontSize: 12, fontFamily: V.sans }}>교통 영향 분포</b>
+                  <b style={{ color: V.ink0, fontWeight: 600, fontSize: 12, fontFamily: V.sans }}>교통 영향 분포</b>
                   <span style={{ marginLeft: "auto", fontSize: 12, color: V.ink4 }}>총 {total}건</span>
                 </div>
-                <div style={{ display: "flex", height: 8, background: "#0d0d0d", border: `1px solid ${V.line}`, borderRadius: 999, overflow: "hidden" }}>
+                <div style={{ display: "flex", height: 8, background: "var(--syncro-grid-line)", border: `1px solid ${V.line}`, borderRadius: 999, overflow: "hidden" }}>
                   <div style={{ width: `${badPct}%`,  background: V.red }} />
                   <div style={{ width: `${neutPct}%`, background: "#6f6f6f" }} />
                   <div style={{ width: `${goodPct}%`, background: V.grn }} />
@@ -282,7 +284,7 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
                     <div key={label} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12 }}>
                       <span style={{ width: 7, height: 7, borderRadius: "50%", background: c, flexShrink: 0 }} />
                       <span style={{ color: V.ink2, fontWeight: 500 }}>{label}</span>
-                      <span style={{ marginLeft: "auto", fontFamily: V.mono, fontSize: 12, fontWeight: 700, color: "#fff" }}>
+                      <span style={{ marginLeft: "auto", fontFamily: V.mono, fontSize: 12, fontWeight: 700, color: V.ink0 }}>
                         {n}<em style={{ fontStyle: "normal", fontSize: 10.5, color: V.ink4, marginLeft: 2 }}>건 · {pct.toFixed(0)}%</em>
                       </span>
                     </div>
@@ -295,7 +297,7 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
                 {[[V.blu, "기사 신뢰도", "사실 기반으로 작성된 정도"], [V.red, "제목 과장도", "과장·자극적 제목 가능성"], [V.grn, "교통 개선", "교통 개선 관련 기사 비율"]].map(([c, b, i]) => (
                   <div key={b} style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: 8, alignItems: "baseline", fontSize: 12.5, color: V.ink2 }}>
                     <span style={{ width: 8, height: 8, borderRadius: "50%", background: c, alignSelf: "center", flexShrink: 0 }} />
-                    <b style={{ color: "#fff", fontWeight: 600, fontSize: 12, whiteSpace: "nowrap" }}>{b}</b>
+                    <b style={{ color: V.ink0, fontWeight: 600, fontSize: 12, whiteSpace: "nowrap" }}>{b}</b>
                     <i style={{ fontStyle: "normal", color: V.ink3, fontSize: 12 }}>{i}</i>
                   </div>
                 ))}
@@ -305,8 +307,8 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
 
           {/* 메뉴 선택 */}
           <div style={{ background: V.bg1, border: `1px solid ${V.line}`, borderRadius: 2 }}>
-            <div style={{ padding: "12px 14px", borderBottom: `1px solid ${V.line}`, background: "#080808" }}>
-              <span style={{ fontSize: 16, fontWeight: 800, color: "#fff", display: "inline-flex", alignItems: "center" }}>
+            <div style={{ padding: "12px 14px", borderBottom: `1px solid ${V.line}`, background: "var(--syncro-panel-header)" }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: V.ink0, display: "inline-flex", alignItems: "center" }}>
                 <span style={{ color: V.ink5, marginRight: 8, fontSize: 11 }}>▪</span>메뉴 선택
               </span>
             </div>
@@ -316,10 +318,10 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
                 const cnt = countOf(s.id);
                 return (
                   <button key={s.id} onClick={() => changeMenu(s.id)}
-                    style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 10, alignItems: "center", padding: "12px 14px", background: isOn ? "#141414" : "transparent", border: 0, borderBottom: `1px solid ${V.line}`, color: isOn ? "#fff" : V.ink2, fontSize: 16, fontWeight: 600, textAlign: "left", cursor: "pointer", boxShadow: isOn ? `inset 2px 0 0 ${s.color}` : "none", fontFamily: V.sans }}>
+                    style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 10, alignItems: "center", padding: "12px 14px", background: isOn ? "var(--syncro-selected-bg)" : "transparent", border: 0, borderBottom: `1px solid ${V.line}`, color: isOn ? V.ink0 : V.ink2, fontSize: 16, fontWeight: 600, textAlign: "left", cursor: "pointer", boxShadow: isOn ? `inset 2px 0 0 ${s.color}` : "none", fontFamily: V.sans }}>
                     <span style={{ width: 8, height: 8, borderRadius: 1, background: s.color }} />
                     <span>{s.name}</span>
-                    <span style={{ fontFamily: V.mono, fontSize: 14, color: isOn ? "#fff" : V.ink4, fontWeight: 600 }}>{cnt}</span>
+                    <span style={{ fontFamily: V.mono, fontSize: 14, color: isOn ? V.ink0 : V.ink4, fontWeight: 600 }}>{cnt}</span>
                   </button>
                 );
               })}
@@ -330,7 +332,7 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
         {/* 뉴스 리스트 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "0 4px" }}>
-            <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>
+            <span style={{ fontSize: 16, fontWeight: 800, color: V.ink0 }}>
               {query ? `"${query}" ` : ""}{menuNameOf(selectedMenu)} 검색 결과
             </span>
             <span style={{ fontFamily: V.mono, fontSize: 14, color: V.ink4 }}>
@@ -361,7 +363,7 @@ export default function NewsDashboard({ onGoMain, onGoMap, onGoCctv, onGoSimulat
                 if (p > totalPages) return null;
                 return (
                   <button key={p} onClick={() => setPage(p)}
-                    style={{ minWidth: 34, height: 34, display: "grid", placeItems: "center", background: p === page ? "#141414" : V.bg1, border: `1px solid ${p === page ? "#2a2a2a" : V.line}`, borderRadius: 2, color: p === page ? "#fff" : V.ink3, fontFamily: V.mono, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    style={{ minWidth: 34, height: 34, display: "grid", placeItems: "center", background: p === page ? "var(--syncro-selected-bg)" : V.bg1, border: `1px solid ${p === page ? V.line2 : V.line}`, borderRadius: 2, color: p === page ? V.ink0 : V.ink3, fontFamily: V.mono, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                     {p}
                   </button>
                 );

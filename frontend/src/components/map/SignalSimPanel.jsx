@@ -7,14 +7,14 @@ function TrafficLight({ active }) {
     <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
       <div style={{
         width: 22, height: 22, borderRadius: "50%",
-        background: active ? "#22c55e" : "#1e293b",
+        background: active ? "#22c55e" : "var(--syncro-grid-line)",
         boxShadow: active ? "0 0 10px #22c55e88" : "none",
         border: "2px solid rgba(255,255,255,0.1)",
         transition: "all 0.3s"
       }} />
       <div style={{
         width: 22, height: 22, borderRadius: "50%",
-        background: !active ? "#ef4444" : "#1e293b",
+        background: !active ? "#ef4444" : "var(--syncro-grid-line)",
         boxShadow: !active ? "0 0 10px #ef444488" : "none",
         border: "2px solid rgba(255,255,255,0.1)",
         transition: "all 0.3s"
@@ -96,19 +96,19 @@ export default function SignalSimPanel({ intNo, intNm, onPhaseChange, phaseOverr
   };
 
   if (loading) return (
-    <div style={{ padding: 20, color: "#94a3b8", fontSize: 13, textAlign: "center" }}>
+    <div style={{ padding: 20, color: "var(--syncro-ink2)", fontSize: 13, textAlign: "center" }}>
       신호 데이터 로딩 중...
     </div>
   );
 
   if (!ctx || ctx.error) return (
-    <div style={{ padding: 20, color: "#64748b", fontSize: 13, textAlign: "center" }}>
+    <div style={{ padding: 20, color: "var(--syncro-ink2)", fontSize: 13, textAlign: "center" }}>
       {ctx?.error || "신호 데이터 없음"}
     </div>
   );
 
   if (!ctx.phases?.length || ctx.warning) return (
-    <div style={{ padding: 20, color: "#64748b", fontSize: 13, textAlign: "center" }}>
+    <div style={{ padding: 20, color: "var(--syncro-ink2)", fontSize: 13, textAlign: "center" }}>
       {ctx.warning || "신호계획 데이터 없음"}
     </div>
   );
@@ -123,19 +123,19 @@ export default function SignalSimPanel({ intNo, intNm, onPhaseChange, phaseOverr
   const remaining    = cycleVal - elapsed;
 
   return (
-    <div style={{ fontSize: 13, color: "#e2e8f0", height: "100%", overflowY: "auto" }}>
+    <div style={{ fontSize: 13, color: "var(--syncro-ink0)", height: "100%", overflowY: "auto" }}>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#60a5fa" }}> {intNm}</div>
-        <div style={{ fontSize: 12, color: "#94a3b8", fontFamily: "monospace" }}>{now.toLocaleTimeString("ko-KR")}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#2563eb" }}> {intNm}</div>
+        <div style={{ fontSize: 12, color: "var(--syncro-ink2)", fontFamily: "monospace" }}>{now.toLocaleTimeString("ko-KR")}</div>
       </div>
 
       <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b", marginBottom: 4 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--syncro-ink2)", marginBottom: 4 }}>
           <span>사이클 진행</span>
           <span>{elapsed}s / {cycleVal}s (잔여 {remaining}s)</span>
         </div>
-        <div style={{ height: 4, background: "#1e293b", borderRadius: 2, overflow: "hidden" }}>
+        <div style={{ height: 4, background: "var(--syncro-grid-line)", borderRadius: 2, overflow: "hidden" }}>
           <div style={{
             height: "100%", borderRadius: 2,
             width: `${(elapsed / cycleVal) * 100}%`,
@@ -152,12 +152,12 @@ export default function SignalSimPanel({ intNo, intNm, onPhaseChange, phaseOverr
             <div key={p.no} style={{
               display: "flex", alignItems: "center", gap: 8,
               padding: "6px 10px", borderRadius: 5,
-              background: isActive ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.02)",
-              border: `1px solid ${isActive ? "rgba(34,197,94,0.4)" : "rgba(255,255,255,0.06)"}`,
+              background: isActive ? "rgba(34,197,94,0.08)" : "var(--syncro-bg2)",
+              border: `1px solid ${isActive ? "rgba(34,197,94,0.4)" : "var(--syncro-line)"}`,
               transition: "all 0.3s"
             }}>
               <TrafficLight active={isActive} />
-              <span style={{ fontSize: 11, fontWeight: 600, color: isActive ? "#22c55e" : "#64748b", minWidth: 42 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: isActive ? "#22c55e" : "var(--syncro-ink2)", minWidth: 42 }}>
                 현시 {p.no}
               </span>
               <div style={{ display: "flex", gap: 4, flexWrap: "wrap", flex: 1 }}>
@@ -166,17 +166,17 @@ export default function SignalSimPanel({ intNo, intNm, onPhaseChange, phaseOverr
                     fontSize: 10, padding: "1px 6px", borderRadius: 3,
                     background: isActive ? "rgba(34,197,94,0.15)" : "rgba(78,166,255,0.08)",
                     border: `1px solid ${isActive ? "rgba(34,197,94,0.3)" : "rgba(78,166,255,0.15)"}`,
-                    color: isActive ? "#22c55e" : "#4ea6ff"
+                    color: isActive ? "#166534" : "#2563eb"
                   }}>{d}</span>
                 ))}
               </div>
-              <span style={{ fontSize: 11, color: "#475569", fontFamily: "monospace" }}>{p.sec}s</span>
+              <span style={{ fontSize: 11, color: "var(--syncro-ink3)", fontFamily: "monospace" }}>{p.sec}s</span>
             </div>
           );
         })}
       </div>
 
-      <div style={{ fontSize: 11, color: "#475569", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8 }}>
+      <div style={{ fontSize: 11, color: "var(--syncro-ink3)", borderTop: "1px solid var(--syncro-line)", paddingTop: 8 }}>
         INT_NO: {intNo} · 현시수: {displayPhases.length}
         {ctx.traffic?.speedKph != null && (
           <span style={{ marginLeft: 8, color: ctx.traffic.realTime ? "#22c55e" : "#f59e0b" }}>

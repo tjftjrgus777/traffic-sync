@@ -36,7 +36,32 @@ const MSG_STORAGE_KEY       = 'ts_chatbot_messages';
 const COLLAPSED_STORAGE_KEY = 'ts_chatbot_collapsed';
 const LIVE_STORAGE_KEY      = 'ts_chatbot_live';
 
-export default function AIChatBot({ selected, onClose, isMuted = false }) {
+export default function AIChatBot({ selected, onClose, isMuted = false, themeMode = "dark" }) {
+  const isLight = themeMode === "light";
+  const c = {
+    panelBg: isLight ? "rgba(248,251,255,0.98)" : "rgba(11,11,11,0.95)",
+    panelBorder: isLight ? "rgba(148,163,184,0.38)" : "rgba(255,255,255,0.07)",
+    sectionBorder: isLight ? "rgba(148,163,184,0.28)" : "rgba(255,255,255,0.06)",
+    title: isLight ? "#0f172a" : "rgba(255,255,255,0.72)",
+    muted: isLight ? "#64748b" : "rgba(255,255,255,0.28)",
+    text: isLight ? "#1e293b" : "rgba(255,255,255,0.82)",
+    aiText: isLight ? "#334155" : "rgba(255,255,255,0.72)",
+    userBg: isLight ? "rgba(219,234,254,0.92)" : "rgba(255,255,255,0.08)",
+    userBorder: isLight ? "rgba(96,165,250,0.35)" : "rgba(255,255,255,0.07)",
+    aiBg: isLight ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.03)",
+    aiBorder: isLight ? "rgba(148,163,184,0.32)" : "rgba(255,255,255,0.06)",
+    chipBg: isLight ? "rgba(255,255,255,0.76)" : "rgba(255,255,255,0.04)",
+    chipBorder: isLight ? "rgba(148,163,184,0.34)" : "rgba(255,255,255,0.08)",
+    chipText: isLight ? "#475569" : "rgba(255,255,255,0.5)",
+    primaryChipBg: isLight ? "rgba(219,234,254,0.95)" : "rgba(80,160,255,0.07)",
+    primaryChipBorder: isLight ? "rgba(96,165,250,0.45)" : "rgba(120,200,255,0.2)",
+    primaryChipText: isLight ? "#2563eb" : "rgba(120,200,255,0.8)",
+    inputBg: isLight ? "rgba(255,255,255,0.94)" : "rgba(255,255,255,0.05)",
+    inputBorder: isLight ? "rgba(148,163,184,0.38)" : "rgba(255,255,255,0.08)",
+    sendBg: isLight ? "rgba(37,99,235,0.1)" : "rgba(255,255,255,0.09)",
+    sendBorder: isLight ? "rgba(37,99,235,0.24)" : "rgba(255,255,255,0.09)",
+    sendText: isLight ? "#2563eb" : "rgba(255,255,255,0.7)",
+  };
   const [messages, setMessages] = useState(() => {
     try {
       const saved = sessionStorage.getItem(MSG_STORAGE_KEY);
@@ -487,22 +512,23 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
     <>
       <div style={{
         display: "flex", flexDirection: "column", flex: 1, minHeight: 0,
-        background: "rgba(11,11,11,0.95)",
-        borderLeft: "1px solid rgba(255,255,255,0.07)",
+        background: c.panelBg,
+        borderLeft: `1px solid ${c.panelBorder}`,
+        boxShadow: isLight ? "inset 1px 0 0 rgba(255,255,255,0.7)" : "none",
         fontFamily: "system-ui,-apple-system,sans-serif",
       }}>
 
         {/* 헤더 */}
         <div style={{
           padding: "12px 16px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          borderBottom: `1px solid ${c.sectionBorder}`,
           display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
         }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.72)" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: c.title }}>
             AI 교통 어시스턴트
           </span>
           {selected && (
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.28)" }}>
+            <span style={{ fontSize: 11, color: c.muted }}>
               · {selected.crsrdNm}
             </span>
           )}
@@ -537,7 +563,7 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
             style={{
               marginLeft: "auto",
               background: "none", border: "none",
-              color: "rgba(255,255,255,0.3)", fontSize: 11,
+              color: c.muted, fontSize: 11,
               cursor: loading ? "default" : "pointer", padding: "0 4px", lineHeight: 1,
               opacity: loading ? 0.3 : 1,
             }}
@@ -546,7 +572,7 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
           </button>
           <button onClick={onClose} style={{
             background: "none", border: "none",
-            color: "rgba(255,255,255,0.3)", fontSize: 14,
+            color: c.muted, fontSize: 14,
             cursor: "pointer", padding: "0 2px", lineHeight: 1,
           }}>✕</button>
         </div>
@@ -554,7 +580,7 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
         {/* 프리셋 */}
         <div style={{
           padding: "8px 16px",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
+          borderBottom: `1px solid ${c.sectionBorder}`,
           display: "flex", gap: 5, flexWrap: "wrap", flexShrink: 0,
         }}>
           {PRESETS.map(({ label, q, multi }) => {
@@ -562,9 +588,9 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
             return (
               <button key={label} onClick={() => sendChat(q)} disabled={disabled} style={{
                 padding: "4px 10px", fontSize: 11, borderRadius: 5,
-                border: multi ? "1px solid rgba(120,200,255,0.2)" : "1px solid rgba(255,255,255,0.08)",
-                background: multi ? "rgba(80,160,255,0.07)" : "rgba(255,255,255,0.04)",
-                color: disabled ? "rgba(255,255,255,0.18)" : multi ? "rgba(120,200,255,0.8)" : "rgba(255,255,255,0.5)",
+                border: multi ? `1px solid ${c.primaryChipBorder}` : `1px solid ${c.chipBorder}`,
+                background: multi ? c.primaryChipBg : c.chipBg,
+                color: disabled ? (isLight ? "#cbd5e1" : "rgba(255,255,255,0.18)") : multi ? c.primaryChipText : c.chipText,
                 cursor: disabled ? "default" : "pointer",
                 fontFamily: "inherit",
               }}>
@@ -591,6 +617,7 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
                     label={`교차로 탐색 과정 · ${m.preSteps.length}단계`}
                     collapsed={collapsedSteps[`${idx}-pre`] === true}
                     onToggle={() => setCollapsedSteps(p => ({ ...p, [`${idx}-pre`]: !p[`${idx}-pre`] }))}
+                    themeMode={themeMode}
                   />
                 )}
 
@@ -600,37 +627,37 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
                   const wCollapsed = collapsedSteps[wKey] ?? false;
                   const allDone = !m.loadingWorkers && m.workers.every(w => !w.loading);
                   return (
-                    <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden" }}>
+                    <div style={{ border: `1px solid ${c.aiBorder}`, borderRadius: 6, overflow: "hidden" }}>
                       <button onClick={() => setCollapsedSteps(p => ({ ...p, [wKey]: !p[wKey] }))} style={{
                         width: "100%", display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
-                        background: "rgba(255,255,255,0.025)", border: "none", cursor: "pointer",
-                        color: "rgba(255,255,255,0.38)", fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
+                        background: c.chipBg, border: "none", cursor: "pointer",
+                        color: c.chipText, fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
                       }}>
                         {!allDone && <span style={{ display: "inline-flex", gap: 2, alignItems: "center", marginRight: 2 }}>
                           {[0,1,2].map(i => <span key={i} style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.45)", display: "inline-block", animation: `chatDotBlink 1.2s ease ${i*0.2}s infinite` }} />)}
                         </span>}
                         {allDone && <span style={{ fontSize: 8, transition: "transform .2s", transform: wCollapsed ? "rotate(-90deg)" : "none", display: "inline-block" }}>▾</span>}
                         {allDone ? `에이전트 분석 · ${m.workers.length}개` : `에이전트 분석 중${m.workers.length > 0 ? ` · ${m.workers.length}개` : ""}`}
-                        <span style={{ marginLeft: "auto", fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{m.centerName}</span>
+                        <span style={{ marginLeft: "auto", fontSize: 10, color: c.muted }}>{m.centerName}</span>
                       </button>
                       {(!wCollapsed || !allDone) && (
                         <div style={{ padding: "6px 12px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
                           {m.workers.map(w => (
                             <div key={w.worker_id} style={{ display: "flex", gap: 10, animation: "chatFadeIn .15s ease" }}>
-                              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", minWidth: 52, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
+                              <span style={{ fontSize: 10, color: c.muted, minWidth: 52, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
                                 W{w.worker_id} {w.direction}
                               </span>
-                              <span style={{ fontSize: 10, color: w.loading ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.48)", lineHeight: 1.55, fontFamily: "system-ui,sans-serif" }}>
+                              <span style={{ fontSize: 10, color: w.loading ? c.muted : c.chipText, lineHeight: 1.55, fontFamily: "system-ui,sans-serif" }}>
                                 {w.loading ? "분석 중..." : (w.content.length > 120 ? w.content.slice(0, 120) + "…" : w.content)}
                               </span>
                             </div>
                           ))}
                           {m.loadingWorkers && m.workers.length === 0 && (
-                            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", fontFamily: "system-ui,sans-serif" }}>인근 교차로 조회 중...</div>
+                            <div style={{ fontSize: 10, color: c.muted, fontFamily: "system-ui,sans-serif" }}>인근 교차로 조회 중...</div>
                           )}
                         </div>
                       )}
-                      {!allDone && <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }}><div style={{ height: "100%", background: "rgba(255,255,255,0.14)", animation: "chatProgressBar 2.4s ease infinite" }} /></div>}
+                      {!allDone && <div style={{ height: 1, background: c.aiBorder }}><div style={{ height: "100%", background: c.primaryChipBorder, animation: "chatProgressBar 2.4s ease infinite" }} /></div>}
                     </div>
                   );
                 })()}
@@ -648,11 +675,11 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
                   const rKey = `${idx}-r${num}`;
                   const rCollapsed = collapsedSteps[rKey] ?? false;
                   return (
-                    <div key={`round-${num}`} style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden" }}>
+                    <div key={`round-${num}`} style={{ border: `1px solid ${c.aiBorder}`, borderRadius: 6, overflow: "hidden" }}>
                       <button onClick={() => allDone && setCollapsedSteps(p => ({ ...p, [rKey]: !p[rKey] }))} style={{
                         width: "100%", display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
-                        background: "rgba(255,255,255,0.025)", border: "none", cursor: allDone ? "pointer" : "default",
-                        color: "rgba(255,255,255,0.38)", fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
+                        background: c.chipBg, border: "none", cursor: allDone ? "pointer" : "default",
+                        color: c.chipText, fontSize: 11, textAlign: "left", fontFamily: "system-ui,sans-serif",
                       }}>
                         {!allDone && <span style={{ display: "inline-flex", gap: 2, alignItems: "center", marginRight: 2 }}>
                           {[0,1,2].map(i => <span key={i} style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.45)", display: "inline-block", animation: `chatDotBlink 1.2s ease ${i*0.2}s infinite` }} />)}
@@ -664,38 +691,38 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
                         <div style={{ padding: "6px 12px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
                           {items.map(d => (
                             <div key={`d-${d.round}-${d.worker_id}`} style={{ display: "flex", gap: 10, animation: "chatFadeIn .15s ease" }}>
-                              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", minWidth: 52, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
+                              <span style={{ fontSize: 10, color: c.muted, minWidth: 52, flexShrink: 0, paddingTop: 1, fontFamily: "system-ui,sans-serif" }}>
                                 W{d.worker_id} {d.direction}
                               </span>
-                              <span style={{ fontSize: 10, color: d.loading ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.48)", lineHeight: 1.55, fontFamily: "system-ui,sans-serif" }}>
+                              <span style={{ fontSize: 10, color: d.loading ? c.muted : c.chipText, lineHeight: 1.55, fontFamily: "system-ui,sans-serif" }}>
                                 {d.loading ? "작성 중..." : (d.content.length > 140 ? d.content.slice(0, 140) + "…" : d.content)}
                               </span>
                             </div>
                           ))}
                           {isActive && items.length === 0 && (
-                            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", fontFamily: "system-ui,sans-serif" }}>대기 중...</div>
+                            <div style={{ fontSize: 10, color: c.muted, fontFamily: "system-ui,sans-serif" }}>대기 중...</div>
                           )}
                         </div>
                       )}
-                      {!allDone && <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }}><div style={{ height: "100%", background: "rgba(255,255,255,0.14)", animation: "chatProgressBar 2.4s ease infinite" }} /></div>}
+                      {!allDone && <div style={{ height: 1, background: c.aiBorder }}><div style={{ height: "100%", background: c.primaryChipBorder, animation: "chatProgressBar 2.4s ease infinite" }} /></div>}
                     </div>
                   );
                 })}
 
                 {/* 오케스트레이터 — 일반 AI 답변처럼 */}
                 {m.loadingOrch && (
-                  <div style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, overflow: "hidden" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", background: "rgba(255,255,255,0.025)", color: "rgba(255,255,255,0.38)", fontSize: 11, fontFamily: "system-ui,sans-serif" }}>
+                  <div style={{ border: `1px solid ${c.aiBorder}`, borderRadius: 6, overflow: "hidden" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", background: c.chipBg, color: c.chipText, fontSize: 11, fontFamily: "system-ui,sans-serif" }}>
                       <span style={{ display: "inline-flex", gap: 2, alignItems: "center" }}>
                         {[0,1,2].map(i => <span key={i} style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.45)", display: "inline-block", animation: `chatDotBlink 1.2s ease ${i*0.2}s infinite` }} />)}
                       </span>
                       <span style={{ marginLeft: 2 }}>종합 분석 중</span>
                     </div>
-                    <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }}><div style={{ height: "100%", background: "rgba(255,255,255,0.14)", animation: "chatProgressBar 2.4s ease infinite" }} /></div>
+                    <div style={{ height: 1, background: c.aiBorder }}><div style={{ height: "100%", background: c.primaryChipBorder, animation: "chatProgressBar 2.4s ease infinite" }} /></div>
                   </div>
                 )}
                 {m.orchestrator && (
-                  <div style={{ fontSize: 13, lineHeight: 1.75, color: "rgba(255,255,255,0.82)", whiteSpace: "pre-line", padding: "2px 2px 0" }}>
+                  <div style={{ fontSize: 13, lineHeight: 1.75, color: c.text, whiteSpace: "pre-line", padding: "2px 2px 0" }}>
                     {m.orchestrator}
                   </div>
                 )}
@@ -708,10 +735,10 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
                 <div style={{
                   maxWidth: "80%", padding: "9px 13px",
                   borderRadius: "12px 12px 3px 12px",
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.07)",
+                  background: c.userBg,
+                  border: `1px solid ${c.userBorder}`,
                   fontSize: 13, lineHeight: 1.7,
-                  color: "rgba(255,255,255,0.82)", whiteSpace: "pre-line",
+                  color: c.text, whiteSpace: "pre-line",
                 }}>
                   {m.text}
                 </div>
@@ -719,7 +746,7 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
             ) : (
               <div key={idx} style={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: "92%" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, paddingLeft: 2 }}>
-                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)" }}>AI</span>
+                  <span style={{ fontSize: 10, color: c.muted }}>AI</span>
                   {/* 개별 메시지 TTS 재생 버튼 */}
                   {GOOGLE_TTS_KEY && (
                     <button
@@ -727,7 +754,7 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
                       title="음성으로 듣기"
                       style={{
                         background: "none", border: "none",
-                        color: "rgba(255,255,255,0.25)", fontSize: 11,
+                        color: c.muted, fontSize: 11,
                         cursor: "pointer", padding: "0 2px",
                       }}
                     >
@@ -739,14 +766,15 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
                   steps={m.steps}
                   collapsed={collapsedSteps[idx] === true}
                   onToggle={() => toggleStep(idx)}
+                  themeMode={themeMode}
                 />
                 <div style={{
                   padding: "9px 13px",
                   borderRadius: "3px 12px 12px 12px",
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: c.aiBg,
+                  border: `1px solid ${c.aiBorder}`,
                   fontSize: 13, lineHeight: 1.8,
-                  color: "rgba(255,255,255,0.72)", whiteSpace: "pre-line",
+                  color: c.aiText, whiteSpace: "pre-line",
                 }}>
                   {m.text}
                 </div>
@@ -781,9 +809,9 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
                         }}
                         style={{
                           padding: "3px 10px", fontSize: 11, borderRadius: 5,
-                          border: "1px solid rgba(255,255,255,0.1)",
-                          background: emailSent[idx] === "sending" ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.05)",
-                          color: emailSent[idx] === "sending" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.4)",
+                          border: `1px solid ${c.chipBorder}`,
+                          background: c.chipBg,
+                          color: emailSent[idx] === "sending" ? c.muted : c.chipText,
                           cursor: emailSent[idx] === "sending" ? "default" : "pointer",
                           fontFamily: "inherit",
                         }}
@@ -799,8 +827,8 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
 
           {loading && (
             <div style={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: "92%" }}>
-              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", paddingLeft: 2 }}>AI</span>
-              <ThinkingBlock steps={liveSteps} />
+              <span style={{ fontSize: 10, color: c.muted, paddingLeft: 2 }}>AI</span>
+              <ThinkingBlock steps={liveSteps} themeMode={themeMode} />
             </div>
           )}
 
@@ -810,7 +838,7 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
         {/* 입력 영역 */}
         <div style={{
           padding: "10px 16px 14px",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
+          borderTop: `1px solid ${c.sectionBorder}`,
           display: "flex", gap: 7, flexShrink: 0, alignItems: "center",
         }}>
           {/* 마이크 버튼 */}
@@ -822,11 +850,11 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
               width: 36, height: 36, borderRadius: 8, flexShrink: 0,
               border: listening
                 ? "1px solid rgba(255,80,80,0.6)"
-                : "1px solid rgba(255,255,255,0.1)",
+                : `1px solid ${c.chipBorder}`,
               background: listening
                 ? "rgba(255,60,60,0.18)"
-                : "rgba(255,255,255,0.05)",
-              color: listening ? "rgba(255,100,100,0.9)" : "rgba(255,255,255,0.45)",
+                : c.chipBg,
+              color: listening ? "rgba(255,100,100,0.9)" : c.chipText,
               fontSize: 13, cursor: loading ? "default" : "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               animation: listening ? "micPulse 1s ease infinite" : "none",
@@ -845,12 +873,12 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
             disabled={loading || listening}
             style={{
               flex: 1,
-              background: "rgba(255,255,255,0.05)",
+              background: c.inputBg,
               border: listening
                 ? "1px solid rgba(255,80,80,0.3)"
-                : "1px solid rgba(255,255,255,0.08)",
+                : `1px solid ${c.inputBorder}`,
               borderRadius: 8, padding: "9px 13px",
-              color: "rgba(255,255,255,0.82)", fontSize: 13,
+              color: c.text, fontSize: 13,
               outline: "none", fontFamily: "inherit",
               opacity: loading ? 0.5 : 1,
             }}
@@ -871,9 +899,9 @@ export default function AIChatBot({ selected, onClose, isMuted = false }) {
           ) : (
             <button onClick={() => sendChat()} style={{
               padding: "9px 16px", borderRadius: 8,
-              background: "rgba(255,255,255,0.09)",
-              border: "1px solid rgba(255,255,255,0.09)",
-              color: "rgba(255,255,255,0.7)",
+              background: c.sendBg,
+              border: `1px solid ${c.sendBorder}`,
+              color: c.sendText,
               fontSize: 13, fontWeight: 600,
               cursor: "pointer", fontFamily: "inherit",
             }}>

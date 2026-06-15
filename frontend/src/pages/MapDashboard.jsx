@@ -32,7 +32,7 @@ const TABS = [
 const CHAT_W = 480;
 const CHATBOT_ICON = "/icons/chatbot.webp";
 
-export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulation, onGoMyPage, onLogout, onGoComplaints, selectedGu, wsData, setWsData, initialCenter, wsStatus, lastUpdate, stations = [], isMuted, onToggleMute, isMicActive, onToggleMic, notifQueue = [], onDismissNotif, }) {
+export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulation, onGoMyPage, onLogout, onGoComplaints, selectedGu, wsData, setWsData, initialCenter, wsStatus, lastUpdate, stations = [], isMuted, onToggleMute, isMicActive, onToggleMic, notifQueue = [], onDismissNotif, themeMode, onToggleTheme, }) {
   const [time,         setTime]         = useState(new Date());
   const [selected,     setSelected]     = useState(null);
   const [activeTab,    setActiveTab]    = useState("map");
@@ -47,6 +47,7 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [complaintMapCenter, setComplaintMapCenter] = useState(null);
   const prevComplaintIdsRef = useRef(new Set());
+  const isLight = themeMode === "light";
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
@@ -122,7 +123,7 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
   const isConn      = wsStatus === "연결됨";
 
   return (
-    <div style={{ fontFamily: "'Noto Sans KR','Malgun Gothic',sans-serif", background: "#12100a", color: "#e2e8f0", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div style={{ fontFamily: "'Noto Sans KR','Malgun Gothic',sans-serif", background: "var(--syncro-bg0)", color: "var(--syncro-ink0)", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
       {/* 공통 헤더 */}
       <AppHeader
@@ -141,6 +142,8 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
         complaintCount={complaints.filter(c => c.status !== "완료").length}
         notifQueue={notifQueue}
         onDismissNotif={onDismissNotif}
+        themeMode={themeMode}
+        onToggleTheme={onToggleTheme}
         rightExtra={(
           <>
             {onToggleMute && (
@@ -148,8 +151,8 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
                 onClick={onToggleMute}
                 title={isMuted ? "음소거 해제" : "음소거"}
                 style={{
-                  background: isMuted ? "#1a0a0a" : "transparent",
-                  border: 0,
+                  background: isMuted ? "var(--syncro-danger-bg)" : "var(--syncro-icon-button-bg)",
+                  border: `1px solid ${isMuted ? "var(--syncro-danger-bd)" : "var(--syncro-icon-button-bd)"}`,
                   borderRadius: 999,
                   width: 32,
                   height: 32,
@@ -157,20 +160,12 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
+                  color: isMuted ? "var(--syncro-danger-text)" : "var(--syncro-icon-button-fg)",
+                  fontSize: 16,
                   flexShrink: 0,
                 }}
               >
-                <img
-                  src={isMuted ? "/icons/mute.png" : "/icons/speaker.png"}
-                  alt=""
-                  style={{
-                    width: 18,
-                    height: 18,
-                    objectFit: "contain",
-                    filter: "invert(1)",
-                    opacity: isMuted ? 1 : 0.9,
-                  }}
-                />
+                {isMuted ? "🔇" : "🔊"}
               </button>
             )}
           </>
@@ -191,22 +186,22 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
         <div style={{ display: "flex", flexDirection: "column", padding: isMobile ? 0 : "10px 6px 10px 10px", minHeight: 0 }}>
 
           {activeTab === "map" && (
-            <div style={{ flex: 1, position: "relative", minHeight: 0, borderRadius: isMobile ? 0 : 11, overflow: "hidden", border: isMobile ? "none" : "1px solid rgba(255,255,255,0.08)" }}>
-              <KakaoMapView crossroads={wsData} selected={selected} onSelect={selectCr} initialCenter={initialCenter} selectedGu={selectedGu} onCctvClick={setSelectedCctv} stations={stations} onStationSelect={(id) => { console.log("지도에서 선택된 지점 ID:", id); }} complaints={complaints.filter(c => c.status !== "완료")} onComplaintClick={setSelectedComplaint} complaintCenter={complaintMapCenter} />
+            <div style={{ flex: 1, position: "relative", minHeight: 0, borderRadius: isMobile ? 0 : 11, overflow: "hidden", border: isMobile ? "none" : "1px solid var(--syncro-line)", boxShadow: "var(--syncro-shadow)" }}>
+              <KakaoMapView crossroads={wsData} selected={selected} onSelect={selectCr} initialCenter={initialCenter} selectedGu={selectedGu} onCctvClick={setSelectedCctv} stations={stations} onStationSelect={(id) => { console.log("지도에서 선택된 지점 ID:", id); }} complaints={complaints.filter(c => c.status !== "완료")} onComplaintClick={setSelectedComplaint} complaintCenter={complaintMapCenter} themeMode={themeMode} />
 
               {/* ── 구별 민원 현황 배지 — 활성 민원 1건 이상일 때만 표시 ── */}
               {selectedGu && complaints.filter(c => c.status !== "완료").length > 0 && (
                 <div style={{
                   position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)",
                   zIndex: 20, display: "flex", alignItems: "center", gap: 10,
-                  background: "rgba(18,14,10,0.88)", border: "1px solid rgba(255,255,255,0.08)",
+                  background: isLight ? "rgba(248,251,255,0.92)" : "rgba(18,14,10,0.88)", border: isLight ? "1px solid var(--syncro-line)" : "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 8, padding: "7px 14px",
                   backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
                   pointerEvents: "none", whiteSpace: "nowrap",
                 }}>
                   <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#ffaa33", display: "inline-block", flexShrink: 0 }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#aab4c8", display: "flex", alignItems: "center", gap: 8 }}>
-                    <b style={{ color: "#e7ecf5" }}>{selectedGu.name}</b>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "var(--syncro-ink1)", display: "flex", alignItems: "center", gap: 8 }}>
+                    <b style={{ color: "var(--syncro-ink0)" }}>{selectedGu.name}</b>
                     <span>현재 민원</span>
                     <b style={{ color: "#ffaa33" }}>{complaints.filter(c => c.status !== "완료").length}건</b>
                   </span>
@@ -224,9 +219,9 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
               )}
 
               {wsData.length === 0 && (
-                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(7,12,23,0.75)", zIndex: 30, gap: 10 }}>
-                  <div style={{ fontSize: 15, color: "#94a3b8" }}>V2X 데이터 수신 대기 중...</div>
-                  <div style={{ fontSize: 13, color: "#475569" }}>스프링 부트 실행 확인 (port 8080)</div>
+                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: isLight ? "rgba(248,251,255,0.78)" : "rgba(7,12,23,0.75)", zIndex: 30, gap: 10 }}>
+                  <div style={{ fontSize: 15, color: "var(--syncro-ink2)" }}>V2X 데이터 수신 대기 중...</div>
+                  <div style={{ fontSize: 13, color: "var(--syncro-ink3)" }}>스프링 부트 실행 확인 (port 8080)</div>
                 </div>
               )}
 
@@ -276,8 +271,8 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
                 <div
                   style={{
                     position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 60,
-                    background: "rgba(10,10,10,0.97)",
-                    borderTop: "1px solid #2a2418",
+                    background: isLight ? "rgba(248,251,255,0.97)" : "rgba(10,10,10,0.97)",
+                    borderTop: "1px solid var(--syncro-line)",
                     borderRadius: "14px 14px 0 0",
                     backdropFilter: "blur(14px)",
                     WebkitBackdropFilter: "blur(14px)",
@@ -301,12 +296,12 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
                     onClick={() => setSheetOpen(o => !o)}
                     style={{ padding: "12px 16px 10px", cursor: "pointer", flexShrink: 0, userSelect: "none" }}
                   >
-                    <div style={{ width: 38, height: 4, borderRadius: 999, background: "#3a3a3a", margin: "0 auto 10px" }} />
+                    <div style={{ width: 38, height: 4, borderRadius: 999, background: "var(--syncro-line2)", margin: "0 auto 10px" }} />
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <span style={{ fontSize: 12, color: "#4ea6ff", fontFamily: "monospace", fontWeight: 600 }}>교차로 {wsData.length}개</span>
                       <span style={{ fontSize: 12, color: "#ff5566", fontFamily: "monospace", fontWeight: 600 }}>위험 {wsData.filter(isHighRisk).length}개</span>
                       <span style={{ fontSize: 12, color: "#2ee07a", fontFamily: "monospace", fontWeight: 600 }}>평균 {avgSpeed}km/h</span>
-                      <span style={{ marginLeft: "auto", color: "#7a7a7a", fontSize: 14 }}>{sheetOpen ? "▼" : "▲"}</span>
+                      <span style={{ marginLeft: "auto", color: "var(--syncro-ink2)", fontSize: 14 }}>{sheetOpen ? "▼" : "▲"}</span>
                     </div>
                   </div>
                   {/* 스크롤 콘텐츠 */}
@@ -330,7 +325,7 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
               {/* 좌측 하단: 신호 현황 오버레이 */}
               {selected && signalPanelOpen && (
                 <div style={{ position: "absolute", bottom: isMobile ? 76 : 14, left: 14, display: "flex", flexDirection: "column", gap: 8, zIndex: 20, width: 460, maxWidth: "calc(100% - 28px)", pointerEvents: "auto" }}>
-                  <div style={{ background: "rgba(18,16,10,0.75)", border: "1px solid rgba(42,36,24,0.8)", borderRadius: 10, padding: 16, backdropFilter: "blur(8px)" }}>
+                  <div style={{ background: isLight ? "rgba(248,251,255,0.9)" : "rgba(18,16,10,0.75)", border: "1px solid var(--syncro-line)", borderRadius: 10, padding: 16, backdropFilter: "blur(8px)", boxShadow: "var(--syncro-shadow)" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, gap: 8 }}>
                       <div style={{ fontSize: 17, color: "#4ea6ff", fontWeight: 800, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selected.crsrdNm}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
@@ -358,14 +353,14 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
         </div>
 
         {/* 우측 사이드바 — 모바일에서 숨김 */}
-        {!isMobile && <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "10px 10px 10px 4px", overflowY: "auto", background: "#12100a" }}>
+        {!isMobile && <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "10px 10px 10px 4px", overflowY: "auto", background: "var(--syncro-bg0)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
             {[
               { label: "교차로 수",   value: wsData.length,                    suffix: "개",   color: "#4ea6ff" },
               { label: "위험 교차로", value: wsData.filter(isHighRisk).length,  suffix: "개",   color: "#ff5566" },
               { label: "평균 속도",   value: avgSpeed,                          suffix: "km/h", color: "#2ee07a" },
             ].map(s => (
-              <div key={s.label} style={{ background: "#1a1710", border: "1px solid #2a2418", borderRadius: 2, padding: "12px 10px", textAlign: "center" }}>
+              <div key={s.label} style={{ background: "var(--syncro-bg1)", border: "1px solid var(--syncro-line)", borderRadius: 2, padding: "12px 10px", textAlign: "center", boxShadow: "var(--syncro-inner-shadow)" }}>
                 <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: "monospace" }}>{s.value}<span style={{ fontSize: 13 }}>{s.suffix}</span></div>
                 <div style={{ fontSize: 12, color: "#7a7a7a", marginTop: 3 }}>{s.label}</div>
               </div>
@@ -388,6 +383,7 @@ export default function MapDashboard({ onGoMain, onGoCctv, onGoNews, onGoSimulat
               selected={selected}
               onClose={() => setChatOpen(false)}
               isMuted={isMuted}
+              themeMode={themeMode}
             />
           </div>
         )}
