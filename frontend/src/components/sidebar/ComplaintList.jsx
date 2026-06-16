@@ -68,8 +68,8 @@ export default function ComplaintList({ complaints, onSelect, selected, onStatus
               style={{
                 display: "flex", alignItems: "flex-start", gap: 10,
                 padding: "9px 10px", borderRadius: 2, marginBottom: 5,
-                background: isSel ? meta.bg : "transparent",
-                border: `1px solid ${isSel ? meta.bd : V.line}`,
+                background: isSel ? "var(--syncro-selected-bg)" : "transparent",
+                border: `1px solid ${isSel ? meta.color : V.line}`,
                 cursor: "pointer",
               }}
               onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "var(--syncro-selected-bg)"; }}

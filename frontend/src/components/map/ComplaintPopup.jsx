@@ -2,9 +2,10 @@ const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:8080").repla
 
 const STATUS_COLOR = { "접수": "#ffaa33", "처리중": "#4ea6ff", "완료": "#2ee07a" };
 
+// 테마(라이트/다크) 따라 자동 전환되는 CSS 변수 사용
 const V = {
-  bg0: "#000", bg1: "#0a0a0a", line: "#1a1a1a",
-  ink0: "#e7ecf5", ink1: "#aab4c8", ink2: "#7a7a7a",
+  bg0: "var(--syncro-bg0)", bg1: "var(--syncro-bg1)", bg2: "var(--syncro-bg2)", line: "var(--syncro-line)",
+  ink0: "var(--syncro-ink0)", ink1: "var(--syncro-ink1)", ink2: "var(--syncro-ink2)",
   org: "#ffaa33", red: "#ff5566",
   mono: "'IBM Plex Mono',ui-monospace,Menlo,monospace",
   sans: "'Pretendard','Noto Sans KR',system-ui,sans-serif",
@@ -21,7 +22,7 @@ export default function ComplaintPopup({ complaint, onClose }) {
       <div style={{ background: V.bg1, border: `1px solid ${V.line}`, borderRadius: 2, width: photos.length > 0 ? 720 : 480, maxWidth: "95vw", maxHeight: "85vh", display: "flex", flexDirection: "column", boxShadow: "0 8px 32px rgba(0,0,0,0.8)" }}>
 
         {/* 헤더 */}
-        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${V.line}`, background: "#080808", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${V.line}`, background: V.bg2, display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <span style={{ fontFamily: V.mono, fontSize: 10, color: V.org, letterSpacing: ".5px", fontWeight: 700 }}>민원</span>
           <span style={{ fontSize: 14, fontWeight: 700, color: V.ink0, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{complaint.title}</span>
           <span style={{ fontFamily: V.mono, fontSize: 11, color: statusColor, fontWeight: 700 }}>{complaint.status || "접수"}</span>
@@ -48,7 +49,7 @@ export default function ComplaintPopup({ complaint, onClose }) {
             </div>
 
             {complaint.aiReason && (
-              <div style={{ padding: "10px 12px", background: "#080808", border: `1px solid ${V.line}`, borderRadius: 2 }}>
+              <div style={{ padding: "10px 12px", background: V.bg0, border: `1px solid ${V.line}`, borderRadius: 2 }}>
                 <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ink2, letterSpacing: ".4px", marginBottom: 5 }}>AI 분석</div>
                 <div style={{ fontSize: 12, color: V.ink1, lineHeight: 1.6 }}>· {complaint.aiReason}</div>
               </div>
@@ -85,7 +86,7 @@ export default function ComplaintPopup({ complaint, onClose }) {
         </div>
 
         {/* 하단 */}
-        <div style={{ padding: "12px 18px", borderTop: `1px solid ${V.line}`, background: "#060606", fontFamily: V.mono, fontSize: 11, color: V.ink2, display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        <div style={{ padding: "12px 18px", borderTop: `1px solid ${V.line}`, background: V.bg2, fontFamily: V.mono, fontSize: 11, color: V.ink2, display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <span>민원번호 #{complaint.id || "—"}</span>
           <span style={{ color: V.line }}>·</span>
           <span>📍 {complaint.address || "위치 정보 없음"}</span>

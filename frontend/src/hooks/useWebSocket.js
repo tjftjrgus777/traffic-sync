@@ -27,10 +27,32 @@ function normalizeTrafficStatuses(list) {
   });
 }
 
+// 빈 신호 broadcast가 와도 화면이 비지 않도록, crsrdId별 마지막 신호를 브라우저에 기억해 빈 곳을 채운다.
+// (crsrdId 키라 구를 바꿔도 섞이지 않음. 백엔드가 빈 신호를 보내도 프론트가 마지막 값으로 메움.)
+function fillAndRecordSignals(list, store) {
+  if (!Array.isArray(list)) return list;
+  return list.map(s => {
+    const id = s.crsrdId;
+    if (id == null) return s;
+    const hasSignals = s.signals && Object.keys(s.signals).length > 0;
+    if (hasSignals) {
+      store[id] = { signals: s.signals, totDt: s.totDt };
+      return s;
+    }
+    const known = store[id];
+    if (known) {
+      return { ...s, signals: known.signals, totDt: s.totDt || known.totDt };
+    }
+    return s;
+  });
+}
+
 export function useWebSocket(setWsData) {
   const [wsStatus, setWsStatus] = useState("연결 중...");
   const [lastUpdate, setLastUpdate] = useState(null);
   const wsRef = useRef(null);
+  // crsrdId → 마지막으로 신호가 있던 값. 빈 broadcast가 와도 이 값으로 채워 화면 유지.
+  const lastSignalsRef = useRef({});
 
   useEffect(() => {
     const WS = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:8080/ws/traffic`;
@@ -55,7 +77,7 @@ export function useWebSocket(setWsData) {
           .then(res => res.ok ? res.json() : [])
           .then(list => {
             if (!destroyed && Array.isArray(list) && list.length > 0) {
-              setWsData(normalizeTrafficStatuses(list));
+              setWsData(normalizeTrafficStatuses(fillAndRecordSignals(list, lastSignalsRef.current)));
               setLastUpdate(new Date());
             }
           })
@@ -66,7 +88,7 @@ export function useWebSocket(setWsData) {
         if (destroyed) return;
         try {
           const list = JSON.parse(e.data);
-          setWsData(normalizeTrafficStatuses(list));
+          setWsData(normalizeTrafficStatuses(fillAndRecordSignals(list, lastSignalsRef.current)));
           setLastUpdate(new Date());
         } catch (err) {
           console.error("WS 파싱:", err);

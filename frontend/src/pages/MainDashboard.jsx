@@ -599,7 +599,7 @@ function SpeedDropdown({ options, selected, onToggle }) {
         <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: V.ink2 }}>▾</span>
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "110%", left: 0, zIndex: 200, background: "#0d0d0d", border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 280, boxShadow: "0 8px 32px rgba(0,0,0,.8)" }}>
+        <div style={{ position: "absolute", top: "110%", left: 0, zIndex: 200, background: V.bg1, border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 280, boxShadow: "0 8px 24px rgba(0,0,0,.18)" }}>
           {/* 검색 입력 */}
           <div style={{ padding: "8px 10px", borderBottom: `1px solid ${V.line}` }}>
             <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
@@ -670,7 +670,7 @@ function RiskDropdown({ options, selectedIdx, onChange, watchIds = [] }) {
         <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: V.ink2 }}>▾</span>
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "110%", left: 0, zIndex: 200, background: "#0d0d0d", border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 300, boxShadow: "0 8px 32px rgba(0,0,0,.8)" }}>
+        <div style={{ position: "absolute", top: "110%", left: 0, zIndex: 200, background: V.bg1, border: `1px solid ${V.line}`, borderRadius: 2, minWidth: 300, boxShadow: "0 8px 24px rgba(0,0,0,.18)" }}>
           <div style={{ padding: "8px 10px", borderBottom: `1px solid ${V.line}` }}>
             <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
               placeholder="교차로 검색..."
