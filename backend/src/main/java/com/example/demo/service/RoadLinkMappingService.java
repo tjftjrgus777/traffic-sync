@@ -197,12 +197,18 @@ public class RoadLinkMappingService {
         return bestDiff <= SNAP_TOLERANCE_DEGREES ? best : null;
     }
 
+    // 신호가 없을 때(V2X 빈 응답 등) 폴백 방위 코드 — 4방위(N/E/S/W)로만 스냅한다.
+    // 비스듬한 간선이 북서/남동 등 대각 칸으로 흩어지는 것을 막아, 사거리는 최대 4방향으로 깔끔하게 표시.
+    // (신호가 있으면 snapToAvailableDirection이 실제 신호 방향에 스냅하므로 이 폴백은 안 탐)
+    private static final String[] CARDINAL_CODES = {"nt", "et", "st", "wt"}; // N, E, S, W
+
     private static String directionCodeForBearing(double bearingDegrees) {
         if (Double.isNaN(bearingDegrees)) {
             return null;
         }
-        int sector = (int) Math.floor(((bearingDegrees + 22.5) % 360.0) / 45.0);
-        return DIRECTION_CODES[sector];
+        // 90°씩 4칸: N(315~45) / E(45~135) / S(135~225) / W(225~315)
+        int sector = (int) Math.floor(((bearingDegrees + 45.0) % 360.0) / 90.0) % 4;
+        return CARDINAL_CODES[sector];
     }
 
     // 두 방위각(0~360°) 사이의 최소 차이(0~180°).

@@ -30,6 +30,22 @@ function speedColor(speed) {
   return "#22c55e";
 }
 
+// 방향별 진입 속도 → 혼잡 등급 라벨 (speedColor와 동일 기준: 정체<15, 서행<25, 원활)
+function congLabel(speed) {
+  if (!Number.isFinite(speed)) return "";
+  if (speed < 15) return "정체";
+  if (speed < 25) return "서행";
+  return "원활";
+}
+
+// 혼잡 배지 배경(반투명) — 흑/백 모드 모두 자연스럽게 보이도록 rgba 사용
+function congBg(speed) {
+  if (!Number.isFinite(speed)) return "rgba(107,114,128,0.15)";
+  if (speed < 15) return "rgba(239,68,68,0.15)";
+  if (speed < 25) return "rgba(245,158,11,0.15)";
+  return "rgba(34,197,94,0.15)";
+}
+
 // ── TrafficLight ──────────────────────────────────────────────────────────────
 /**
  * 신호등 1개 컴포넌트
@@ -168,17 +184,29 @@ function TrafficLight({ status, rmndCs, elapsed }) {
  * @param {number} elapsed - TrafficLight에 전달할 경과 시간
  */
 function DirCard({ dir, label, arrow, signals, speeds, elapsed }) {
-  // 해당 방향의 SignalDirection 객체 추출
-  // SignalDirection: { stsg, ltsg, pdsg, utsg, bssg, bcsg } 각각 DirectionSignal | null
+  // 해당 방향의 SignalDirection 객체 / 진입 속도 추출
   const d = signals?.[dir];
-  if (!d) return null; // 데이터 없는 방향은 아예 렌더링 안 함 (레이아웃 공백 방지)
-
-  // 실제 데이터가 있는 신호 종류만 필터링 (d[key]가 null/undefined면 제외)
-  const activeSigs = SIGNAL_TYPES.filter(({ key }) => !!d[key]);
-
-  // 이 방향으로 교차로에 진입하는 도로의 실시간 속도(km/h). 없으면 수집 중.
   const speed = speeds?.[dir];
   const hasSpeed = Number.isFinite(speed);
+  const hasSignal = !!d;
+  // 신호도 속도도 없는 방향: 8방향 십자 레이아웃 유지를 위해 흐린 빈 카드 표시
+  if (!hasSignal && !hasSpeed) {
+    return (
+      <div style={{
+        background: "var(--syncro-bg2)", border: "1px dashed var(--syncro-line)",
+        borderRadius: 8, padding: "10px 8px",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
+        flex: 1, minWidth: 0, overflow: "hidden", opacity: 0.45,
+      }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "var(--syncro-ink3)", lineHeight: 1.1 }}>{arrow} {label}</div>
+        <span style={{ fontSize: 11, color: "var(--syncro-ink3)" }}>수집 없음</span>
+      </div>
+    );
+  }
+
+  // 실제 데이터가 있는 신호 종류만 필터링 (d[key]가 null/undefined면 제외)
+  const activeSigs = d ? SIGNAL_TYPES.filter(({ key }) => !!d[key]) : [];
+  const sc = speedColor(speed);
 
   return (
     <div style={{
@@ -193,41 +221,53 @@ function DirCard({ dir, label, arrow, signals, speeds, elapsed }) {
         {arrow} {label}
       </div>
 
-      {/* 신호 종류별 TrafficLight 가로 나열 */}
-      <div style={{ display: "flex", gap: 8, alignItems: "flex-start", justifyContent: "center", maxWidth: "100%" }}>
-        {activeSigs.map(({ key, label: sLabel }) => {
-          const sig = d[key]; // DirectionSignal { status, rmndCs }
-          return (
-            <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 0 }}>
-              {/* 신호등 그래픽 + 카운트다운 */}
-              <TrafficLight
-                status={sig.status}   // "protected-Movement-Allowed" 등
-                rmndCs={sig.rmndCs}   // 잔여 데시초
-                elapsed={elapsed}     // 경과 시간 (실시간 차감용)
-              />
-              {/* 신호 종류 라벨 (직진 / 좌회전 / 보행) */}
-              <div style={{ fontSize: 13, color: "var(--syncro-ink2)", whiteSpace: "nowrap" }}>{sLabel}</div>
-            </div>
-          );
-        })}
-      </div>
+      {hasSignal ? (
+        <>
+          {/* 신호 종류별 TrafficLight 가로 나열 */}
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", justifyContent: "center", maxWidth: "100%" }}>
+            {activeSigs.map(({ key, label: sLabel }) => {
+              const sig = d[key]; // DirectionSignal { status, rmndCs }
+              return (
+                <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 0 }}>
+                  {/* 신호등 그래픽 + 카운트다운 */}
+                  <TrafficLight status={sig.status} rmndCs={sig.rmndCs} elapsed={elapsed} />
+                  {/* 신호 종류 라벨 (직진 / 좌회전 / 보행) */}
+                  <div style={{ fontSize: 13, color: "var(--syncro-ink2)", whiteSpace: "nowrap" }}>{sLabel}</div>
+                </div>
+              );
+            })}
+          </div>
 
-      {/* 이 방향 진입 속도 (TOPIS 진입 링크 기준) */}
-      <div style={{
-        display: "flex", alignItems: "baseline", gap: 3,
-        borderTop: "1px solid var(--syncro-line)", paddingTop: 6, marginTop: 2,
-      }}>
-        {hasSpeed ? (
-          <>
-            <span style={{ fontSize: 16, fontWeight: 800, fontFamily: "monospace", color: speedColor(speed) }}>
-              {speed}
-            </span>
-            <span style={{ fontSize: 11, color: "var(--syncro-ink2)" }}>km/h 진입</span>
-          </>
-        ) : (
-          <span style={{ fontSize: 11, color: "var(--syncro-ink3)" }}>속도 수집 중</span>
-        )}
-      </div>
+          {/* 진입 속도 + 혼잡 등급 (신호 있을 때도 함께 표시) */}
+          <div style={{
+            display: "flex", alignItems: "baseline", gap: 4, justifyContent: "center", flexWrap: "wrap",
+            borderTop: "1px solid var(--syncro-line)", paddingTop: 6, marginTop: 2,
+          }}>
+            {hasSpeed ? (
+              <>
+                <span style={{ fontSize: 16, fontWeight: 800, fontFamily: "monospace", color: sc }}>{speed}</span>
+                <span style={{ fontSize: 11, color: "var(--syncro-ink2)" }}>km/h</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: sc }}>· {congLabel(speed)}</span>
+              </>
+            ) : (
+              <span style={{ fontSize: 11, color: "var(--syncro-ink3)" }}>속도 수집 중</span>
+            )}
+          </div>
+        </>
+      ) : (
+        /* 신호 없음 → 진입 속도만 크게 표시 */
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "8px 0 2px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
+            <span style={{ fontSize: 26, fontWeight: 800, fontFamily: "monospace", color: sc, lineHeight: 1 }}>{speed}</span>
+            <span style={{ fontSize: 11, color: "var(--syncro-ink2)" }}>km/h</span>
+          </div>
+          {/* 혼잡 배지 */}
+          <span style={{ fontSize: 11, fontWeight: 700, color: sc, background: congBg(speed), borderRadius: 999, padding: "2px 9px" }}>
+            {congLabel(speed)}
+          </span>
+          <span style={{ fontSize: 10, color: "var(--syncro-ink3)" }}>진입 속도</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -290,15 +330,12 @@ export default function SignalPanel({ cr }) {
       {/* API 수집 시각 표시 */}
       <div style={{ fontSize: 13, color: "var(--syncro-ink2)" }}>API 수집: {ts}</div>
 
-      {/* ── 북쪽 행: 북서 / 북 / 북동 ──────────────────────────────────────── */}
-      {/* 셋 중 하나라도 데이터 있을 때만 행 전체 렌더 */}
-      {(s.north || s.northeast || s.northwest) && (
-        <div style={{ display: "flex", gap: 8, minWidth: 0 }}>
-          {s.northwest && <DirCard dir="northwest" label="북서" arrow="↖" signals={s} speeds={spd} elapsed={elapsed} />}
-          {s.north     && <DirCard dir="north"     label="북"   arrow="↑" signals={s} speeds={spd} elapsed={elapsed} />}
-          {s.northeast && <DirCard dir="northeast" label="북동" arrow="↗" signals={s} speeds={spd} elapsed={elapsed} />}
-        </div>
-      )}
+      {/* ── 북쪽 행: 북서 / 북 / 북동 (8방향 항상 표시) ─────────────────────── */}
+      <div style={{ display: "flex", gap: 8, minWidth: 0 }}>
+        <DirCard dir="northwest" label="북서" arrow="↖" signals={s} speeds={spd} elapsed={elapsed} />
+        <DirCard dir="north"     label="북"   arrow="↑" signals={s} speeds={spd} elapsed={elapsed} />
+        <DirCard dir="northeast" label="북동" arrow="↗" signals={s} speeds={spd} elapsed={elapsed} />
+      </div>
 
       {/* ── 가운데 행: 서 / 중앙 박스 / 동 ─────────────────────────────────── */}
       <div style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}>
@@ -344,15 +381,12 @@ export default function SignalPanel({ cr }) {
         <DirCard dir="east" label="동" arrow="→" signals={s} speeds={spd} elapsed={elapsed} />
       </div>
 
-      {/* ── 남쪽 행: 남서 / 남 / 남동 ──────────────────────────────────────── */}
-      {/* 셋 중 하나라도 데이터 있을 때만 행 전체 렌더 */}
-      {(s.south || s.southeast || s.southwest) && (
-        <div style={{ display: "flex", gap: 8, minWidth: 0 }}>
-          {s.southwest && <DirCard dir="southwest" label="남서" arrow="↙" signals={s} speeds={spd} elapsed={elapsed} />}
-          {s.south     && <DirCard dir="south"     label="남"   arrow="↓" signals={s} speeds={spd} elapsed={elapsed} />}
-          {s.southeast && <DirCard dir="southeast" label="남동" arrow="↘" signals={s} speeds={spd} elapsed={elapsed} />}
-        </div>
-      )}
+      {/* ── 남쪽 행: 남서 / 남 / 남동 (8방향 항상 표시) ─────────────────────── */}
+      <div style={{ display: "flex", gap: 8, minWidth: 0 }}>
+        <DirCard dir="southwest" label="남서" arrow="↙" signals={s} speeds={spd} elapsed={elapsed} />
+        <DirCard dir="south"     label="남"   arrow="↓" signals={s} speeds={spd} elapsed={elapsed} />
+        <DirCard dir="southeast" label="남동" arrow="↘" signals={s} speeds={spd} elapsed={elapsed} />
+      </div>
     </div>
   );
 }
