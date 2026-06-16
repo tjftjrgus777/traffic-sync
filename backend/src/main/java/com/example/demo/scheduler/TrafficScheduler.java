@@ -99,9 +99,9 @@ public class TrafficScheduler {
                         signalCount, crossroads.size(), crossroads.size() - signalCount);
             }
 
-            // V2X 빈/부분 응답으로 신호가 비면 직전 캐시의 마지막 신호를 유지(과거 스냅샷 보존)해
-            // 화면에서 신호등이 깜빡 사라지는 것을 막는다.
-            preserveStaleSignals(freshData);
+            // V2X 빈/부분 응답이거나 구를 바꿔도, 한 번이라도 받은 신호는 영구 보관소에서 채워
+            // 화면에서 신호등이 사라지는 것을 막는다. (enrich 전에 채워야 avgWait/혼잡도도 정확)
+            cacheService.fillStaleSignals(freshData);
 
             // 프론트와 챗봇이 같은 값을 쓰도록 실제 보조 API 캐시와 계산 지표를 합친다.
             supplementalDataCacheService.enrichTrafficStatuses(freshData);
@@ -133,30 +133,5 @@ public class TrafficScheduler {
             skeletons.put(c.getCrsrdId(), status);
         }
         return skeletons;
-    }
-
-    // 새 폴링 결과에서 신호가 비어 있으면(빈 응답·부분 응답·스켈레톤) 직전 캐시의
-    // 마지막 신호를 그대로 살려둔다. V2X 피드가 간헐적으로 NODATA를 줘도 신호등이
-    // 화면에서 사라지지 않게 하는 stale 보존 로직.
-    private void preserveStaleSignals(Map<String, TrafficStatus> freshData) {
-        Map<String, TrafficStatus> previous = cacheService.getAllSignals();
-        if (previous == null || previous.isEmpty()) return;
-        int preserved = 0;
-        for (Map.Entry<String, TrafficStatus> entry : freshData.entrySet()) {
-            TrafficStatus fresh = entry.getValue();
-            if (fresh == null) continue;
-            Map<String, com.example.demo.model.SignalDirection> signals = fresh.getSignals();
-            boolean freshEmpty = (signals == null || signals.isEmpty());
-            if (!freshEmpty) continue;
-            TrafficStatus old = previous.get(entry.getKey());
-            if (old == null || old.getSignals() == null || old.getSignals().isEmpty()) continue;
-            // 직전 신호를 유지 (수집 시각도 함께 보존)
-            fresh.setSignals(old.getSignals());
-            fresh.setTotDt(old.getTotDt());
-            preserved++;
-        }
-        if (preserved > 0) {
-            log.info("신호 stale 보존: 빈 신호 {}개를 직전 캐시로 유지", preserved);
-        }
     }
 }

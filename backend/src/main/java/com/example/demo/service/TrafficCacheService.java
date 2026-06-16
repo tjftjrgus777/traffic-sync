@@ -10,7 +10,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import lombok.extern.slf4j.Slf4j;
+
 // 교차로 정보 및 신호 데이터를 메모리에 캐싱 (PoC용, 추후 Redis로 교체)
+@Slf4j
 @Service
 // - 교차로ID → 교차로 정보
 public class TrafficCacheService {
@@ -53,27 +56,53 @@ public class TrafficCacheService {
         signalCache.put(crsrdId, status);
     }
 
+    // 구를 바꾸면(=캐시 교체) signalCache는 새 구로 갈리지만, 이 맵은 지금까지 본 모든 교차로의
+    // 마지막 "실제 신호"를 crsrdId로 영구 보관한다. 구를 오가도·V2X가 빈 응답을 줘도 한 번 본 신호는 복원된다.
+    // (crsrdId가 키라 구가 달라도 섞이지 않음. 서버 재시작 시에는 비워짐 — 메모리 보관)
+    private final Map<String, TrafficStatus> lastKnownSignals = new ConcurrentHashMap<>();
+
     // 전체 업데이트 메서드: 새 맵을 생성해 참조를 원자적으로 교체 → clear()+putAll() 의 부분 읽기 문제 제거
-    // 추가로, 새 데이터에서 신호가 비어 있으면(V2X 빈/부분 응답·스켈레톤) 직전 캐시의 마지막 신호를
-    // 같은 crsrdId 기준으로 유지(stale 보존)한다. 폴링·구역선택·속도 broadcast 등 모든 캐시 갱신 경로에서
-    // 신호등이 화면에서 사라지는 것을 막는다. (구를 바꾸면 crsrdId가 달라 보존이 일어나지 않으므로 오염 없음)
+    // 갱신 시 ① 실제 신호는 영구 보관소에 기록하고 ② 빈 신호는 영구 보관소의 마지막 값으로 채운다.
+    // 폴링·구역선택·속도 broadcast 등 모든 캐시 갱신 경로에서 신호등이 화면에서 사라지는 것을 막는다.
     public void updateAllSignals(Map<String, TrafficStatus> statusMap) {
         if (statusMap != null) {
-            Map<String, TrafficStatus> previous = signalCache;
-            if (previous != null && !previous.isEmpty()) {
-                for (Map.Entry<String, TrafficStatus> entry : statusMap.entrySet()) {
-                    TrafficStatus fresh = entry.getValue();
-                    if (fresh == null) continue;
-                    Map<String, com.example.demo.model.SignalDirection> sig = fresh.getSignals();
-                    if (sig != null && !sig.isEmpty()) continue;   // 새 신호가 있으면 그대로 사용
-                    TrafficStatus old = previous.get(entry.getKey());
-                    if (old == null || old.getSignals() == null || old.getSignals().isEmpty()) continue;
-                    fresh.setSignals(old.getSignals());            // 직전 신호 유지 (제자리 갱신 → broadcast에도 반영)
-                    fresh.setTotDt(old.getTotDt());
-                }
-            }
+            recordLastKnown(statusMap);   // 새로 들어온 실제 신호를 영구 보관소에 저장
+            fillStaleSignals(statusMap);  // 빈 신호는 영구 보관소의 마지막 값으로 채움(구 무관)
         }
         signalCache = new ConcurrentHashMap<>(statusMap);
+    }
+
+    // 새 데이터에서 신호가 비어 있으면 영구 보관소(lastKnownSignals)의 같은 crsrdId 마지막 신호로 채운다.
+    // 제자리(in-place) 갱신이라 이 맵을 그대로 broadcast하는 경로(MapController 등)에도 반영된다.
+    // enrich 전에 호출해야 avgWait/혼잡도 계산도 정확하므로 폴링에서 별도로 한 번 더 호출한다.
+    public void fillStaleSignals(Map<String, TrafficStatus> statusMap) {
+        if (statusMap == null || lastKnownSignals.isEmpty()) return;
+        int filled = 0;
+        for (Map.Entry<String, TrafficStatus> entry : statusMap.entrySet()) {
+            TrafficStatus fresh = entry.getValue();
+            if (fresh == null) continue;
+            Map<String, com.example.demo.model.SignalDirection> sig = fresh.getSignals();
+            if (sig != null && !sig.isEmpty()) continue;   // 새 신호가 있으면 그대로 사용
+            TrafficStatus known = lastKnownSignals.get(entry.getKey());
+            if (known == null || known.getSignals() == null || known.getSignals().isEmpty()) continue;
+            fresh.setSignals(known.getSignals());
+            fresh.setTotDt(known.getTotDt());
+            filled++;
+        }
+        if (filled > 0) {
+            log.info("신호 영구보존: 빈 신호 {}개를 마지막 신호로 복원", filled);
+        }
+    }
+
+    // 실제 신호가 있는 상태만 영구 보관소에 저장(빈 신호는 저장 안 함 → 옛 값을 덮어쓰지 않음).
+    private void recordLastKnown(Map<String, TrafficStatus> statusMap) {
+        for (Map.Entry<String, TrafficStatus> entry : statusMap.entrySet()) {
+            TrafficStatus s = entry.getValue();
+            if (s == null) continue;
+            Map<String, com.example.demo.model.SignalDirection> sig = s.getSignals();
+            if (sig == null || sig.isEmpty()) continue;
+            lastKnownSignals.put(entry.getKey(), s);
+        }
     }
 
     // 조회 메서드 (교차로ID로 신호 상태 조회, 캐시에 없으면 null 반환) --> 챗봇이 답변 생성할 때 그 교차로ID에 해당하는 신호 상태 가져올 때
