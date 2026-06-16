@@ -1,0 +1,12 @@
+flask
+flask-cors
+python-dotenv
+aiohttp
+oracledb
+torch
+transformers
+beautifulsoup4
+konlpy
+openai
+joblib
+scikit-learn

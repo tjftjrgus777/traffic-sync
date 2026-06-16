@@ -6,6 +6,9 @@ import datetime
 import xgboost
 import oracledb
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -16,12 +19,19 @@ model = joblib.load(os.path.join(BASE_DIR, 'xgboost_traffic_model.joblib'))
 
 # 2. DB 접속 설정
 db_config = {
-     "user": "ADMIN",
-     "password": "Heeyoun1220!",
-     "dsn": "koreapoint_medium",
-
-
-     "wallet_location": "C:/final__project/traffic-sync/backend/src/main/resources/wallet"
+# <<<<<<< HEAD
+#      "user": "ADMIN",
+#      "password": "Heeyoun1220!",
+#      "dsn": "koreapoint_medium",
+#
+#
+#      "wallet_location": "C:/final__project/traffic-sync/backend/src/main/resources/wallet"
+#
+# =======
+     "user": os.getenv("ORACLE_USER", "ADMIN"),
+     "password": os.getenv("ORACLE_PASSWORD"),
+     "dsn": os.getenv("ORACLE_DSN", "koreapoint_medium"),
+     "wallet_location": os.getenv("ORACLE_WALLET_PATH", os.path.join(BASE_DIR, "../src/main/resources/wallet")),
 
 
 }

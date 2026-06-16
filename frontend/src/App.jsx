@@ -195,29 +195,34 @@ export default function App() {
         // 임시 비번이면 브리핑 없이 마이페이지로
         if (data.isTempPw) { assistant.greetOnLogin(name, gu); return }
 
-        // 날씨 + 민원 미처리 건수 병렬 fetch
+        // 날씨 + 민원 미처리 건수 병렬 fetch (각각 독립적으로 처리)
         let weatherDesc = '정보 없음', temp = '--', pendingCount = 0
+
+        // 민원 건수 (위치와 무관하게 항상 호출)
         try {
-          const pos = await new Promise((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(
-              p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-              reject, { timeout: 5000 }
-            )
-          )
-          const [wRes, cRes] = await Promise.all([
-            fetch(`${API}/api/civil/auth/weather?lat=${pos.lat}&lng=${pos.lng}`),
-            fetch(`${API}/api/complaints`),
-          ])
-          if (wRes.ok) {
-            const w = await wRes.json()
-            weatherDesc = w.description || '정보 없음'
-            temp = w.temperatureC != null ? `${Math.round(w.temperatureC)}도` : '--'
-          }
+          const cRes = await fetch(`${API}/api/complaints`)
           if (cRes.ok) {
             const complaints = await cRes.json()
             pendingCount = Array.isArray(complaints)
               ? complaints.filter(c => c.status === '접수').length
               : 0
+          }
+        } catch {}
+
+        // 날씨 (위치 권한 실패 시 강남구 기본 좌표 사용)
+        try {
+          const pos = await new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+              () => resolve({ lat: 37.4979, lng: 127.0577 }),
+              { timeout: 5000 }
+            )
+          })
+          const wRes = await fetch(`${API}/api/civil/auth/weather?lat=${pos.lat}&lng=${pos.lng}`)
+          if (wRes.ok) {
+            const w = await wRes.json()
+            weatherDesc = w.description || '정보 없음'
+            temp = w.temperatureC != null ? `${Math.round(w.temperatureC)}도` : '--'
           }
         } catch {}
 
