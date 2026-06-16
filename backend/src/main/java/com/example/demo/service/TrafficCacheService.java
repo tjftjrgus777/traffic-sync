@@ -54,7 +54,25 @@ public class TrafficCacheService {
     }
 
     // 전체 업데이트 메서드: 새 맵을 생성해 참조를 원자적으로 교체 → clear()+putAll() 의 부분 읽기 문제 제거
+    // 추가로, 새 데이터에서 신호가 비어 있으면(V2X 빈/부분 응답·스켈레톤) 직전 캐시의 마지막 신호를
+    // 같은 crsrdId 기준으로 유지(stale 보존)한다. 폴링·구역선택·속도 broadcast 등 모든 캐시 갱신 경로에서
+    // 신호등이 화면에서 사라지는 것을 막는다. (구를 바꾸면 crsrdId가 달라 보존이 일어나지 않으므로 오염 없음)
     public void updateAllSignals(Map<String, TrafficStatus> statusMap) {
+        if (statusMap != null) {
+            Map<String, TrafficStatus> previous = signalCache;
+            if (previous != null && !previous.isEmpty()) {
+                for (Map.Entry<String, TrafficStatus> entry : statusMap.entrySet()) {
+                    TrafficStatus fresh = entry.getValue();
+                    if (fresh == null) continue;
+                    Map<String, com.example.demo.model.SignalDirection> sig = fresh.getSignals();
+                    if (sig != null && !sig.isEmpty()) continue;   // 새 신호가 있으면 그대로 사용
+                    TrafficStatus old = previous.get(entry.getKey());
+                    if (old == null || old.getSignals() == null || old.getSignals().isEmpty()) continue;
+                    fresh.setSignals(old.getSignals());            // 직전 신호 유지 (제자리 갱신 → broadcast에도 반영)
+                    fresh.setTotDt(old.getTotDt());
+                }
+            }
+        }
         signalCache = new ConcurrentHashMap<>(statusMap);
     }
 
