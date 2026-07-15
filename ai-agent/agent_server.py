@@ -62,7 +62,7 @@ sim_llm = ChatOllama(
 # ── 멀티에이전트 워커 LLM (exaone3.5:2.4b × 4, 포트별 독립 인스턴스) ────────────────
 WORKER_MODEL  = "exaone3.5:2.4b"
 WORKER_PORTS  = [11435, 11436, 11437, 11438]
-SPRING_BASE   = "http://34.158.208.63:8080"
+SPRING_BASE   = "http://localhost:8080"
 
 worker_llms = [
     ChatOllama(

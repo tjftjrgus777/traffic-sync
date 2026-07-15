@@ -68,6 +68,9 @@ class ModelManager:
 
     _instance = None
 
+    #new는 --init--보다 먼저됨
+    #한 줄 요약: _initialized = False는 "나는 아직 초기화 안 됐어"라고 미리 표시해두는 거. 그래야 __init__이 "아, 내가 처음이구나!" 하고 진행함.
+    # 없으면 __init__ 맨 위에서 if self._initialized 검사할 때 속성 자체가 없어서 AttributeError 나거나, 조건을 통과 못 해서 로직이 꼬임. (2/2)
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
